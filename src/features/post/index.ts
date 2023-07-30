@@ -94,10 +94,9 @@ const postInGuild = async ({ id }: Guild) => {
 discord.once(Events.ClientReady, async (client) => {
   while (process.exitCode === undefined) {
     const now = new Date();
-    const untilNextHour =
-      (60 - now.getMinutes()) *
-      (60 - now.getSeconds()) *
-      (1000 - now.getMilliseconds());
+    const untilNextSecond = 1000 - now.getMilliseconds();
+    const untilNextMinute = (60 - now.getSeconds()) * 1000 + untilNextSecond;
+    const untilNextHour = (60 - now.getMinutes()) * 60000 + untilNextMinute;
     await sleep(untilNextHour);
 
     const guildManager = client.guilds;

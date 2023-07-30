@@ -1,4 +1,3 @@
-import type { SetOptions } from "redis";
 import { v4 as uuid } from "uuid";
 
 import redis from "./services/redis";
@@ -34,33 +33,26 @@ const asJson = async <T>(callback: () => Promise<string | null>) => {
 
 const get = <T>(key: string) => asJson<T>(() => redis.get(key));
 
-const set = <T>(key: string, value: NonNullable<T>, options: SetOptions) => {
-  const json = JSON.stringify(value);
-  if (json !== undefined) return asJson<T>(() => redis.set(key, json, options));
-  throw new Error(`${key}: ${value.toString()}`);
-};
-
-const putIfAbsent = <T>(
-  key: string,
-  value: NonNullable<T>,
-  expireInMilliseconds?: number,
-) =>
-  set<T>(key, value, {
+const tryLock = async (lockKey: string, lockToken: string) => {
+  const previousLockToken = await redis.set(lockKey, lockToken, {
     GET: true,
     NX: true,
-    PX: expireInMilliseconds,
+    PX: LOCK_TIMEOUT,
   });
 
-const tryLock = async (lockKey: string, lockToken: string) => {
-  // prettier-ignore
-  const previousLockToken = await putIfAbsent(lockKey, lockToken, LOCK_TIMEOUT);
-  return previousLockToken === undefined || previousLockToken === lockToken;
+  return previousLockToken === null || previousLockToken === lockToken;
+};
+
+const lock = async (lockKey: string, lockToken: string) => {
+  while (!(await tryLock(lockKey, lockToken))) {
+    const untilLockExpires = await redis.pTTL(lockKey);
+    await sleep(untilLockExpires);
+  }
 };
 
 const extendLock = (lockKey: string, lockToken: string) => {
   const script = `
-    if redis.call("get", KEYS[1]) == ARGV[1]
-    then
+    if redis.call("get", KEYS[1]) == ARGV[1] then
       return redis.call("pexpire", KEYS[1], ARGV[2])
     else
       return 0
@@ -84,8 +76,7 @@ const atomicSet = <T>(
   if (json === undefined) throw new Error(`${key}: ${value.toString()}`);
 
   const script = `
-    if redis.call("get", KEYS[1]) == ARGV[1]
-    then
+    if redis.call("get", KEYS[1]) == ARGV[1] then
       return redis.call("set", KEYS[2], ARGV[2], "px", ARGV[3])
     else
       return nil
@@ -100,8 +91,7 @@ const atomicSet = <T>(
 
 const unlock = (lockKey: string, lockToken: string) => {
   const script = `
-    if redis.call("get", KEYS[1]) == ARGV[1]
-    then
+    if redis.call("get", KEYS[1]) == ARGV[1] then
       return redis.call("del", KEYS[1])
     else
       return 0
@@ -121,11 +111,7 @@ const computeIfAbsent = async <T>(
 ) => {
   const lockKey = CacheKey.lock(key);
   const lockToken = uuid();
-
-  while (!(await tryLock(lockKey, lockToken))) {
-    const untilLockExpires = await redis.pTTL(lockKey);
-    await sleep(untilLockExpires);
-  }
+  await lock(lockKey, lockToken);
 
   let value = await get<T>(key);
 

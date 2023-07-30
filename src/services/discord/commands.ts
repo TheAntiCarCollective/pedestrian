@@ -79,7 +79,9 @@ const createCommands = async (client: Client<true>, commands: Command[]) => {
     if (interaction.isCommand()) {
       for (const { json, onInteraction } of commands) {
         if (json.name === interaction.commandName) {
-          await onInteraction(interaction);
+          let result = onInteraction(interaction);
+          result = result instanceof Promise ? result : Promise.resolve();
+          await result.catch(console.error);
           break;
         }
       }
