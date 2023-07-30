@@ -1,25 +1,25 @@
 import type { PoolClient } from "pg";
 import { Pool } from "pg";
 
-import { ProcessEnv } from "../constants";
+import Environment from "../environment";
 
 // region Types
 type Callback<T> = (client: PoolClient) => Promise<T>;
 // endregion
 
 const postgresql = new Pool({
-  host: ProcessEnv.POSTGRESQL_HOST,
-  port: parseInt(ProcessEnv.POSTGRESQL_PORT),
-  database: ProcessEnv.POSTGRESQL_DATABASE,
-  user: ProcessEnv.POSTGRESQL_USER,
-  password: ProcessEnv.POSTGRESQL_PASSWORD,
+  host: Environment.POSTGRESQL_HOST,
+  port: parseInt(Environment.POSTGRESQL_PORT),
+  database: Environment.POSTGRESQL_DATABASE,
+  user: Environment.POSTGRESQL_USER,
+  password: Environment.POSTGRESQL_PASSWORD,
 });
 
 export const useClient = async <T>(callback: Callback<T>) => {
   const client = await postgresql.connect();
 
   try {
-    return callback(client);
+    return await callback(client);
   } finally {
     client.release();
   }
@@ -27,14 +27,14 @@ export const useClient = async <T>(callback: Callback<T>) => {
 
 export const useTransaction = <T>(callback: Callback<T>) =>
   useClient(async (client) => {
-    await client.query("BEGIN");
+    await client.query("begin");
 
     try {
       const result = await callback(client);
-      await client.query("COMMIT");
+      await client.query("commit");
       return result;
     } catch (error) {
-      await client.query("ROLLBACK");
+      await client.query("rollback");
       throw error;
     }
   });

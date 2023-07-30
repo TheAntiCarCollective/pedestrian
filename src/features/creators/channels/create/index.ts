@@ -3,23 +3,21 @@ import {
   bold,
   channelMention,
   ChannelType,
+  EmbedBuilder,
   ForumLayoutType,
   PermissionFlagsBits,
   SortOrderType,
 } from "discord.js";
 import { compress } from "compress-tag";
 
-import { Color, JsonError } from "../../../services/discord";
-import { message, MessageMode } from "../../../services/discord/commands";
-
-import guildSettings from "../../../settings/guild";
-import { ProcessEnv } from "../../../constants";
+import { Color, JsonError } from "../../../../services/discord";
+import guildSettings from "../../../../settings/guild";
+import Environment from "../../../../environment";
 
 import * as database from "./database";
 
 export enum Option {
   CATEGORY = "category",
-  GUIDELINES = "guidelines",
   NAME = "name",
   NSFW = "nsfw",
 }
@@ -44,13 +42,19 @@ export default async (interaction: ChatInputCommandInteraction) => {
       channel${maxCreatorChannels === 1 ? "" : "s"}.
     `;
 
-    return message(interaction, MessageMode.REPLY, Color.ERROR, description);
+    const embed = new EmbedBuilder()
+      .setColor(Color.ERROR)
+      .setDescription(description);
+
+    return interaction.reply({
+      embeds: [embed],
+      ephemeral: true,
+    });
   }
 
   const name = options.getString(Option.NAME) ?? "creators";
-  const guidelines = options.getString(Option.GUIDELINES) ?? undefined;
   const category = options.getChannel(Option.CATEGORY);
-  const nsfw = options.getBoolean(Option.NSFW) ?? undefined;
+  const nsfw = options.getBoolean(Option.NSFW) ?? false;
 
   const { user } = client;
   const permissionOverwrites = [
@@ -71,12 +75,12 @@ export default async (interaction: ChatInputCommandInteraction) => {
     nsfw,
     parent: category?.id,
     permissionOverwrites,
-    topic: guidelines,
     type: ChannelType.GuildForum,
   });
 
-  const webhookOptions = { name: ProcessEnv.PROJECT_NAME };
-  const webhook = await channel.createWebhook(webhookOptions);
+  const webhook = await channel.createWebhook({
+    name: Environment.PROJECT_NAME,
+  });
 
   const channelId = channel.id;
   const webhookId = webhook.id;
@@ -97,5 +101,12 @@ export default async (interaction: ChatInputCommandInteraction) => {
     ${bold("/creators subscriptions create")}
   `;
 
-  return message(interaction, MessageMode.REPLY, Color.SUCCESS, description);
+  const embed = new EmbedBuilder()
+    .setColor(Color.SUCCESS)
+    .setDescription(description);
+
+  return interaction.reply({
+    embeds: [embed],
+    ephemeral: true,
+  });
 };

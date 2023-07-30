@@ -4,7 +4,7 @@ const getProcessEnv = (key: string) => {
   throw new Error(key);
 };
 
-export const ProcessEnv = {
+export default {
   DISCORD_TOKEN: getProcessEnv("DISCORD_TOKEN"),
   POSTGRESQL_HOST: getProcessEnv("POSTGRESQL_HOST"),
   POSTGRESQL_PORT: getProcessEnv("POSTGRESQL_PORT"),
@@ -16,7 +16,3 @@ export const ProcessEnv = {
   REDIS_PORT: getProcessEnv("REDIS_PORT"),
   YOUTUBE_API_KEY: getProcessEnv("YOUTUBE_API_KEY"),
 } as const;
-
-export enum ExitCode {
-  BOOTSTRAP_FAILED = 1,
-}

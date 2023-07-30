@@ -1,8 +1,6 @@
 import discord from "./services/discord";
 import redis from "./services/redis";
-
-import { ExitCode } from "./constants";
-import exit from "./exit";
+import exit, { ExitCode } from "./exit";
 
 // Install
 import "./features";

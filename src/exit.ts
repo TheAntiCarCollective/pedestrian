@@ -2,7 +2,9 @@ import discord from "./services/discord";
 import postgresql from "./services/postgresql";
 import redis from "./services/redis";
 
-import { ExitCode } from "./constants";
+export enum ExitCode {
+  BOOTSTRAP_FAILED = 1,
+}
 
 export default async (code: ExitCode, error: unknown): Promise<never> => {
   const postgresqlPromise = postgresql.end();

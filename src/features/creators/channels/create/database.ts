@@ -1,6 +1,6 @@
-import postgresql from "../../../services/postgresql";
+import postgresql from "../../../../services/postgresql";
 
-// #region Types
+// region Types
 type Count = {
   count: string;
 };
@@ -11,13 +11,13 @@ type CreateCreatorChannel = {
   webhookId: string;
   webhookToken: string;
 };
-// #endregion
+// endregion
 
 export const getCountOfCreatorChannels = async (guildId: string) => {
   const query = `
-    SELECT COUNT(*) AS count
-    FROM creator_channels
-    WHERE guild_id = $1
+    select count(*) as count
+    from creator_channel
+    where guild_id = $1
   `;
 
   const values = [guildId];
@@ -33,8 +33,8 @@ export const createCreatorChannel = ({
   webhookToken,
 }: CreateCreatorChannel) => {
   const query = `
-    INSERT INTO creator_channels(id, guild_id, webhook_id, webhook_token)
-    VALUES ($1, $2, $3, $4)
+    insert into creator_channel(id, guild_id, webhook_id, webhook_token)
+    values($1, $2, $3, $4)
   `;
 
   const values = [channelId, guildId, webhookId, webhookToken];

@@ -2,16 +2,14 @@ import type {
   ApplicationCommandType,
   ChatInputCommandInteraction,
   Client,
-  CommandInteraction,
   ContextMenuCommandBuilder,
-  InteractionReplyOptions,
   MessageContextMenuCommandInteraction,
   SlashCommandBuilder,
   UserContextMenuCommandInteraction,
 } from "discord.js";
-import { EmbedBuilder, Events, Routes } from "discord.js";
+import { Events, Routes } from "discord.js";
 
-import discord, { Color, JsonError } from "./index";
+import discord from "./index";
 
 // region Types
 type ContextMenuCommandJson = ReturnType<ContextMenuCommandBuilder["toJSON"]>;
@@ -110,45 +108,3 @@ discord.once(Events.ClientReady, async (client) => {
   bufferedCommands = [];
 });
 // endregion
-
-// #region message
-export enum MessageMode {
-  REPLY,
-  EDIT_REPLY,
-  FOLLOW_UP,
-}
-
-export const message = (
-  interaction: CommandInteraction,
-  mode: MessageMode,
-  color: Color,
-  description: string,
-  callback?: (
-    options: InteractionReplyOptions,
-    embed: EmbedBuilder,
-  ) => InteractionReplyOptions,
-) => {
-  // prettier-ignore
-  const embed = new EmbedBuilder()
-    .setColor(color)
-    .setDescription(description);
-
-  const defaultOptions = {
-    embeds: [embed],
-    ephemeral: true,
-  };
-
-  const options = callback ? callback(defaultOptions, embed) : defaultOptions;
-
-  switch (mode) {
-    case MessageMode.REPLY:
-      return interaction.reply(options);
-    case MessageMode.EDIT_REPLY:
-      return interaction.editReply(options);
-    case MessageMode.FOLLOW_UP:
-      return interaction.followUp(options);
-    default:
-      throw new JsonError(interaction);
-  }
-};
-// #endregion

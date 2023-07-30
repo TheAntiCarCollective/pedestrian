@@ -1,6 +1,6 @@
 services:
   flyway:
-    image: flyway/flyway:latest
+    image: flyway/flyway:9.21
     command:
       - "-url=jdbc:postgresql://postgres:5432/db"
       - "-user=user"
@@ -12,7 +12,7 @@ services:
     volumes:
       - ./flyway/sql:/flyway/sql
   postgres:
-    image: postgres:latest
+    image: postgres:15.3
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
@@ -20,6 +20,6 @@ services:
     ports:
       - 5432:5432
   redis:
-    image: redis:latest
+    image: redis:7.0.12
     ports:
       - 6379:6379

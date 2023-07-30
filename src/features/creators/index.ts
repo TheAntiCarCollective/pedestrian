@@ -4,7 +4,6 @@ import {
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
-import { compress } from "compress-tag";
 
 import type { ChatInputCommand } from "../../services/discord/commands";
 import { registerCommand } from "../../services/discord/commands";
@@ -22,14 +21,9 @@ export enum SubcommandGroup {
   SUBSCRIPTIONS = "subscriptions",
 }
 
-// region registerCommand
-const description = compress`
-  Manage creators and creator channels and subscriptions.
-`;
-
 const json = new SlashCommandBuilder()
   .setName("creators")
-  .setDescription(description)
+  .setDescription("Manage creators")
   .setDMPermission(false)
   .setDefaultMemberPermissions(
     PermissionFlagsBits.ManageChannels |
@@ -49,19 +43,13 @@ const json = new SlashCommandBuilder()
           .addStringOption((option) =>
             option
               .setName(ChannelsCreateOption.NAME)
-              .setDescription("Name for the creator channel.")
+              .setDescription("Name for the creator channel")
               .setMaxLength(100),
-          )
-          .addStringOption((option) =>
-            option
-              .setName(ChannelsCreateOption.GUIDELINES)
-              .setDescription("Guidelines for the creator channel.")
-              .setMaxLength(1024),
           )
           .addChannelOption((option) =>
             option
               .setName(ChannelsCreateOption.CATEGORY)
-              .setDescription("Category for the creator channel.")
+              .setDescription("Category for the creator channel")
               .addChannelTypes(ChannelType.GuildCategory),
           )
           .addBooleanOption((option) =>
@@ -84,13 +72,6 @@ const json = new SlashCommandBuilder()
               .setName(SubscriptionsCreateOption.NAME)
               .setDescription("Name of the creator")
               .setRequired(true),
-          )
-          .addNumberOption((option) =>
-            option
-              .setName(SubscriptionsCreateOption.POST_LATEST_NOW)
-              .setDescription("Post latest N uploads from creator now")
-              .setMinValue(0)
-              .setMaxValue(10),
           ),
       ),
   )
@@ -114,4 +95,3 @@ const onInteraction = async (interaction: ChatInputCommandInteraction) => {
 
 const command: ChatInputCommand = { json, onInteraction };
 void registerCommand(command);
-// endregion

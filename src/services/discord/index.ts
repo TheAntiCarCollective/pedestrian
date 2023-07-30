@@ -1,14 +1,10 @@
 import type { JSONEncodable } from "discord.js";
 import { Client } from "discord.js";
 
-const discord = new Client({
-  intents: ["Guilds"],
-});
-
 export enum Color {
-  ERROR = 0xff0000,
-  INFORMATIONAL = 0x0000ff,
-  SUCCESS = 0x00ff00,
+  ERROR = 0xed4245, // Red
+  INFORMATIONAL = 0x5865f2, // Blurple
+  SUCCESS = 0x57f287, // Green
 }
 
 export class JsonError<T> extends Error {
@@ -22,4 +18,6 @@ export class JsonError<T> extends Error {
   }
 }
 
-export default discord;
+export default new Client({
+  intents: ["Guilds"],
+});

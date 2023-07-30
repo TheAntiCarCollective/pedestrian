@@ -1,10 +1,10 @@
 import type * as types from "./types";
 import * as database from "./database";
 
-// #region Types
+// region Types
 export type GuildSettings = types.GuildSettings;
 type PartialGuildSettings = Partial<GuildSettings> & Pick<GuildSettings, "id">;
-// #endregion
+// endregion
 
 function guildSettings(guildId: string): Promise<GuildSettings>;
 function guildSettings(
@@ -12,14 +12,17 @@ function guildSettings(
 ): Promise<GuildSettings>;
 
 async function guildSettings(parameter: string | PartialGuildSettings) {
-  const guildId = typeof parameter === "string" ? parameter : parameter.id;
+  const isGuildId = typeof parameter === "string";
+  const guildId = isGuildId ? parameter : parameter.id;
   const guildSettings = await database.getOrCreateGuildSettings(guildId);
 
-  if (typeof parameter === "string") {
-    return guildSettings;
-  }
+  if (isGuildId) return guildSettings;
 
-  const newGuildSettings = { ...guildSettings, ...parameter };
+  const newGuildSettings = {
+    ...guildSettings,
+    ...parameter,
+  };
+
   await database.setGuildSettings(newGuildSettings);
   return newGuildSettings;
 }

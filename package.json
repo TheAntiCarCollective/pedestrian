@@ -19,7 +19,8 @@
   "license": "ISC",
   "name": "pedestrian",
   "scripts": {
+    "check": "prettier --check . && eslint .",
     "prettier": "prettier --write .",
-    "start": "prettier --check . && eslint . && ts-node src/index.ts"
+    "start": "npm run check && ts-node src/index.ts"
   }
 }

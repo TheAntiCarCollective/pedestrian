@@ -5,40 +5,40 @@ import type { GuildSettings } from "./types";
 export const getOrCreateGuildSettings = (guildId: string) =>
   useTransaction(async (client) => {
     const query = `
-      SELECT
+      select
         id,
-        max_creator_channels AS "maxCreatorChannels"
-      FROM guilds
-      WHERE id = $1
+        max_creator_channels as "maxCreatorChannels"
+      from guild
+      where id = $1
     `;
 
     const values = [guildId];
     const { rows } = await client.query<GuildSettings>(query, values);
     let guildSettings = rows[0];
 
-    if (!guildSettings) {
+    if (guildSettings === undefined) {
       const query = `
-        INSERT INTO guilds(id)
-        VALUES($1)
-        RETURNING
+        insert into guild(id)
+        values($1)
+        returning
           id,
-          max_creator_channels AS "maxCreatorChannels"
+          max_creator_channels as "maxCreatorChannels"
       `;
 
       const { rows } = await client.query<GuildSettings>(query, values);
       guildSettings = rows[0];
     }
 
-    if (guildSettings) return guildSettings;
+    if (guildSettings !== undefined) return guildSettings;
     throw new Error(guildId);
   });
 
 export const setGuildSettings = (guildSettings: GuildSettings) =>
   useClient((client) => {
     const query = `
-      UPDATE guilds
-      SET max_creator_channels = $2
-      WHERE id = $1
+      update guild
+      set max_creator_channels = $2
+      where id = $1
     `;
 
     const values = [guildSettings.id, guildSettings.maxCreatorChannels];
