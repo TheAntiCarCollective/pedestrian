@@ -4,20 +4,24 @@ import redis from "./services/redis";
 
 export enum ExitCode {
   BOOTSTRAP_FAILED = 1,
+  SIGINT = 2,
 }
 
-const onExit = async () => {
-  await discord.destroy();
-  await redis.quit();
-  await postgresql.end();
+const onExit = async (code: ExitCode) => {
+  try {
+    await discord.destroy();
+    await redis.quit();
+    await postgresql.end();
+  } finally {
+    process.exitCode = code;
+  }
 };
 
-process.on("exit", () => {
-  void onExit();
+process.on("SIGINT", () => {
+  void onExit(ExitCode.SIGINT);
 });
 
 export default async (code: ExitCode, error: unknown): Promise<never> => {
-  await onExit();
-  process.exitCode = code;
+  await onExit(code);
   throw error;
 };

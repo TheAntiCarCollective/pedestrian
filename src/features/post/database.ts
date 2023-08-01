@@ -4,6 +4,7 @@ import type { CreatorType } from "../creators/constants";
 
 // region Type
 export type Subscription = {
+  createdAt: Date;
   creatorId: string;
   creatorType: CreatorType;
   lastContentId: string | null;
@@ -14,6 +15,7 @@ export type Subscription = {
 
 type CreatePost = {
   id: string;
+  threadId: string | null;
   creatorChannelId: string;
   creatorId: string;
   creatorType: CreatorType;
@@ -24,6 +26,7 @@ type CreatePost = {
 export const getSubscriptions = async (guildId: string) => {
   const query = `
     select
+      s.created_at as "createdAt",
       c.domain_id as "creatorId",
       c.type as "creatorType",
       p.content_id as "lastContentId",
@@ -53,25 +56,33 @@ export const getSubscriptions = async (guildId: string) => {
 
 export const createPost = ({
   id,
+  threadId,
   creatorChannelId,
   creatorId,
   creatorType,
   contentId,
 }: CreatePost) => {
   const query = `
-    insert into post(id, subscription_id, content_id)
+    insert into post(id, thread_id, subscription_id, content_id)
     select
       $1 as id,
+      $2 as thread_id,
       s.id as subscription_id,
-      $5 as content_id
+      $6 as content_id
     from subscription as s
     inner join creator as c
       on c.id = s.creator_id
-    where s.creator_channel_id = $2
-      and c.domain_id = $3
-      and c.type = $4
+    where s.creator_channel_id = $3
+      and c.domain_id = $4
+      and c.type = $5
   `;
 
-  const values = [id, creatorChannelId, creatorId, creatorType, contentId];
-  return postgresql.query(query, values);
+  return postgresql.query(query, [
+    id,
+    threadId,
+    creatorChannelId,
+    creatorId,
+    creatorType,
+    contentId,
+  ]);
 };

@@ -138,7 +138,9 @@ export default async (interaction: ChatInputCommandInteraction) => {
   const name = options.getString(Option.NAME);
   if (name === null) throw new JsonError(interaction);
 
-  let selectedOptions: string[] = [];
+  let selectedOptions: string[] =
+    channels.length === 1 ? [channels[0]!.id] : [];
+
   const creatorChannelOptions = () => {
     const selectMenuOptions = channels.map(({ id, name }) =>
       new StringSelectMenuOptionBuilder()
@@ -348,9 +350,11 @@ export default async (interaction: ChatInputCommandInteraction) => {
     .map(channelMention)
     .join(", ");
 
+  const youtubeChannelName = selectedYoutubeChannel?.title ?? name;
   const description = compress`
-    Successfully created a subscription for ${bold(name)}! Posts will now be
-    automatically created in ${channelMentions} when ${bold(name)} uploads.
+    Successfully created a subscription for ${bold(youtubeChannelName)}! Posts
+    will now be automatically created in ${channelMentions} when
+    ${bold(youtubeChannelName)} uploads.
     \nNote: It may take up to an hour for posts to be created after an upload.
   `;
 

@@ -1,5 +1,5 @@
 import type { Guild } from "discord.js";
-import { bold, DiscordAPIError, Events, SnowflakeUtil } from "discord.js";
+import { bold, DiscordAPIError, Events } from "discord.js";
 import { compress } from "compress-tag";
 
 import discord from "../../services/discord";
@@ -34,7 +34,8 @@ const postFromYouTube = async (subscription: Subscription) => {
   const webhook = await getWebhook(subscription);
   if (webhook === undefined) return;
 
-  const { creatorId, lastContentId, creatorChannelId } = subscription;
+  const { creatorId, lastContentId, creatorChannelId, createdAt } =
+    subscription;
 
   const { contentDetails, snippet } = await youtube.getChannel(creatorId);
   const { relatedPlaylists } = contentDetails ?? {};
@@ -51,10 +52,8 @@ const postFromYouTube = async (subscription: Subscription) => {
   if (typeof videoId !== "string" || videoId === lastContentId) return;
   if (typeof publishedAt !== "string" || typeof title !== "string") return;
 
-  const channelTimestamp = SnowflakeUtil.timestampFrom(creatorChannelId);
-  const channelDate = new Date(channelTimestamp);
   const videoDate = new Date(publishedAt);
-  if (videoDate < channelDate) return;
+  if (videoDate < createdAt) return;
 
   const rawContent = compress`
     ${getVideoUrl(videoId)}
@@ -67,15 +66,18 @@ const postFromYouTube = async (subscription: Subscription) => {
   const content = rawContent.substring(0, 2000);
   const threadName = `${channelName} - ${title}`.substring(0, 100);
 
-  const { id } = await webhook.send({
+  const { id, thread } = await webhook.send({
     avatarURL: getThumbnailUrl(thumbnails),
     content,
     username: channelName,
     threadName,
   });
 
+  const threadId = thread?.id ?? null;
+
   await database.createPost({
     id,
+    threadId,
     creatorChannelId,
     creatorId,
     creatorType: CreatorType.YOUTUBE,

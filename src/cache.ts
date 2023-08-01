@@ -7,10 +7,10 @@ import sleep from "./sleep";
 const LOCK_TIMEOUT = 1_000;
 
 // region CacheKey
-const keyPrefix = Environment.PROJECT_NAME.toLowerCase();
-
 const normalizeInput = (value: string) =>
-  value.trim().replace(/\s+/g, " ").toLowerCase();
+  value.replace(/\s+/g, "").toLowerCase();
+
+const keyPrefix = normalizeInput(Environment.PROJECT_NAME);
 
 export const CacheKey = {
   channel: (channelId: string) => `${keyPrefix}:channel:${channelId}`,

@@ -29,6 +29,7 @@ create table creator(
 
 create table subscription(
   id                  serial not null,
+  created_at          timestamptz not null default now(),
   creator_channel_id  bigint not null,
   creator_id          int not null,
   primary key(id),
@@ -45,6 +46,7 @@ create index on subscription(creator_id);
 
 create table post(
   id              bigint not null,
+  thread_id       bigint null,
   subscription_id int not null,
   content_id      text not null,
   primary key(id),
