@@ -76,7 +76,6 @@ const atomicSet = <T>(
   expireInMilliseconds: number,
 ) => {
   const json = JSON.stringify(value);
-  if (json === undefined) throw new Error(`${key}: ${value.toString()}`);
 
   const script = `
     if redis.call("get", KEYS[1]) == ARGV[1] then

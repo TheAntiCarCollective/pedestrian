@@ -52,10 +52,10 @@ const createCommands = async (client: Client<true>, commands: Command[]) => {
 
   const guildCommands = commands
     .filter(({ guildId }) => guildId !== undefined)
-    .reduce(({ get, set }, command) => {
-      const guildId = command.guildId!;
+    .reduce(({ get, set }, { guildId, json }) => {
+      if (guildId === undefined) throw new Error();
       const body = get(guildId) ?? [];
-      body.push(command.json);
+      body.push(json);
       return set(guildId, body);
     }, new Map<string, CommandJson[]>());
 

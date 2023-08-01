@@ -6,12 +6,7 @@ export type GuildSettings = types.GuildSettings;
 type PartialGuildSettings = Partial<GuildSettings> & Pick<GuildSettings, "id">;
 // endregion
 
-function guildSettings(guildId: string): Promise<GuildSettings>;
-function guildSettings(
-  guildSettings: PartialGuildSettings,
-): Promise<GuildSettings>;
-
-async function guildSettings(parameter: string | PartialGuildSettings) {
+const guildSettings = async (parameter: string | PartialGuildSettings) => {
   const isGuildId = typeof parameter === "string";
   const guildId = isGuildId ? parameter : parameter.id;
   const guildSettings = await database.getOrCreateGuildSettings(guildId);
@@ -25,6 +20,6 @@ async function guildSettings(parameter: string | PartialGuildSettings) {
 
   await database.setGuildSettings(newGuildSettings);
   return newGuildSettings;
-}
+};
 
 export default guildSettings;

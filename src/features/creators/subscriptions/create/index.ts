@@ -13,7 +13,6 @@ import {
   ButtonStyle,
   channelMention,
   ChannelType,
-  ComponentType,
   DiscordAPIError,
   EmbedBuilder,
   StringSelectMenuBuilder,
@@ -33,8 +32,6 @@ import * as creatorsDatabase from "../../database";
 export enum Option {
   NAME = "name",
 }
-
-const TIMEOUT_IN_5_MINUTES = 300_000;
 
 const getEmbedByYoutubeChannel = ({
   channelId,
@@ -85,37 +82,38 @@ const getEmbedByYoutubeChannel = ({
 };
 
 export default async (interaction: ChatInputCommandInteraction) => {
-  // region Step 1: Check if a creator channel exists
   const { guild, options } = interaction;
   if (!guild) throw new JsonError(interaction);
 
   const guildChannelManager = guild.channels;
   const guildId = guild.id;
 
-  const channelIds = await database.getCreatorChannelIds(guildId);
-  const channelPromises = channelIds.map(async (channelId) => {
-    // Check if channel exists, if not, then delete from database
-    try {
-      const channel = await guildChannelManager.fetch(channelId);
-      if (channel?.type === ChannelType.GuildForum) return channel;
-      throw new JsonError(interaction);
-    } catch (error) {
-      if (error instanceof DiscordAPIError && error.status === 404) {
-        await creatorsDatabase.deleteCreatorChannel(channelId);
-        console.info(error);
-        return undefined;
+  const creatorChannelIds = await database.getCreatorChannelIds(guildId);
+  const creatorChannelPromises = creatorChannelIds.map(
+    // Delete from database if channel does not exist
+    async (creatorChannelId) => {
+      try {
+        const channel = await guildChannelManager.fetch(creatorChannelId);
+        if (channel?.type === ChannelType.GuildForum) return channel;
+        throw new JsonError(interaction);
+      } catch (error) {
+        if (error instanceof DiscordAPIError && error.status === 404) {
+          await creatorsDatabase.deleteCreatorChannel(creatorChannelId);
+          console.info(error);
+          return undefined;
+        }
+
+        throw error;
       }
+    },
+  );
 
-      throw error;
-    }
-  });
-
-  const channelsRaw = await Promise.all(channelPromises);
-  const channels = channelsRaw
+  const creatorChannelsRaw = await Promise.all(creatorChannelPromises);
+  const creatorChannels = creatorChannelsRaw
     .filter((channel) => channel !== undefined)
     .map((channel) => channel as NonNullable<typeof channel>);
 
-  if (channels.length === 0) {
+  if (creatorChannels.length === 0) {
     const description = compress`
       Your request for creating a creator subscription has been denied because
       this server currently has no creator channels. Use the following command
@@ -132,89 +130,11 @@ export default async (interaction: ChatInputCommandInteraction) => {
       ephemeral: true,
     });
   }
-  // endregion
 
-  // region Step 2: Get user selected creator channels
   const name = options.getString(Option.NAME);
   if (name === null) throw new JsonError(interaction);
 
-  let selectedOptions: string[] =
-    channels.length === 1 ? [channels[0]!.id] : [];
-
-  const creatorChannelOptions = () => {
-    const selectMenuOptions = channels.map(({ id, name }) =>
-      new StringSelectMenuOptionBuilder()
-        .setDefault(selectedOptions.includes(id))
-        .setLabel(name)
-        .setValue(id),
-    );
-
-    const selectMenu = new StringSelectMenuBuilder()
-      .setCustomId(uuid()) // Required, but not used
-      .addOptions(selectMenuOptions)
-      .setMinValues(1);
-
-    const buttonLabel = "I am finished selecting creator channels";
-    const button = new ButtonBuilder()
-      .setCustomId(uuid()) // Required, but not used
-      .setDisabled(selectedOptions.length === 0)
-      .setLabel(buttonLabel)
-      .setStyle(ButtonStyle.Success);
-
-    const selectMenuActionRow =
-      // prettier-ignore
-      new ActionRowBuilder<MessageActionRowComponentBuilder>()
-        .addComponents(selectMenu);
-    const buttonActionRow =
-      // prettier-ignore
-      new ActionRowBuilder<MessageActionRowComponentBuilder>()
-        .addComponents(button);
-
-    const description = compress`
-      Posts will automatically be created in the selected creator channels
-      whenever ${bold(name)} uploads.
-      \nYour request for creating a creator subscription will automatically be
-      cancelled if you do not click ${bold(buttonLabel)} within 5 minutes.
-    `;
-
-    const embed = new EmbedBuilder()
-      .setColor(Color.INFORMATIONAL)
-      .setDescription(description);
-
-    return {
-      components: [selectMenuActionRow, buttonActionRow],
-      embeds: [embed],
-      ephemeral: true,
-    };
-  };
-
-  let response = await interaction.reply(creatorChannelOptions());
-  let buttonInteraction: ButtonInteraction;
-
-  try {
-    const interaction = await response.awaitMessageComponent({
-      filter: async (interaction) => {
-        if (interaction.isStringSelectMenu()) {
-          selectedOptions = interaction.values;
-          response = await interaction.update(creatorChannelOptions());
-        }
-
-        return interaction.isButton();
-      },
-      time: TIMEOUT_IN_5_MINUTES,
-    });
-
-    if (!interaction.isButton()) throw new JsonError(interaction);
-    buttonInteraction = interaction;
-  } catch (error) {
-    await response.delete();
-    console.info(error);
-    return response;
-  }
-  // endregion
-
-  // region Step 3: Get user selected creator
-  const noResultsExistOptions = () => {
+  const noResultsExistOptions = <T>(content: T) => {
     const description = compress`
       Your request for creating a creator subscription has been denied because
       no results exist for ${bold(name)}. Retry this command with a different
@@ -227,7 +147,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
     return {
       components: [],
-      content: null,
+      content,
       embeds: [embed],
       ephemeral: true,
     };
@@ -235,19 +155,26 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
   const youtubeChannels = await youtube.getChannels(name);
   const maxPage = youtubeChannels.length;
-  if (maxPage === 0) return buttonInteraction.update(noResultsExistOptions());
+  if (maxPage === 0) return interaction.reply(noResultsExistOptions(undefined));
 
+  const selectMenuId = uuid();
   const previousButtonId = uuid();
   const nextButtonId = uuid();
   const applyButtonId = uuid();
   const cancelButtonId = uuid();
 
+  const { id: defaultCreatorChannelId } = creatorChannels[0] ?? {};
+  if (defaultCreatorChannelId === undefined) throw new JsonError(interaction);
+
+  let selectedCreatorChannelIds: string[] =
+    creatorChannels.length === 1 ? [defaultCreatorChannelId] : [];
   let selectedYoutubeChannel: YoutubeChannel | undefined;
   let page = 1;
 
   const youtubeChannelOptions = () => {
     selectedYoutubeChannel = youtubeChannels[page - 1];
     const embed = getEmbedByYoutubeChannel(selectedYoutubeChannel);
+    const { channelTitle, title } = selectedYoutubeChannel ?? {};
 
     const applyButtonLabel = "I want to create a subscription for this creator";
     // prettier-ignore
@@ -255,10 +182,24 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
     const content = compress`
       Page ${page} of ${maxPage}
+      \nPosts will automatically be created in the selected creator channels
+      whenever ${bold(channelTitle ?? title ?? name)} uploads.
       \nYour request for creating a creator subscription will automatically be
       cancelled if you do not click ${bold(applyButtonLabel)} or
-      ${bold(cancelButtonLabel)} within 5 minutes.
+      ${bold(cancelButtonLabel)} within 10 minutes.
     `;
+
+    const selectMenuOptions = creatorChannels.map(({ id, name }) =>
+      new StringSelectMenuOptionBuilder()
+        .setDefault(selectedCreatorChannelIds.includes(id))
+        .setLabel(name)
+        .setValue(id),
+    );
+
+    const selectMenu = new StringSelectMenuBuilder()
+      .setCustomId(selectMenuId)
+      .addOptions(selectMenuOptions)
+      .setMinValues(1);
 
     const previousButton = new ButtonBuilder()
       .setCustomId(previousButtonId)
@@ -274,6 +215,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
     const applyButton = new ButtonBuilder()
       .setCustomId(applyButtonId)
+      .setDisabled(selectedCreatorChannelIds.length === 0)
       .setLabel(applyButtonLabel)
       .setStyle(ButtonStyle.Success);
 
@@ -282,6 +224,10 @@ export default async (interaction: ChatInputCommandInteraction) => {
       .setLabel(cancelButtonLabel)
       .setStyle(ButtonStyle.Danger);
 
+    const selectMenuActionRow =
+      // prettier-ignore
+      new ActionRowBuilder<MessageActionRowComponentBuilder>()
+        .addComponents(selectMenu);
     const pageActionRow =
       // prettier-ignore
       new ActionRowBuilder<MessageActionRowComponentBuilder>()
@@ -295,38 +241,54 @@ export default async (interaction: ChatInputCommandInteraction) => {
       new ActionRowBuilder<MessageActionRowComponentBuilder>()
         .addComponents(cancelButton);
 
+    const components = [
+      selectMenuActionRow,
+      pageActionRow,
+      applyActionRow,
+      cancelActionRow,
+    ];
+
     return {
-      components: [pageActionRow, applyActionRow, cancelActionRow],
+      components,
       content,
       embeds: [embed],
       ephemeral: true,
     };
   };
 
-  response = await buttonInteraction.update(youtubeChannelOptions());
+  let response = await interaction.reply(youtubeChannelOptions());
+  let buttonInteraction: ButtonInteraction;
 
   try {
-    buttonInteraction = await response.awaitMessageComponent({
-      componentType: ComponentType.Button,
+    const interaction = await response.awaitMessageComponent({
       filter: async (interaction) => {
         switch (interaction.customId) {
+          case selectMenuId:
+            if (!interaction.isStringSelectMenu())
+              throw new JsonError(interaction);
+            selectedCreatorChannelIds = interaction.values;
+            break;
           case previousButtonId:
             page -= 1;
-            response = await interaction.update(youtubeChannelOptions());
-            return false;
+            break;
           case nextButtonId:
             page += 1;
-            response = await interaction.update(youtubeChannelOptions());
-            return false;
+            break;
           case applyButtonId:
           case cancelButtonId:
             return true;
           default:
             throw new JsonError(interaction);
         }
+
+        response = await interaction.update(youtubeChannelOptions());
+        return false;
       },
-      time: TIMEOUT_IN_5_MINUTES,
+      time: 600_000, // 10 minutes
     });
+
+    if (!interaction.isButton()) throw new JsonError(interaction);
+    buttonInteraction = interaction;
   } catch (error) {
     await response.delete();
     console.info(error);
@@ -337,16 +299,16 @@ export default async (interaction: ChatInputCommandInteraction) => {
   const youtubeChannelId = selectedYoutubeChannel?.channelId;
 
   if (buttonId === cancelButtonId || typeof youtubeChannelId !== "string")
-    return buttonInteraction.update(noResultsExistOptions());
+    return buttonInteraction.update(noResultsExistOptions(null));
 
   await database.createSubscriptions({
     domainId: youtubeChannelId,
     creatorType: CreatorType.YOUTUBE,
-    creatorChannelIds: selectedOptions,
+    creatorChannelIds: selectedCreatorChannelIds,
   });
 
   // prettier-ignore
-  const channelMentions = selectedOptions
+  const channelMentions = selectedCreatorChannelIds
     .map(channelMention)
     .join(", ");
 
@@ -367,5 +329,4 @@ export default async (interaction: ChatInputCommandInteraction) => {
     content: null,
     embeds: [embed],
   });
-  // endregion
 };
