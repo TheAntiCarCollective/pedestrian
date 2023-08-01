@@ -7,13 +7,16 @@ import sleep from "./sleep";
 const LOCK_TIMEOUT = 1_000;
 
 // region CacheKey
-const getCacheKey = (key: string) => `${Environment.PROJECT_NAME}:${key}`;
+const keyPrefix = Environment.PROJECT_NAME.toLowerCase();
+
+const normalizeInput = (value: string) =>
+  value.trim().replace(/\s+/g, " ").toLowerCase();
 
 export const CacheKey = {
-  channel: (channelId: string) => getCacheKey(`channel:${channelId}`),
-  channels: (query: string) => getCacheKey(`channels:${query}`),
-  lock: (key: string) => getCacheKey(`lock:${key}`),
-  videos: (playlistId: string) => getCacheKey(`videos:${playlistId}`),
+  channel: (channelId: string) => `${keyPrefix}:channel:${channelId}`,
+  channels: (query: string) => `${keyPrefix}:channels:${normalizeInput(query)}`,
+  lock: (key: string) => `${keyPrefix}:lock:${key}`,
+  videos: (playlistId: string) => `${keyPrefix}:videos:${playlistId}`,
 } as const;
 // endregion
 

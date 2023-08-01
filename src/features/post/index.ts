@@ -1,5 +1,5 @@
 import type { Guild } from "discord.js";
-import { DiscordAPIError, Events, SnowflakeUtil } from "discord.js";
+import { bold, DiscordAPIError, Events, SnowflakeUtil } from "discord.js";
 import { compress } from "compress-tag";
 
 import discord from "../../services/discord";
@@ -31,12 +31,18 @@ const getWebhook = async ({
 };
 
 const postFromYouTube = async (subscription: Subscription) => {
+  const webhook = await getWebhook(subscription);
+  if (webhook === undefined) return;
+
   const { creatorId, lastContentId, creatorChannelId } = subscription;
 
   const { contentDetails, snippet } = await youtube.getChannel(creatorId);
   const { relatedPlaylists } = contentDetails ?? {};
   const { uploads } = relatedPlaylists ?? {};
   if (uploads === undefined) return;
+
+  const { title: channelName, thumbnails } = snippet ?? {};
+  if (typeof channelName !== "string") return;
 
   const videos = await youtube.getVideos(uploads);
   const { description, publishedAt, resourceId, title } = videos[0] ?? {};
@@ -50,21 +56,22 @@ const postFromYouTube = async (subscription: Subscription) => {
   const videoDate = new Date(publishedAt);
   if (videoDate < channelDate) return;
 
-  const webhook = await getWebhook(subscription);
-  if (webhook === undefined) return;
-
-  const { title: channelName, thumbnails } = snippet ?? {};
-
-  const content = compress`
-    ${getVideoUrl(videoId)}\n
-    ${description ?? ""}
+  const rawContent = compress`
+    ${getVideoUrl(videoId)}
+    \n${bold("Title")}
+    \n${title}
+    \n${bold("Description")}
+    \n${description ?? ""}
   `;
+
+  const content = rawContent.substring(0, 2000);
+  const threadName = `${channelName} - ${title}`.substring(0, 100);
 
   const { id } = await webhook.send({
     avatarURL: getThumbnailUrl(thumbnails),
     content,
-    username: channelName ?? undefined,
-    threadName: title,
+    username: channelName,
+    threadName,
   });
 
   await database.createPost({

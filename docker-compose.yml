@@ -1,6 +1,6 @@
 services:
   flyway:
-    image: flyway/flyway:9.21
+    build: flyway
     command:
       - "-url=jdbc:postgresql://postgres:5432/db"
       - "-user=user"
@@ -9,8 +9,6 @@ services:
       - "migrate"
     depends_on:
       - postgres
-    volumes:
-      - ./flyway/sql:/flyway/sql
   postgres:
     image: postgres:15.3
     environment:

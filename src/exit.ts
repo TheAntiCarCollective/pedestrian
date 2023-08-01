@@ -6,14 +6,18 @@ export enum ExitCode {
   BOOTSTRAP_FAILED = 1,
 }
 
+const onExit = async () => {
+  await discord.destroy();
+  await redis.quit();
+  await postgresql.end();
+};
+
+process.on("exit", () => {
+  void onExit();
+});
+
 export default async (code: ExitCode, error: unknown): Promise<never> => {
-  const postgresqlPromise = postgresql.end();
-  const redisPromise = redis.quit();
-
-  discord.destroy();
-  await postgresqlPromise;
-  await redisPromise;
-
+  await onExit();
   process.exitCode = code;
   throw error;
 };

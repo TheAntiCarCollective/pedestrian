@@ -1,0 +1,16 @@
+flyway
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose.yml
+
+# Git
+.git
+.gitignore
+
+# JetBrains
+.idea
+
+# Node.js
+node_modules

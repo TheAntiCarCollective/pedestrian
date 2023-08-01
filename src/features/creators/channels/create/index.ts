@@ -97,8 +97,8 @@ export default async (interaction: ChatInputCommandInteraction) => {
   const description = compress`
     Successfully created ${channelMention(channelId)}! Posts will be created
     once creators are subscribed to the channel. Creators can be subscribed
-    to the channel using the following command:\n
-    ${bold("/creators subscriptions create")}
+    to the channel using the following command:
+    \n${bold("/creators subscriptions create")}
   `;
 
   const embed = new EmbedBuilder()

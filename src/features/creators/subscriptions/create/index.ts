@@ -44,41 +44,44 @@ const getEmbedByYoutubeChannel = ({
   thumbnails,
   title,
 }: YoutubeChannel = {}) => {
-  const channelName = channelTitle ?? title;
-  const thumbnailUrl = getThumbnailUrl(thumbnails);
+  const channelName = channelTitle ?? title ?? null;
+  const thumbnailUrl = getThumbnailUrl(thumbnails) ?? null;
 
   const channelUrl =
-    typeof channelId === "string" ? getChannelUrl(channelId) : channelId;
+    typeof channelId === "string" ? getChannelUrl(channelId) : null;
   const timestamp =
-    typeof publishedAt === "string" ? new Date(publishedAt) : publishedAt;
+    typeof publishedAt === "string" ? new Date(publishedAt) : null;
 
   const author =
-    typeof channelName === "string"
-      ? {
+    channelName === null
+      ? null
+      : {
           iconUrl: thumbnailUrl,
           name: channelName,
           url: channelUrl ?? undefined,
-        }
-      : channelName;
+        };
 
   const footer =
-    typeof channelName === "string"
-      ? {
+    channelName === null
+      ? null
+      : {
           iconUrl: thumbnailUrl,
           text: channelName,
-        }
-      : channelName;
+        };
+
+  description ??= "";
+  description = description.length > 0 ? description : null;
 
   return new EmbedBuilder()
-    .setAuthor(author ?? null)
+    .setAuthor(author)
     .setColor(Color.INFORMATIONAL)
-    .setDescription(description ?? null)
-    .setFooter(footer ?? null)
-    .setImage(thumbnailUrl ?? null)
-    .setThumbnail(thumbnailUrl ?? null)
-    .setTimestamp(timestamp ?? null)
-    .setTitle(channelName ?? null)
-    .setURL(channelUrl ?? null);
+    .setDescription(description)
+    .setFooter(footer)
+    .setImage(thumbnailUrl)
+    .setThumbnail(thumbnailUrl)
+    .setTimestamp(timestamp)
+    .setTitle(channelName)
+    .setURL(channelUrl);
 };
 
 export default async (interaction: ChatInputCommandInteraction) => {
@@ -116,8 +119,8 @@ export default async (interaction: ChatInputCommandInteraction) => {
     const description = compress`
       Your request for creating a creator subscription has been denied because
       this server currently has no creator channels. Use the following command
-      to create a creator channel:\n
-      ${bold("/creators channels create")}
+      to create a creator channel:
+      \n${bold("/creators channels create")}
     `;
 
     const embed = new EmbedBuilder()
@@ -167,8 +170,8 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
     const description = compress`
       Posts will automatically be created in the selected creator channels
-      whenever ${bold(name)} uploads.\n
-      Your request for creating a creator subscription will automatically be
+      whenever ${bold(name)} uploads.
+      \nYour request for creating a creator subscription will automatically be
       cancelled if you do not click ${bold(buttonLabel)} within 5 minutes.
     `;
 
@@ -249,8 +252,8 @@ export default async (interaction: ChatInputCommandInteraction) => {
     const cancelButtonLabel = "None of these creators is the one I am searching for";
 
     const content = compress`
-      Page ${page} of ${maxPage}\n
-      Your request for creating a creator subscription will automatically be
+      Page ${page} of ${maxPage}
+      \nYour request for creating a creator subscription will automatically be
       cancelled if you do not click ${bold(applyButtonLabel)} or
       ${bold(cancelButtonLabel)} within 5 minutes.
     `;
@@ -347,8 +350,8 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
   const description = compress`
     Successfully created a subscription for ${bold(name)}! Posts will now be
-    automatically created in ${channelMentions} when ${bold(name)} uploads.\n
-    Note: It may take up to an hour for posts to be created after an upload.\n
+    automatically created in ${channelMentions} when ${bold(name)} uploads.
+    \nNote: It may take up to an hour for posts to be created after an upload.
   `;
 
   const embed = new EmbedBuilder()
