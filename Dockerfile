@@ -1,4 +1,4 @@
-FROM node:20.5.0
+FROM node:20.5.0-alpine
 
 WORKDIR /pedestrian
 

@@ -1,0 +1,38 @@
+name: Docker Build & Push
+
+on: [push, create]
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to CR
+        uses: docker/login-action@v2
+        with:
+          registry: rg.nl-ams.scw.cloud/dreamexposure/
+          username: ${{ secrets.SCW_USER }}
+          password: ${{ secrets.SCW_SECRET }}
+
+      - name: Build & push Pedestrian
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            rg.nl-ams.scw.cloud/dreamexposure/pedestrian:latest
+            rg.nl-ams.scw.cloud/dreamexposure/pedestrian:${{ github.ref_name }}
+
+      - name: Build & push Pedestrian Flyway
+        uses: docker/build-push-action@v4
+        with:
+          context: ./flyway
+          push: true
+          tags: |
+            rg.nl-ams.scw.cloud/dreamexposure/pedestrian-flyway:latest
+            rg.nl-ams.scw.cloud/dreamexposure/pedestrian-flyway:${{ github.ref_name }}
