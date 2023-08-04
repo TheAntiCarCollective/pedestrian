@@ -3,15 +3,16 @@ import postgresql, { useTransaction } from "../../../../services/postgresql";
 import { CreatorType } from "../../constants";
 
 // region Types
-type StringId = {
+type CreatorChannelId = {
   id: string;
+  creatorSubscriptionCount: number;
 };
 
-type NumberId = {
+type Id = {
   id: number;
 };
 
-type CreateSubscriptions = {
+type CreateCreatorSubscriptions = {
   domainId: string;
   creatorType: CreatorType;
   creatorChannelIds: string[];
@@ -28,7 +29,7 @@ const getOrCreateCreatorId = (domainId: string, creatorType: CreatorType) =>
     `;
 
     const values = [domainId, creatorType];
-    const { rows } = await client.query<NumberId>(query, values);
+    const { rows } = await client.query<Id>(query, values);
     let row = rows[0];
 
     if (!row) {
@@ -38,7 +39,7 @@ const getOrCreateCreatorId = (domainId: string, creatorType: CreatorType) =>
         returning id
       `;
 
-      const { rows } = await client.query<NumberId>(query, values);
+      const { rows } = await client.query<Id>(query, values);
       row = rows[0];
     }
 
@@ -48,25 +49,30 @@ const getOrCreateCreatorId = (domainId: string, creatorType: CreatorType) =>
 
 export const getCreatorChannelIds = async (guildId: string) => {
   const query = `
-    select id
-    from creator_channel
-    where guild_id = $1
+    select
+      cc.id,
+      count(cs.id) as "creatorSubscriptionCount"
+    from creator_channel as cc
+    left join creator_subscription as cs
+      on cs.creator_channel_id = cc.id
+    where cc.guild_id = $1
+    group by cc.id
   `;
 
   const values = [guildId];
-  const { rows } = await postgresql.query<StringId>(query, values);
-  return rows.map(({ id }) => id);
+  const { rows } = await postgresql.query<CreatorChannelId>(query, values);
+  return rows;
 };
 
-export const createSubscriptions = async ({
+export const createCreatorSubscriptions = async ({
   domainId,
   creatorType,
   creatorChannelIds,
-}: CreateSubscriptions) => {
+}: CreateCreatorSubscriptions) => {
   const creatorId = await getOrCreateCreatorId(domainId, creatorType);
 
   const query = `
-    insert into subscription(creator_channel_id, creator_id)
+    insert into creator_subscription(creator_channel_id, creator_id)
     values($1, $2)
     on conflict do nothing
   `;

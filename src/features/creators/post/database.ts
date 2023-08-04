@@ -1,9 +1,9 @@
-import postgresql from "../../services/postgresql";
+import postgresql from "../../../services/postgresql";
 
-import type { CreatorType } from "../creators/constants";
+import type { CreatorType } from "../constants";
 
 // region Types
-export type Subscription = {
+export type CreatorSubscription = {
   createdAt: Date;
   domainId: string;
   creatorType: CreatorType;
@@ -13,7 +13,7 @@ export type Subscription = {
   webhookToken: string;
 };
 
-type CreatePost = {
+type CreateCreatorPost = {
   id: string;
   creatorChannelId: string;
   domainId: string;
@@ -22,54 +22,54 @@ type CreatePost = {
 };
 // endregion
 
-export const getSubscriptions = async (guildId: string) => {
+export const getCreatorSubscriptions = async (guildId: string) => {
   const query = `
     select
-      s.created_at as "createdAt",
+      cs.created_at as "createdAt",
       c.domain_id as "domainId",
       c.type as "creatorType",
-      p.content_id as "lastContentId",
+      cp.content_id as "lastContentId",
       cc.id as "creatorChannelId",
       cc.webhook_id as "webhookId",
       cc.webhook_token as "webhookToken"
-    from subscription as s
+    from creator_subscription as cs
     inner join creator as c
-      on c.id = s.creator_id
+      on c.id = cs.creator_id
     inner join creator_channel as cc
-      on cc.id = s.creator_channel_id
+      on cc.id = cs.creator_channel_id
     left join lateral
-      ( select p.content_id
-        from post as p
-        where p.subscription_id = s.id
-        order by p.id desc
+      ( select cp.content_id
+        from creator_post as cp
+        where cp.creator_subscription_id = cs.id
+        order by cp.id desc
         limit 1
-      ) as p
+      ) as cp
       on true
     where cc.guild_id = $1
   `;
 
   const values = [guildId];
-  const { rows } = await postgresql.query<Subscription>(query, values);
+  const { rows } = await postgresql.query<CreatorSubscription>(query, values);
   return rows;
 };
 
-export const createPost = ({
+export const createCreatorPost = ({
   id,
   creatorChannelId,
   domainId,
   creatorType,
   contentId,
-}: CreatePost) => {
+}: CreateCreatorPost) => {
   const query = `
-    insert into post(id, subscription_id, content_id)
+    insert into creator_post(id, creator_subscription_id, content_id)
     select
       $1 as id,
-      s.id as subscription_id,
+      cs.id as creator_subscription_id,
       $5 as content_id
-    from subscription as s
+    from creator_subscription as cs
     inner join creator as c
-      on c.id = s.creator_id
-    where s.creator_channel_id = $2
+      on c.id = cs.creator_id
+    where cs.creator_channel_id = $2
       and c.domain_id = $3
       and c.type = $4
   `;

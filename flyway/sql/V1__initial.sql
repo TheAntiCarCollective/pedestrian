@@ -1,6 +1,7 @@
 create table guild(
-  id                    bigint not null,
-  max_creator_channels  int not null default 1,
+  id                        bigint not null,
+  max_creator_channels      int not null default 1,
+  max_creator_subscriptions int not null default 10
   primary key(id)
 );
 
@@ -27,7 +28,7 @@ create table creator(
   unique(domain_id, type)
 );
 
-create table subscription(
+create table creator_subscription(
   id                  serial not null,
   created_at          timestamptz not null default now(),
   creator_channel_id  bigint not null,
@@ -42,16 +43,16 @@ create table subscription(
     on delete cascade
 );
 
-create index on subscription(creator_id);
+create index on creator_subscription(creator_id);
 
-create table post(
-  id              bigint not null,
-  subscription_id int not null,
-  content_id      text not null,
+create table creator_post(
+  id                      bigint not null,
+  creator_subscription_id int not null,
+  content_id              text not null,
   primary key(id),
-  foreign key(subscription_id)
-    references subscription(id)
+  foreign key(creator_subscription_id)
+    references creator_subscription(id)
     on delete cascade
 );
 
-create index on post(subscription_id);
+create index on creator_post(creator_subscription_id);

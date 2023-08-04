@@ -23,11 +23,11 @@ import { v4 as uuid } from "uuid";
 
 import { Color, JsonError } from "../../../../services/discord";
 
-import type { Subscription } from "./database";
+import type { CreatorSubscription } from "./database";
 import * as database from "./database";
 import * as creatorsDatabase from "../../database";
 import { CreatorType } from "../../constants";
-import * as youtube from "../../../youtube";
+import * as youtube from "../../youtube";
 
 // region Types
 type Creators = {
@@ -36,14 +36,14 @@ type Creators = {
 // endregion
 
 const getCreatorChannels = async (
-  subscriptions: Subscription[],
+  creatorSubscriptions: CreatorSubscription[],
   interaction: ChatInputCommandInteraction,
 ) => {
   const { guild } = interaction;
   if (guild === null) throw new JsonError(interaction);
   const guildChannelManager = guild.channels;
 
-  const creatorChannelIds = subscriptions
+  const creatorChannelIds = creatorSubscriptions
     .map(({ creatorChannelId }) => creatorChannelId)
     .reduce((set, id) => set.add(id), new Set<string>());
 
@@ -75,14 +75,15 @@ const getCreatorChannels = async (
 };
 
 const getCreators = async (
-  subscriptions: Subscription[],
+  creatorSubscriptions: CreatorSubscription[],
   creatorChannelIds: string[],
 ) => {
   const creatorDomainIds = {
     [CreatorType.YOUTUBE]: new Set<string>(),
   };
 
-  for (const { creatorChannelId, domainId, creatorType } of subscriptions) {
+  for (const creatorSubscription of creatorSubscriptions) {
+    const { creatorChannelId, domainId, creatorType } = creatorSubscription;
     if (creatorChannelIds.includes(creatorChannelId)) {
       const domainIds = creatorDomainIds[creatorType];
       domainIds.add(domainId);
@@ -129,8 +130,9 @@ export default async (interaction: ChatInputCommandInteraction) => {
   if (guild === null) throw new JsonError(interaction);
   const { id: guildId } = guild;
 
-  const subscriptions = await database.getSubscriptions(guildId);
-  const creatorChannels = await getCreatorChannels(subscriptions, interaction);
+  const creatorSubscriptions = await database.getCreatorSubscriptions(guildId);
+  // prettier-ignore
+  const creatorChannels = await getCreatorChannels(creatorSubscriptions, interaction);
 
   if (creatorChannels.length === 0) {
     const description = compress`
@@ -151,7 +153,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
   }
 
   const creatorChannelIds = creatorChannels.map(({ id }) => id);
-  const creators = await getCreators(subscriptions, creatorChannelIds);
+  const creators = await getCreators(creatorSubscriptions, creatorChannelIds);
 
   const channelSelectMenuId = uuid();
   const subscriptionSelectMenuId = uuid();
@@ -194,7 +196,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
       .addOptions(channelSelectMenuOptions)
       .setCustomId(channelSelectMenuId);
 
-    const subscriptionSelectMenuOptions = subscriptions
+    const subscriptionSelectMenuOptions = creatorSubscriptions
       .filter(({ creatorChannelId }) => creatorChannelId === selectedChannelId)
       .map(({ id, domainId, creatorType }) => {
         let label: string;
@@ -283,7 +285,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
               throw new JsonError(interaction);
 
             // Remove all subscription IDs for selectedChannelId
-            for (const { id, creatorChannelId } of subscriptions) {
+            for (const { id, creatorChannelId } of creatorSubscriptions) {
               if (creatorChannelId === selectedChannelId) {
                 const index = selectedSubscriptionIds.indexOf(id);
                 if (index >= 0) selectedSubscriptionIds.splice(index, 1);
@@ -292,7 +294,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
             // Add selected subscription IDs for selectedChannelId
             const { values: rawValues } = interaction;
-            const values = rawValues.map(parseInt);
+            const values = rawValues.map((rawValue) => parseInt(rawValue));
             selectedSubscriptionIds.push(...values);
             break;
           }
@@ -324,7 +326,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
     return response;
   }
 
-  await database.deleteSubscriptions(selectedSubscriptionIds);
+  await database.deleteCreatorSubscriptions(selectedSubscriptionIds);
   const { length } = selectedSubscriptionIds;
 
   const description = compress`

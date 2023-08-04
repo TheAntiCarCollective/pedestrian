@@ -31,7 +31,6 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
   const settingsPromise = guildSettings(guildId);
   const countPromise = database.getCountOfCreatorChannels(guildId);
-
   const { maxCreatorChannels } = await settingsPromise;
   const count = await countPromise;
 

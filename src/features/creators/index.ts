@@ -16,6 +16,9 @@ import onSubscriptions, {
 } from "./subscriptions";
 import { Option as SubscriptionsCreateOption } from "./subscriptions/create";
 
+// Install
+import "./post";
+
 export enum SubcommandGroup {
   CHANNELS = "channels",
   SUBSCRIPTIONS = "subscriptions",

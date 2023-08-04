@@ -23,11 +23,12 @@ import { v4 as uuid } from "uuid";
 
 import { Color, JsonError } from "../../../../services/discord";
 import { getChannelUrl, getThumbnailUrl } from "../../../../services/youtube";
+import guildSettings from "../../../../settings/guild";
 
 import * as database from "./database";
 import { CreatorType } from "../../constants";
 import * as creatorsDatabase from "../../database";
-import * as youtube from "../../../youtube";
+import * as youtube from "../../youtube";
 
 export enum Option {
   NAME = "name",
@@ -88,25 +89,29 @@ export default async (interaction: ChatInputCommandInteraction) => {
   const guildChannelManager = guild.channels;
   const guildId = guild.id;
 
-  const creatorChannelIds = await database.getCreatorChannelIds(guildId);
-  const creatorChannelPromises = creatorChannelIds.map(
+  const settingsPromise = guildSettings(guildId);
+  const creatorChannelIdsPromise = database.getCreatorChannelIds(guildId);
+  const { maxCreatorSubscriptions } = await settingsPromise;
+  const creatorChannelIds = await creatorChannelIdsPromise;
+
+  const creatorChannelPromises = creatorChannelIds
+    .filter((id) => id.creatorSubscriptionCount < maxCreatorSubscriptions)
     // Delete from database if channel does not exist
-    async (creatorChannelId) => {
+    .map(async ({ id }) => {
       try {
-        const channel = await guildChannelManager.fetch(creatorChannelId);
+        const channel = await guildChannelManager.fetch(id);
         if (channel?.type === ChannelType.GuildForum) return channel;
         throw new JsonError(interaction);
       } catch (error) {
         if (error instanceof DiscordAPIError && error.status === 404) {
-          await creatorsDatabase.deleteCreatorChannel(creatorChannelId);
+          await creatorsDatabase.deleteCreatorChannel(id);
           console.info(error);
           return undefined;
         }
 
         throw error;
       }
-    },
-  );
+    });
 
   const creatorChannelsRaw = await Promise.all(creatorChannelPromises);
   const creatorChannels = creatorChannelsRaw
@@ -116,8 +121,9 @@ export default async (interaction: ChatInputCommandInteraction) => {
   if (creatorChannels.length === 0) {
     const description = compress`
       Your request for creating a creator subscription has been denied because
-      this server currently has no creator channels. Use the following command
-      to create a creator channel:
+      this server currently has no creator channels ${bold("or")} no creator
+      channels exist with less than ${maxCreatorSubscriptions} creator
+      subscriptions. Use the following command to create a creator channel:
       \n${bold("/creators channels create")}
     `;
 
@@ -302,7 +308,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
   if (buttonId === cancelButtonId || typeof youtubeChannelId !== "string")
     return buttonInteraction.update(noResultsExistOptions(null));
 
-  await database.createSubscriptions({
+  await database.createCreatorSubscriptions({
     domainId: youtubeChannelId,
     creatorType: CreatorType.YOUTUBE,
     creatorChannelIds: selectedCreatorChannelIds,

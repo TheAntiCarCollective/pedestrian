@@ -2,21 +2,21 @@ import type { Guild } from "discord.js";
 import { bold, DiscordAPIError, Events } from "discord.js";
 import { compress } from "compress-tag";
 
-import discord from "../../services/discord";
-import { getThumbnailUrl, getVideoUrl } from "../../services/youtube";
-import sleep from "../../sleep";
+import discord from "../../../services/discord";
+import { getThumbnailUrl, getVideoUrl } from "../../../services/youtube";
+import sleep from "../../../sleep";
 
-import type { Subscription } from "./database";
+import type { CreatorSubscription } from "./database";
 import * as database from "./database";
 import * as youtube from "../youtube";
-import * as creatorsDatabase from "../creators/database";
-import { CreatorType } from "../creators/constants";
+import * as creatorsDatabase from "../database";
+import { CreatorType } from "../constants";
 
 const getWebhook = async ({
   creatorChannelId,
   webhookId,
   webhookToken,
-}: Subscription) => {
+}: CreatorSubscription) => {
   try {
     return await discord.fetchWebhook(webhookId, webhookToken);
   } catch (error) {
@@ -30,11 +30,12 @@ const getWebhook = async ({
   }
 };
 
-const postFromYouTube = async (subscription: Subscription) => {
-  const webhook = await getWebhook(subscription);
+const postFromYouTube = async (creatorSubscription: CreatorSubscription) => {
+  const webhook = await getWebhook(creatorSubscription);
   if (webhook === undefined) return;
 
-  const { domainId, lastContentId, creatorChannelId, createdAt } = subscription;
+  const { domainId, lastContentId, creatorChannelId, createdAt } =
+    creatorSubscription;
 
   const { contentDetails, snippet } = await youtube.getChannel(domainId);
   const { relatedPlaylists } = contentDetails ?? {};
@@ -72,7 +73,7 @@ const postFromYouTube = async (subscription: Subscription) => {
     threadName,
   });
 
-  await database.createPost({
+  await database.createCreatorPost({
     id,
     creatorChannelId,
     domainId,
@@ -82,12 +83,12 @@ const postFromYouTube = async (subscription: Subscription) => {
 };
 
 const postInGuild = async ({ id }: Guild) => {
-  const subscriptions = await database.getSubscriptions(id);
-  const promises = subscriptions.map((subscription) => {
-    const { creatorType } = subscription;
+  const creatorSubscriptions = await database.getCreatorSubscriptions(id);
+  const promises = creatorSubscriptions.map((creatorSubscription) => {
+    const { creatorType } = creatorSubscription;
     switch (creatorType) {
       case CreatorType.YOUTUBE:
-        return postFromYouTube(subscription);
+        return postFromYouTube(creatorSubscription);
       default:
         throw new Error(creatorType);
     }
@@ -107,6 +108,11 @@ discord.once(Events.ClientReady, async (client) => {
     const guildManager = client.guilds;
     const guilds = guildManager.valueOf();
     const promises = guilds.map(postInGuild);
-    await Promise.all(promises);
+
+    try {
+      await Promise.all(promises);
+    } catch (error) {
+      console.error(error);
+    }
   }
 });

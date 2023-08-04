@@ -1,5 +1,5 @@
-import youtube from "../services/youtube";
-import cache, { CacheKey } from "../cache";
+import youtube from "../../services/youtube";
+import cache, { CacheKey } from "../../cache";
 
 const { channels, playlistItems, search } = youtube;
 const EXPIRE_IN_30_DAYS = 2_592_000_000;
