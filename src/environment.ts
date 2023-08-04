@@ -15,7 +15,7 @@ export default {
   PROJECT_NAME: getProcessEnv("PROJECT_NAME", "Pedestrian"),
   REDIS_HOST: getProcessEnv("REDIS_HOST", "localhost"),
   REDIS_PORT: getProcessEnv("REDIS_PORT", "6379"),
-  REDIS_DATABASE: getProcessEnv("REDIS_DATABASE", "0"),
+  REDIS_CLUSTER: process.env["REDIS_CLUSTER"],
   REDIS_USERNAME: process.env["REDIS_USERNAME"],
   REDIS_PASSWORD: process.env["REDIS_PASSWORD"],
   YOUTUBE_API_KEY: getProcessEnv("YOUTUBE_API_KEY"),

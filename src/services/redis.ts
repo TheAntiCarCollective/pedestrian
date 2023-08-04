@@ -1,13 +1,35 @@
-import { createClient } from "redis";
+import { createClient, createCluster } from "redis";
 
 import Environment from "../environment";
 
-const redis = createClient({
-  url: `redis://${Environment.REDIS_HOST}:${Environment.REDIS_PORT}`,
-  database: parseInt(Environment.REDIS_DATABASE),
-  username: Environment.REDIS_USERNAME,
-  password: Environment.REDIS_PASSWORD,
-});
+const url = `redis://${Environment.REDIS_HOST}:${Environment.REDIS_PORT}`;
+const username = Environment.REDIS_USERNAME;
+const password = Environment.REDIS_PASSWORD;
+
+const createRedisByCluster = () =>
+  createCluster({
+    rootNodes: [
+      {
+        url,
+      },
+    ],
+    defaults: {
+      username,
+      password,
+    },
+  });
+
+const createRedisByClient = () =>
+  createClient({
+    url,
+    username,
+    password,
+  });
+
+const redis =
+  Environment.REDIS_CLUSTER === "true"
+    ? createRedisByCluster()
+    : createRedisByClient();
 
 redis.on("error", (error) => {
   console.error("Redis Client Error", error);
