@@ -5,7 +5,6 @@ import type {
   ButtonInteraction,
   ChatInputCommandInteraction,
   ForumChannel,
-  MessageActionRowComponentBuilder,
 } from "discord.js";
 import {
   ActionRowBuilder,
@@ -176,9 +175,6 @@ export default async (interaction: ChatInputCommandInteraction) => {
       Use the first select menu to choose the creator channel to delete creator
       subscriptions from; then use the second select menu to choose the creator
       subscriptions to delete.
-      \nYour request for deleting a creator subscription will automatically be
-      cancelled if you do not click ${bold(applyButtonLabel)} or
-      ${bold(cancelButtonLabel)} within 10 minutes.
     `;
 
     const embed = new EmbedBuilder()
@@ -236,19 +232,19 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
     const channelActionRow =
       // prettier-ignore
-      new ActionRowBuilder<MessageActionRowComponentBuilder>()
+      new ActionRowBuilder<StringSelectMenuBuilder>()
         .addComponents(channelSelectMenu);
     const subscriptionActionRow =
       // prettier-ignore
-      new ActionRowBuilder<MessageActionRowComponentBuilder>()
+      new ActionRowBuilder<StringSelectMenuBuilder>()
         .addComponents(subscriptionSelectMenu);
     const applyActionRow =
       // prettier-ignore
-      new ActionRowBuilder<MessageActionRowComponentBuilder>()
+      new ActionRowBuilder<ButtonBuilder>()
         .addComponents(applyButton);
     const cancelActionRow =
       // prettier-ignore
-      new ActionRowBuilder<MessageActionRowComponentBuilder>()
+      new ActionRowBuilder<ButtonBuilder>()
         .addComponents(cancelButton);
 
     const components = [
@@ -320,19 +316,19 @@ export default async (interaction: ChatInputCommandInteraction) => {
   }
 
   const { customId: buttonId } = buttonInteraction;
-  if (buttonId === cancelButtonId) {
-    await buttonInteraction.deferUpdate();
-    await response.delete();
-    return response;
-  }
-
-  await database.deleteCreatorSubscriptions(selectedSubscriptionIds);
+  const isApplyButton = buttonId === applyButtonId;
   const { length } = selectedSubscriptionIds;
 
-  const description = compress`
-    Successfully deleted ${bold(length.toString())} creator
-    subscription${length === 1 ? "" : "s"}!
-  `;
+  if (isApplyButton && length > 0) {
+    await database.deleteCreatorSubscriptions(selectedSubscriptionIds);
+  }
+
+  const count = bold(length.toString());
+  const s = length === 1 ? "" : "s";
+
+  const description = isApplyButton
+    ? `Successfully deleted ${count} creator subscription${s}!`
+    : `Successfully cancelled deleting creator subscriptions!`;
 
   const embed = new EmbedBuilder()
     .setColor(Color.SUCCESS)

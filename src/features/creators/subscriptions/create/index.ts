@@ -4,7 +4,6 @@ import YoutubeChannel = youtube_v3.Schema$SearchResultSnippet;
 import type {
   ButtonInteraction,
   ChatInputCommandInteraction,
-  MessageActionRowComponentBuilder,
 } from "discord.js";
 import {
   ActionRowBuilder,
@@ -188,12 +187,9 @@ export default async (interaction: ChatInputCommandInteraction) => {
     const cancelButtonLabel = "None of these creators is the one I am searching for";
 
     const content = compress`
-      Page ${page} of ${maxPage}
-      \nPosts will automatically be created in the selected creator channels
+      Posts will automatically be created in the selected creator channels
       whenever ${bold(youtubeChannelName)} uploads.
-      \nYour request for creating a creator subscription will automatically be
-      cancelled if you do not click ${bold(applyButtonLabel)} or
-      ${bold(cancelButtonLabel)} within 10 minutes.
+      \n\nPage ${page} of ${maxPage}
     `;
 
     const selectMenuOptions = creatorChannels.map(({ id, name }) =>
@@ -233,19 +229,19 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
     const selectMenuActionRow =
       // prettier-ignore
-      new ActionRowBuilder<MessageActionRowComponentBuilder>()
+      new ActionRowBuilder<StringSelectMenuBuilder>()
         .addComponents(selectMenu);
     const pageActionRow =
       // prettier-ignore
-      new ActionRowBuilder<MessageActionRowComponentBuilder>()
+      new ActionRowBuilder<ButtonBuilder>()
         .addComponents(previousButton, nextButton);
     const applyActionRow =
       // prettier-ignore
-      new ActionRowBuilder<MessageActionRowComponentBuilder>()
+      new ActionRowBuilder<ButtonBuilder>()
         .addComponents(applyButton);
     const cancelActionRow =
       // prettier-ignore
-      new ActionRowBuilder<MessageActionRowComponentBuilder>()
+      new ActionRowBuilder<ButtonBuilder>()
         .addComponents(cancelButton);
 
     const components = [
@@ -324,7 +320,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
     Successfully created a subscription for ${bold(youtubeChannelName)}! Posts
     will now be automatically created in ${channelMentions} when
     ${bold(youtubeChannelName)} uploads.
-    \nNote: It may take up to an hour for posts to be created after an upload.
+    \n\nPlease allow up to an hour for posts to be created after an upload.
   `;
 
   const embed = new EmbedBuilder()

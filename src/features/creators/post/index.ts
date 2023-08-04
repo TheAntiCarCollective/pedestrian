@@ -57,9 +57,9 @@ const postFromYouTube = async (creatorSubscription: CreatorSubscription) => {
 
   const rawContent = compress`
     ${getVideoUrl(videoId)}
-    \n${bold("Title")}
+    \n\n${bold("Title")}
     \n${title}
-    \n${bold("Description")}
+    \n\n${bold("Description")}
     \n${description ?? ""}
   `;
 
@@ -100,9 +100,7 @@ const postInGuild = async ({ id }: Guild) => {
 discord.once(Events.ClientReady, async (client) => {
   while (process.exitCode === undefined) {
     const now = new Date();
-    const untilNextSecond = 1000 - now.getMilliseconds();
-    const untilNextMinute = (60 - now.getSeconds()) * 1000 + untilNextSecond;
-    const untilNextHour = (60 - now.getMinutes()) * 60000 + untilNextMinute;
+    const untilNextHour = 3600000 - (now.getTime() % 3600000);
     await sleep(untilNextHour);
 
     const guildManager = client.guilds;
