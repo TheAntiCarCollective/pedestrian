@@ -2,10 +2,10 @@ import postgresql from "../../services/postgresql";
 
 import type { CreatorType } from "../creators/constants";
 
-// region Type
+// region Types
 export type Subscription = {
   createdAt: Date;
-  creatorId: string;
+  domainId: string;
   creatorType: CreatorType;
   lastContentId: string | null;
   creatorChannelId: string;
@@ -17,7 +17,7 @@ type CreatePost = {
   id: string;
   threadId: string | null;
   creatorChannelId: string;
-  creatorId: string;
+  domainId: string;
   creatorType: CreatorType;
   contentId: string;
 };
@@ -27,7 +27,7 @@ export const getSubscriptions = async (guildId: string) => {
   const query = `
     select
       s.created_at as "createdAt",
-      c.domain_id as "creatorId",
+      c.domain_id as "domainId",
       c.type as "creatorType",
       p.content_id as "lastContentId",
       cc.id as "creatorChannelId",
@@ -58,7 +58,7 @@ export const createPost = ({
   id,
   threadId,
   creatorChannelId,
-  creatorId,
+  domainId,
   creatorType,
   contentId,
 }: CreatePost) => {
@@ -81,7 +81,7 @@ export const createPost = ({
     id,
     threadId,
     creatorChannelId,
-    creatorId,
+    domainId,
     creatorType,
     contentId,
   ]);

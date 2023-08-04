@@ -1,0 +1,343 @@
+import { youtube_v3 } from "googleapis";
+import YoutubeChannel = youtube_v3.Schema$Channel;
+
+import type {
+  ButtonInteraction,
+  ChatInputCommandInteraction,
+  ForumChannel,
+  MessageActionRowComponentBuilder,
+} from "discord.js";
+import {
+  ActionRowBuilder,
+  bold,
+  ButtonBuilder,
+  ButtonStyle,
+  ChannelType,
+  DiscordAPIError,
+  EmbedBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+} from "discord.js";
+import { compress } from "compress-tag";
+import { v4 as uuid } from "uuid";
+
+import { Color, JsonError } from "../../../../services/discord";
+
+import type { Subscription } from "./database";
+import * as database from "./database";
+import * as creatorsDatabase from "../../database";
+import { CreatorType } from "../../constants";
+import * as youtube from "../../../youtube";
+
+// region Types
+type Creators = {
+  [CreatorType.YOUTUBE]: Record<string, YoutubeChannel>;
+};
+// endregion
+
+const getCreatorChannels = async (
+  subscriptions: Subscription[],
+  interaction: ChatInputCommandInteraction,
+) => {
+  const { guild } = interaction;
+  if (guild === null) throw new JsonError(interaction);
+  const guildChannelManager = guild.channels;
+
+  const creatorChannelIds = subscriptions
+    .map(({ creatorChannelId }) => creatorChannelId)
+    .reduce((set, id) => set.add(id), new Set<string>());
+
+  const creatorChannelPromises: Promise<ForumChannel | undefined>[] = [];
+  for (const creatorChannelId of creatorChannelIds) {
+    const creatorChannelPromise = guildChannelManager
+      .fetch(creatorChannelId)
+      .then((channel) => {
+        if (channel?.type === ChannelType.GuildForum) return channel;
+        throw new JsonError(interaction);
+      })
+      .catch(async (error) => {
+        if (error instanceof DiscordAPIError && error.status === 404) {
+          await creatorsDatabase.deleteCreatorChannel(creatorChannelId);
+          console.info(error);
+          return undefined;
+        }
+
+        throw error;
+      });
+
+    creatorChannelPromises.push(creatorChannelPromise);
+  }
+
+  const creatorChannelsRaw = await Promise.all(creatorChannelPromises);
+  return creatorChannelsRaw
+    .filter((channel) => channel !== undefined)
+    .map((channel) => channel as NonNullable<typeof channel>);
+};
+
+const getCreators = async (
+  subscriptions: Subscription[],
+  creatorChannelIds: string[],
+) => {
+  const creatorDomainIds = {
+    [CreatorType.YOUTUBE]: new Set<string>(),
+  };
+
+  for (const { creatorChannelId, domainId, creatorType } of subscriptions) {
+    if (creatorChannelIds.includes(creatorChannelId)) {
+      const domainIds = creatorDomainIds[creatorType];
+      domainIds.add(domainId);
+    }
+  }
+
+  const creatorPromises = Object.entries(creatorDomainIds).map(
+    async ([creatorType, domainIds]) => {
+      switch (creatorType) {
+        case CreatorType.YOUTUBE: {
+          const youtubeChannelPromises: Promise<YoutubeChannel>[] = [];
+          for (const domainId of domainIds) {
+            const youtubeChannelPromise = youtube.getChannel(domainId);
+            youtubeChannelPromises.push(youtubeChannelPromise);
+          }
+
+          const youtubeChannels = await Promise.all(youtubeChannelPromises);
+          const youtubeCreators: Record<string, YoutubeChannel> = {};
+
+          for (const youtubeChannel of youtubeChannels) {
+            const { id } = youtubeChannel;
+            if (typeof id !== "string") {
+              const message = JSON.stringify(youtubeChannel);
+              throw new Error(message);
+            }
+
+            youtubeCreators[id] = youtubeChannel;
+          }
+
+          return { [creatorType]: youtubeCreators };
+        }
+        default:
+          throw new Error(creatorType);
+      }
+    },
+  );
+
+  const creators = await Promise.all(creatorPromises);
+  return Object.assign({}, ...creators) as Creators;
+};
+
+export default async (interaction: ChatInputCommandInteraction) => {
+  const { guild } = interaction;
+  if (guild === null) throw new JsonError(interaction);
+  const { id: guildId } = guild;
+
+  const subscriptions = await database.getSubscriptions(guildId);
+  const creatorChannels = await getCreatorChannels(subscriptions, interaction);
+
+  if (creatorChannels.length === 0) {
+    const description = compress`
+      Your request for deleting a creator subscription has been denied because
+      this server currently has no creator subscriptions. Use the following
+      command to create a creator subscription:
+      \n${bold("/creators subscriptions create")}
+    `;
+
+    const embed = new EmbedBuilder()
+      .setColor(Color.ERROR)
+      .setDescription(description);
+
+    return interaction.reply({
+      embeds: [embed],
+      ephemeral: true,
+    });
+  }
+
+  const creatorChannelIds = creatorChannels.map(({ id }) => id);
+  const creators = await getCreators(subscriptions, creatorChannelIds);
+
+  const channelSelectMenuId = uuid();
+  const subscriptionSelectMenuId = uuid();
+  const applyButtonId = uuid();
+  const cancelButtonId = uuid();
+
+  const { id: defaultChannelId } = creatorChannels[0] ?? {};
+  if (defaultChannelId === undefined) throw new JsonError(interaction);
+
+  let selectedChannelId = defaultChannelId;
+  const selectedSubscriptionIds: number[] = [];
+
+  const options = () => {
+    const applyButtonLabel =
+      "I am finished selecting creator subscriptions to delete";
+    const cancelButtonLabel =
+      "I do not want to delete any creator subscriptions";
+
+    const description = compress`
+      Use the first select menu to choose the creator channel to delete creator
+      subscriptions from; then use the second select menu to choose the creator
+      subscriptions to delete.
+      \nYour request for deleting a creator subscription will automatically be
+      cancelled if you do not click ${bold(applyButtonLabel)} or
+      ${bold(cancelButtonLabel)} within 10 minutes.
+    `;
+
+    const embed = new EmbedBuilder()
+      .setColor(Color.INFORMATIONAL)
+      .setDescription(description);
+
+    const channelSelectMenuOptions = creatorChannels.map(({ id, name }) =>
+      new StringSelectMenuOptionBuilder()
+        .setDefault(selectedChannelId === id)
+        .setLabel(name)
+        .setValue(id),
+    );
+
+    const channelSelectMenu = new StringSelectMenuBuilder()
+      .addOptions(channelSelectMenuOptions)
+      .setCustomId(channelSelectMenuId);
+
+    const subscriptionSelectMenuOptions = subscriptions
+      .filter(({ creatorChannelId }) => creatorChannelId === selectedChannelId)
+      .map(({ id, domainId, creatorType }) => {
+        let label: string;
+        switch (creatorType) {
+          case CreatorType.YOUTUBE: {
+            const youtubeChannels = creators[creatorType];
+            const { snippet } = youtubeChannels[domainId] ?? {};
+            const { title } = snippet ?? {};
+            label = title ?? domainId;
+            break;
+          }
+          default:
+            throw new Error(creatorType);
+        }
+
+        return new StringSelectMenuOptionBuilder()
+          .setDefault(selectedSubscriptionIds.includes(id))
+          .setLabel(label)
+          .setValue(id.toString());
+      });
+
+    const subscriptionSelectMenu = new StringSelectMenuBuilder()
+      .addOptions(subscriptionSelectMenuOptions)
+      .setCustomId(subscriptionSelectMenuId)
+      .setMinValues(0)
+      .setMaxValues(subscriptionSelectMenuOptions.length);
+
+    const applyButton = new ButtonBuilder()
+      .setCustomId(applyButtonId)
+      .setLabel(applyButtonLabel)
+      .setStyle(ButtonStyle.Danger);
+
+    const cancelButton = new ButtonBuilder()
+      .setCustomId(cancelButtonId)
+      .setLabel(cancelButtonLabel)
+      .setStyle(ButtonStyle.Secondary);
+
+    const channelActionRow =
+      // prettier-ignore
+      new ActionRowBuilder<MessageActionRowComponentBuilder>()
+        .addComponents(channelSelectMenu);
+    const subscriptionActionRow =
+      // prettier-ignore
+      new ActionRowBuilder<MessageActionRowComponentBuilder>()
+        .addComponents(subscriptionSelectMenu);
+    const applyActionRow =
+      // prettier-ignore
+      new ActionRowBuilder<MessageActionRowComponentBuilder>()
+        .addComponents(applyButton);
+    const cancelActionRow =
+      // prettier-ignore
+      new ActionRowBuilder<MessageActionRowComponentBuilder>()
+        .addComponents(cancelButton);
+
+    const components = [
+      channelActionRow,
+      subscriptionActionRow,
+      applyActionRow,
+      cancelActionRow,
+    ];
+
+    return {
+      components,
+      embeds: [embed],
+      ephemeral: true,
+    };
+  };
+
+  let response = await interaction.reply(options());
+  let buttonInteraction: ButtonInteraction;
+
+  try {
+    const interaction = await response.awaitMessageComponent({
+      filter: async (interaction) => {
+        switch (interaction.customId) {
+          case channelSelectMenuId: {
+            if (!interaction.isStringSelectMenu())
+              throw new JsonError(interaction);
+
+            const { values } = interaction;
+            selectedChannelId = values[0] ?? selectedChannelId;
+            break;
+          }
+          case subscriptionSelectMenuId: {
+            if (!interaction.isStringSelectMenu())
+              throw new JsonError(interaction);
+
+            // Remove all subscription IDs for selectedChannelId
+            for (const { id, creatorChannelId } of subscriptions) {
+              if (creatorChannelId === selectedChannelId) {
+                const index = selectedSubscriptionIds.indexOf(id);
+                if (index >= 0) selectedSubscriptionIds.splice(index, 1);
+              }
+            }
+
+            // Add selected subscription IDs for selectedChannelId
+            const { values: rawValues } = interaction;
+            const values = rawValues.map(parseInt);
+            selectedSubscriptionIds.push(...values);
+            break;
+          }
+          case applyButtonId:
+          case cancelButtonId:
+            return true;
+          default:
+            throw new JsonError(interaction);
+        }
+
+        response = await interaction.update(options());
+        return false;
+      },
+      time: 600_000, // 10 minutes
+    });
+
+    if (!interaction.isButton()) throw new JsonError(interaction);
+    buttonInteraction = interaction;
+  } catch (error) {
+    await response.delete();
+    console.info(error);
+    return response;
+  }
+
+  const { customId: buttonId } = buttonInteraction;
+  if (buttonId === cancelButtonId) {
+    await buttonInteraction.deferUpdate();
+    await response.delete();
+    return response;
+  }
+
+  await database.deleteSubscriptions(selectedSubscriptionIds);
+  const { length } = selectedSubscriptionIds;
+
+  const description = compress`
+    Successfully deleted ${bold(length.toString())} creator
+    subscription${length === 1 ? "" : "s"}!
+  `;
+
+  const embed = new EmbedBuilder()
+    .setColor(Color.SUCCESS)
+    .setDescription(description);
+
+  return buttonInteraction.update({
+    components: [],
+    embeds: [embed],
+  });
+};

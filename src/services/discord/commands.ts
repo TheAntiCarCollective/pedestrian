@@ -50,14 +50,14 @@ const createCommands = async (client: Client<true>, commands: Command[]) => {
     .filter(({ guildId }) => guildId === undefined)
     .map(({ json }) => json);
 
-  const guildCommands = commands
-    .filter(({ guildId }) => guildId !== undefined)
-    .reduce(({ get, set }, { guildId, json }) => {
-      if (guildId === undefined) throw new Error();
-      const body = get(guildId) ?? [];
+  const guildCommands = new Map<string, CommandJson[]>();
+  for (const { guildId, json } of commands) {
+    if (guildId !== undefined) {
+      const body = guildCommands.get(guildId) ?? [];
       body.push(json);
-      return set(guildId, body);
-    }, new Map<string, CommandJson[]>());
+      guildCommands.set(guildId, body);
+    }
+  }
 
   const promises: Promise<unknown>[] = [];
   const { application, rest } = client;

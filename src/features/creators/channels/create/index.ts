@@ -24,9 +24,9 @@ export enum Option {
 
 export default async (interaction: ChatInputCommandInteraction) => {
   const { client, guild, options } = interaction;
-  if (!guild) throw new JsonError(interaction);
+  if (guild === null) throw new JsonError(interaction);
 
-  const { channels } = guild;
+  const guildChannelManager = guild.channels;
   const guildId = guild.id;
 
   const settingsPromise = guildSettings(guildId);
@@ -68,7 +68,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
     },
   ];
 
-  const channel = await channels.create({
+  const channel = await guildChannelManager.create({
     defaultForumLayout: ForumLayoutType.GalleryView,
     defaultSortOrder: SortOrderType.CreationDate,
     name,

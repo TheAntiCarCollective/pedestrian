@@ -25,9 +25,9 @@ import { Color, JsonError } from "../../../../services/discord";
 import { getChannelUrl, getThumbnailUrl } from "../../../../services/youtube";
 
 import * as database from "./database";
-import * as youtube from "./youtube";
 import { CreatorType } from "../../constants";
 import * as creatorsDatabase from "../../database";
+import * as youtube from "../../../youtube";
 
 export enum Option {
   NAME = "name",
@@ -83,7 +83,7 @@ const getEmbedByYoutubeChannel = ({
 
 export default async (interaction: ChatInputCommandInteraction) => {
   const { guild, options } = interaction;
-  if (!guild) throw new JsonError(interaction);
+  if (guild === null) throw new JsonError(interaction);
 
   const guildChannelManager = guild.channels;
   const guildId = guild.id;
@@ -175,15 +175,16 @@ export default async (interaction: ChatInputCommandInteraction) => {
     selectedYoutubeChannel = youtubeChannels[page - 1];
     const embed = getEmbedByYoutubeChannel(selectedYoutubeChannel);
     const { channelTitle, title } = selectedYoutubeChannel ?? {};
+    const youtubeChannelName = channelTitle ?? title ?? name;
 
-    const applyButtonLabel = "I want to create a subscription for this creator";
+    const applyButtonLabel = `I want to create a subscription for ${youtubeChannelName}`;
     // prettier-ignore
     const cancelButtonLabel = "None of these creators is the one I am searching for";
 
     const content = compress`
       Page ${page} of ${maxPage}
       \nPosts will automatically be created in the selected creator channels
-      whenever ${bold(channelTitle ?? title ?? name)} uploads.
+      whenever ${bold(youtubeChannelName)} uploads.
       \nYour request for creating a creator subscription will automatically be
       cancelled if you do not click ${bold(applyButtonLabel)} or
       ${bold(cancelButtonLabel)} within 10 minutes.
@@ -197,9 +198,9 @@ export default async (interaction: ChatInputCommandInteraction) => {
     );
 
     const selectMenu = new StringSelectMenuBuilder()
-      .setCustomId(selectMenuId)
       .addOptions(selectMenuOptions)
-      .setMinValues(1);
+      .setCustomId(selectMenuId)
+      .setMaxValues(selectMenuOptions.length);
 
     const previousButton = new ButtonBuilder()
       .setCustomId(previousButtonId)
@@ -222,7 +223,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
     const cancelButton = new ButtonBuilder()
       .setCustomId(cancelButtonId)
       .setLabel(cancelButtonLabel)
-      .setStyle(ButtonStyle.Danger);
+      .setStyle(ButtonStyle.Secondary);
 
     const selectMenuActionRow =
       // prettier-ignore

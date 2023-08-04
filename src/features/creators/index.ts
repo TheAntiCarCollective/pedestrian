@@ -9,9 +9,9 @@ import type { ChatInputCommand } from "../../services/discord/commands";
 import { registerCommand } from "../../services/discord/commands";
 import { JsonError } from "../../services/discord";
 
-import channels, { Subcommand as ChannelsSubCommand } from "./channels";
+import onChannels, { Subcommand as ChannelsSubCommand } from "./channels";
 import { Option as ChannelsCreateOption } from "./channels/create";
-import subscriptions, {
+import onSubscriptions, {
   Subcommand as SubscriptionsSubcommand,
 } from "./subscriptions";
 import { Option as SubscriptionsCreateOption } from "./subscriptions/create";
@@ -73,6 +73,11 @@ const json = new SlashCommandBuilder()
               .setDescription("Name of the creator")
               .setRequired(true),
           ),
+      )
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName(SubscriptionsSubcommand.DELETE)
+          .setDescription("Delete channel subscriptions"),
       ),
   )
   .toJSON();
@@ -83,10 +88,10 @@ const onInteraction = async (interaction: ChatInputCommandInteraction) => {
 
   switch (subcommandGroup) {
     case SubcommandGroup.CHANNELS:
-      await channels(interaction);
+      await onChannels(interaction);
       break;
     case SubcommandGroup.SUBSCRIPTIONS:
-      await subscriptions(interaction);
+      await onSubscriptions(interaction);
       break;
     default:
       throw new JsonError(interaction);

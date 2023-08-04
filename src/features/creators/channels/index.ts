@@ -2,7 +2,7 @@ import type { ChatInputCommandInteraction } from "discord.js";
 
 import { JsonError } from "../../../services/discord";
 
-import create from "./create";
+import onCreate from "./create";
 
 export enum Subcommand {
   CREATE = "create",
@@ -14,7 +14,7 @@ export default (interaction: ChatInputCommandInteraction) => {
 
   switch (subcommand) {
     case Subcommand.CREATE:
-      return create(interaction);
+      return onCreate(interaction);
     default:
       throw new JsonError(interaction);
   }

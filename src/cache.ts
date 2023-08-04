@@ -20,35 +20,36 @@ export const CacheKey = {
 } as const;
 // endregion
 
-const asJson = async <T>(callback: () => Promise<string | null>) => {
-  let json: string | null;
-
-  try {
-    json = await callback();
-  } catch (error) {
+const onRejected =
+  <T>(defaultValue: T) =>
+  (error: unknown) => {
     console.error(error);
-    json = null;
-  }
+    return defaultValue;
+  };
+
+const get = async <T>(key: string) => {
+  const redisPromise = redis.get(key);
+  const json = await redisPromise.catch(onRejected(null));
 
   if (json === null) return undefined;
-  return JSON.parse(json) as NonNullable<T>;
+  return JSON.parse(json) as T;
 };
 
-const get = <T>(key: string) => asJson<T>(() => redis.get(key));
-
 const tryLock = async (lockKey: string, lockToken: string) => {
-  const previousLockToken = await redis.set(lockKey, lockToken, {
+  const redisPromise = redis.set(lockKey, lockToken, {
     GET: true,
     NX: true,
     PX: LOCK_TIMEOUT,
   });
 
+  const previousLockToken = await redisPromise.catch(onRejected(null));
   return previousLockToken === null || previousLockToken === lockToken;
 };
 
 const lock = async (lockKey: string, lockToken: string) => {
   while (!(await tryLock(lockKey, lockToken))) {
-    const untilLockExpires = await redis.pTTL(lockKey);
+    const redisPromise = redis.pTTL(lockKey);
+    const untilLockExpires = await redisPromise.catch(onRejected(0));
     await sleep(untilLockExpires);
   }
 };
@@ -62,17 +63,19 @@ const extendLock = (lockKey: string, lockToken: string) => {
     end
   `;
 
-  return redis.eval(script, {
+  const redisPromise = redis.eval(script, {
     arguments: [lockToken, LOCK_TIMEOUT.toString()],
     keys: [lockKey],
   });
+
+  return redisPromise.catch(onRejected(0));
 };
 
-const atomicSet = <T>(
+const atomicSet = (
   lockKey: string,
   lockToken: string,
   key: string,
-  value: NonNullable<T>,
+  value: unknown,
   expireInMilliseconds: number,
 ) => {
   const json = JSON.stringify(value);
@@ -85,10 +88,12 @@ const atomicSet = <T>(
     end
   `;
 
-  return redis.eval(script, {
+  const redisPromise = redis.eval(script, {
     arguments: [lockToken, json, expireInMilliseconds.toString()],
     keys: [lockKey, key],
   });
+
+  return redisPromise.catch(onRejected(null));
 };
 
 const unlock = (lockKey: string, lockToken: string) => {
@@ -100,10 +105,12 @@ const unlock = (lockKey: string, lockToken: string) => {
     end
   `;
 
-  return redis.eval(script, {
+  const redisPromise = redis.eval(script, {
     arguments: [lockToken],
     keys: [lockKey],
   });
+
+  return redisPromise.catch(onRejected(0));
 };
 
 const computeIfAbsent = async <T>(
@@ -115,7 +122,7 @@ const computeIfAbsent = async <T>(
   const lockToken = uuid();
   await lock(lockKey, lockToken);
 
-  let value = await get<T>(key);
+  let value = await get<NonNullable<T>>(key);
 
   if (value === undefined) {
     const callbackPromise = callback();

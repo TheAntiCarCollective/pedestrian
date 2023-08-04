@@ -8,7 +8,7 @@ import sleep from "../../sleep";
 
 import type { Subscription } from "./database";
 import * as database from "./database";
-import * as youtube from "./youtube";
+import * as youtube from "../youtube";
 import * as creatorsDatabase from "../creators/database";
 import { CreatorType } from "../creators/constants";
 
@@ -34,10 +34,9 @@ const postFromYouTube = async (subscription: Subscription) => {
   const webhook = await getWebhook(subscription);
   if (webhook === undefined) return;
 
-  const { creatorId, lastContentId, creatorChannelId, createdAt } =
-    subscription;
+  const { domainId, lastContentId, creatorChannelId, createdAt } = subscription;
 
-  const { contentDetails, snippet } = await youtube.getChannel(creatorId);
+  const { contentDetails, snippet } = await youtube.getChannel(domainId);
   const { relatedPlaylists } = contentDetails ?? {};
   const { uploads } = relatedPlaylists ?? {};
   if (uploads === undefined) return;
@@ -79,7 +78,7 @@ const postFromYouTube = async (subscription: Subscription) => {
     id,
     threadId,
     creatorChannelId,
-    creatorId,
+    domainId,
     creatorType: CreatorType.YOUTUBE,
     contentId: videoId,
   });
