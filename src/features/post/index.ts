@@ -65,18 +65,15 @@ const postFromYouTube = async (subscription: Subscription) => {
   const content = rawContent.substring(0, 2000);
   const threadName = `${channelName} - ${title}`.substring(0, 100);
 
-  const { id, thread } = await webhook.send({
+  const { id } = await webhook.send({
     avatarURL: getThumbnailUrl(thumbnails),
     content,
     username: channelName,
     threadName,
   });
 
-  const threadId = thread?.id ?? null;
-
   await database.createPost({
     id,
-    threadId,
     creatorChannelId,
     domainId,
     creatorType: CreatorType.YOUTUBE,

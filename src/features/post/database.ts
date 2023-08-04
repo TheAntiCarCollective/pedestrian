@@ -15,7 +15,6 @@ export type Subscription = {
 
 type CreatePost = {
   id: string;
-  threadId: string | null;
   creatorChannelId: string;
   domainId: string;
   creatorType: CreatorType;
@@ -56,30 +55,27 @@ export const getSubscriptions = async (guildId: string) => {
 
 export const createPost = ({
   id,
-  threadId,
   creatorChannelId,
   domainId,
   creatorType,
   contentId,
 }: CreatePost) => {
   const query = `
-    insert into post(id, thread_id, subscription_id, content_id)
+    insert into post(id, subscription_id, content_id)
     select
       $1 as id,
-      $2 as thread_id,
       s.id as subscription_id,
-      $6 as content_id
+      $5 as content_id
     from subscription as s
     inner join creator as c
       on c.id = s.creator_id
-    where s.creator_channel_id = $3
-      and c.domain_id = $4
-      and c.type = $5
+    where s.creator_channel_id = $2
+      and c.domain_id = $3
+      and c.type = $4
   `;
 
   return postgresql.query(query, [
     id,
-    threadId,
     creatorChannelId,
     domainId,
     creatorType,

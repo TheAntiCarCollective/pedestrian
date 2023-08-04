@@ -46,7 +46,6 @@ create index on subscription(creator_id);
 
 create table post(
   id              bigint not null,
-  thread_id       bigint null,
   subscription_id int not null,
   content_id      text not null,
   primary key(id),
