@@ -8,11 +8,7 @@ const password = Environment.REDIS_PASSWORD;
 
 const createRedisByCluster = () =>
   createCluster({
-    rootNodes: [
-      {
-        url,
-      },
-    ],
+    rootNodes: [{ url }],
     defaults: {
       username,
       password,
