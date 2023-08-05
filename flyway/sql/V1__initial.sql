@@ -1,7 +1,7 @@
 create table guild(
   id                        bigint not null,
   max_creator_channels      int not null default 1,
-  max_creator_subscriptions int not null default 10
+  max_creator_subscriptions int not null default 10,
   primary key(id)
 );
 
