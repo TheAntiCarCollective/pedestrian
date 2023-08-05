@@ -15,7 +15,7 @@ const keyPrefix = normalizeInput(Environment.PROJECT_NAME);
 export const CacheKey = {
   channel: (channelId: string) => `${keyPrefix}:channel:${channelId}`,
   channels: (query: string) => `${keyPrefix}:channels:${normalizeInput(query)}`,
-  lock: (key: string) => `${keyPrefix}:lock:${key}`,
+  lock: (key: string) => `${keyPrefix}:lock:{${key}}`,
   videos: (playlistId: string) => `${keyPrefix}:videos:${playlistId}`,
 } as const;
 // endregion
