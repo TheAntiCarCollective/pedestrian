@@ -1,5 +1,9 @@
+import { v4 as uuid } from "uuid";
+
 import redis from "./services/redis";
 import Environment from "./environment";
+import { atomicSet, extendLock, lock, unlock } from "./lock";
+import sleep from "./sleep";
 
 // region CacheKey
 const normalizeInput = (value: string) =>
@@ -14,34 +18,19 @@ export const CacheKey = {
 } as const;
 // endregion
 
+const LOCK_TIMEOUT = 1_000;
+
 const get = async <T>(key: string) => {
-  let json: string | null;
+  let json: string | null = null;
 
   try {
     json = await redis.get(key);
   } catch (error) {
     console.error(error);
-    json = null;
   }
 
   if (json === null) return undefined;
   return JSON.parse(json) as T;
-};
-
-const set = async (
-  key: string,
-  value: unknown,
-  expireInMilliseconds: number,
-) => {
-  const json = JSON.stringify(value);
-
-  try {
-    await redis.set(key, json, {
-      PX: expireInMilliseconds,
-    });
-  } catch (error) {
-    console.error(error);
-  }
 };
 
 const computeIfAbsent = async <T>(
@@ -49,13 +38,25 @@ const computeIfAbsent = async <T>(
   callback: () => Promise<NonNullable<T>>,
   expireInMilliseconds: number = Number.MAX_VALUE,
 ) => {
-  let value = await get<NonNullable<T>>(key);
+  const lockToken = uuid();
+  await lock(key, lockToken, LOCK_TIMEOUT);
 
+  let value = await get<NonNullable<T>>(key);
   if (value === undefined) {
-    value = await callback();
-    await set(key, value, expireInMilliseconds);
+    const callbackPromise = callback();
+
+    while (value === undefined) {
+      await extendLock(key, lockToken, LOCK_TIMEOUT);
+      const sleepPromise = sleep(LOCK_TIMEOUT / 2);
+      const result = await Promise.race([callbackPromise, sleepPromise]);
+      value = result === undefined ? undefined : result;
+    }
+
+    const json = JSON.stringify(value);
+    await atomicSet(key, lockToken, json, expireInMilliseconds);
   }
 
+  await unlock(key, lockToken);
   return value;
 };
 
