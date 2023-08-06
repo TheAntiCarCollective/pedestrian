@@ -23,10 +23,15 @@ import { v4 as uuid } from "uuid";
 import { Color, JsonError } from "../../../../services/discord";
 
 import type { CreatorSubscription } from "./database";
-import * as database from "./database";
+import * as localDatabase from "./database";
 import * as creatorsDatabase from "../../database";
 import { CreatorType } from "../../constants";
 import * as youtube from "../../youtube";
+
+const database = {
+  ...localDatabase,
+  ...creatorsDatabase,
+};
 
 // region Types
 type Creators = {
@@ -56,7 +61,7 @@ const getCreatorChannels = async (
       })
       .catch(async (error) => {
         if (error instanceof DiscordAPIError && error.status === 404) {
-          await creatorsDatabase.deleteCreatorChannel(creatorChannelId);
+          await database.deleteCreatorChannel(creatorChannelId);
           console.info(error);
           return undefined;
         }

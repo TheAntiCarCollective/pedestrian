@@ -24,10 +24,15 @@ import { Color, JsonError } from "../../../../services/discord";
 import { getChannelUrl, getThumbnailUrl } from "../../../../services/youtube";
 import guildSettings from "../../../../settings/guild";
 
-import * as database from "./database";
-import { CreatorType } from "../../constants";
+import * as localDatabase from "./database";
 import * as creatorsDatabase from "../../database";
+import { CreatorType } from "../../constants";
 import * as youtube from "../../youtube";
+
+const database = {
+  ...localDatabase,
+  ...creatorsDatabase,
+};
 
 export enum Option {
   NAME = "name",
@@ -103,7 +108,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
         throw new JsonError(interaction);
       } catch (error) {
         if (error instanceof DiscordAPIError && error.status === 404) {
-          await creatorsDatabase.deleteCreatorChannel(id);
+          await database.deleteCreatorChannel(id);
           console.info(error);
           return undefined;
         }

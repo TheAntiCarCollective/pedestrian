@@ -11,6 +11,7 @@ export type CreatorSubscription = {
   creatorChannelId: string;
   webhookId: string;
   webhookToken: string;
+  creatorMentionRoleId: string | null;
 };
 
 type CreateCreatorPost = {
@@ -31,12 +32,15 @@ export const getCreatorSubscriptions = async (guildId: string) => {
       cp.content_id as "lastContentId",
       cc.id as "creatorChannelId",
       cc.webhook_id as "webhookId",
-      cc.webhook_token as "webhookToken"
+      cc.webhook_token as "webhookToken",
+      g.creator_mention_role_id as "creatorMentionRoleId"
     from creator_subscription as cs
     inner join creator as c
       on c.id = cs.creator_id
     inner join creator_channel as cc
       on cc.id = cs.creator_channel_id
+    inner join guild as g
+      on g.id = cc.guild_id
     left join lateral
       ( select cp.content_id
         from creator_post as cp
@@ -45,7 +49,7 @@ export const getCreatorSubscriptions = async (guildId: string) => {
         limit 1
       ) as cp
       on true
-    where cc.guild_id = $1
+    where g.id = $1
   `;
 
   const values = [guildId];

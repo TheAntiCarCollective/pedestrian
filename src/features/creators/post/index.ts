@@ -1,5 +1,5 @@
 import type { Guild } from "discord.js";
-import { bold, DiscordAPIError, Events } from "discord.js";
+import { bold, DiscordAPIError, Events, roleMention } from "discord.js";
 import { compress } from "compress-tag";
 
 import discord from "../../../services/discord";
@@ -7,10 +7,15 @@ import { getThumbnailUrl, getVideoUrl } from "../../../services/youtube";
 import sleep from "../../../sleep";
 
 import type { CreatorSubscription } from "./database";
-import * as database from "./database";
-import * as youtube from "../youtube";
+import * as localDatabase from "./database";
 import * as creatorsDatabase from "../database";
+import * as youtube from "../youtube";
 import { CreatorType } from "../constants";
+
+const database = {
+  ...localDatabase,
+  ...creatorsDatabase,
+};
 
 const getWebhook = async ({
   creatorChannelId,
@@ -21,7 +26,7 @@ const getWebhook = async ({
     return await discord.fetchWebhook(webhookId, webhookToken);
   } catch (error) {
     if (error instanceof DiscordAPIError && error.status === 404) {
-      await creatorsDatabase.deleteCreatorChannel(creatorChannelId);
+      await database.deleteCreatorChannel(creatorChannelId);
       console.info(error);
       return undefined;
     }
@@ -34,8 +39,13 @@ const postFromYouTube = async (creatorSubscription: CreatorSubscription) => {
   const webhook = await getWebhook(creatorSubscription);
   if (webhook === undefined) return;
 
-  const { domainId, lastContentId, creatorChannelId, createdAt } =
-    creatorSubscription;
+  const {
+    domainId,
+    lastContentId,
+    creatorChannelId,
+    createdAt,
+    creatorMentionRoleId,
+  } = creatorSubscription;
 
   const { contentDetails, snippet } = await youtube.getChannel(domainId);
   const { relatedPlaylists } = contentDetails ?? {};
@@ -55,8 +65,14 @@ const postFromYouTube = async (creatorSubscription: CreatorSubscription) => {
   const videoDate = new Date(publishedAt);
   if (videoDate < createdAt) return;
 
+  const videoUrl = getVideoUrl(videoId);
+  const header =
+    creatorMentionRoleId === null
+      ? videoUrl
+      : `${roleMention(creatorMentionRoleId)}\n${videoUrl}`;
+
   const rawContent = compress`
-    ${getVideoUrl(videoId)}
+    ${header}
     \n\n${bold("Title")}
     \n${title}
     \n\n${bold("Description")}

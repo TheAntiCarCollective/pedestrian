@@ -9,8 +9,10 @@ import type { ChatInputCommand } from "../../services/discord/commands";
 import { registerCommand } from "../../services/discord/commands";
 import { JsonError } from "../../services/discord";
 
-import onChannels, { Subcommand as ChannelsSubCommand } from "./channels";
+import onChannels, { Subcommand as ChannelsSubcommand } from "./channels";
 import { Option as ChannelsCreateOption } from "./channels/create";
+import onRoles, { Subcommand as RolesSubcommand } from "./roles";
+import { Option as RolesGuildOption } from "./roles/guild";
 import onSubscriptions, {
   Subcommand as SubscriptionsSubcommand,
 } from "./subscriptions";
@@ -21,6 +23,7 @@ import "./post";
 
 export enum SubcommandGroup {
   CHANNELS = "channels",
+  ROLES = "roles",
   SUBSCRIPTIONS = "subscriptions",
 }
 
@@ -41,7 +44,7 @@ const json = new SlashCommandBuilder()
       .setDescription("Manage creator channels")
       .addSubcommand((subcommand) =>
         subcommand
-          .setName(ChannelsSubCommand.CREATE)
+          .setName(ChannelsSubcommand.CREATE)
           .setDescription("Create a creator channel")
           .addStringOption((option) =>
             option
@@ -59,6 +62,21 @@ const json = new SlashCommandBuilder()
             option
               .setName(ChannelsCreateOption.NSFW)
               .setDescription("Is the creator channel NSFW?"),
+          ),
+      ),
+  )
+  .addSubcommandGroup((subcommandGroup) =>
+    subcommandGroup
+      .setName(SubcommandGroup.ROLES)
+      .setDescription("Manage roles for creators")
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName(RolesSubcommand.GUILD)
+          .setDescription("Set default role to mention in creator posts")
+          .addRoleOption((roleOption) =>
+            roleOption
+              .setName(RolesGuildOption.ROLE)
+              .setDescription("Role to mention in creator posts"),
           ),
       ),
   )
@@ -92,6 +110,9 @@ const onInteraction = async (interaction: ChatInputCommandInteraction) => {
   switch (subcommandGroup) {
     case SubcommandGroup.CHANNELS:
       await onChannels(interaction);
+      break;
+    case SubcommandGroup.ROLES:
+      await onRoles(interaction);
       break;
     case SubcommandGroup.SUBSCRIPTIONS:
       await onSubscriptions(interaction);
