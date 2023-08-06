@@ -3,7 +3,7 @@ import postgresql, { useTransaction } from "../../../../services/postgresql";
 import { CreatorType } from "../../constants";
 
 // region Types
-type CreatorChannelId = {
+type CreatorChannel = {
   id: string;
   creatorSubscriptionCount: number;
 };
@@ -47,7 +47,7 @@ const getOrCreateCreatorId = (domainId: string, creatorType: CreatorType) =>
     throw new Error(`${creatorType}: ${domainId}`);
   });
 
-export const getCreatorChannelIds = async (guildId: string) => {
+export const getCreatorChannels = async (guildId: string) => {
   const query = `
     select
       cc.id,
@@ -60,7 +60,7 @@ export const getCreatorChannelIds = async (guildId: string) => {
   `;
 
   const values = [guildId];
-  const { rows } = await postgresql.query<CreatorChannelId>(query, values);
+  const { rows } = await postgresql.query<CreatorChannel>(query, values);
   return rows;
 };
 

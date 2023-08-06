@@ -13,5 +13,8 @@ module.exports = {
     tsConfigRootDir: __dirname,
   },
   plugins: ["@typescript-eslint"],
+  rules: {
+    "no-console": "error",
+  },
   root: true,
 };

@@ -1,8 +1,24 @@
 import type { Callback, Result } from "ioredis";
+import { v4 as uuid } from "uuid";
+import loggerFactory from "pino";
 
 import redis from "./services/redis";
 import sleep from "./sleep";
 
+// region Types
+export type Lock = {
+  key: string;
+  token: string;
+};
+// endregion
+
+// region Module Objects
+const logger = loggerFactory({
+  name: __filename,
+});
+// endregion
+
+// region Redis
 redis.defineCommand("extendLock", {
   numberOfKeys: 1,
   lua: `
@@ -10,17 +26,6 @@ redis.defineCommand("extendLock", {
       return redis.call("pexpire", KEYS[1], ARGV[2])
     else
       return 0
-    end
-  `,
-});
-
-redis.defineCommand("atomicSet", {
-  numberOfKeys: 2,
-  lua: `
-    if redis.call("get", KEYS[1]) == ARGV[1] then
-      return redis.call("set", KEYS[2], ARGV[2], "px", ARGV[3])
-    else
-      return nil
     end
   `,
 });
@@ -44,14 +49,6 @@ declare module "ioredis" {
       expireInMilliseconds: number, // ARGV[2]
       callback?: Callback<string>,
     ): Result<number, Context>;
-    atomicSet(
-      lockKey: string, // KEYS[1]
-      key: string, // KEYS[2]
-      lockToken: string, // ARGV[1]
-      value: string, // ARGV[2]
-      expireInMilliseconds: number, // ARGV[3]
-      callback?: Callback<string>,
-    ): Result<string | null, Context>;
     unlock(
       lockKey: string, // KEYS[1]
       lockToken: string, // ARGV[1]
@@ -59,85 +56,87 @@ declare module "ioredis" {
     ): Result<number, Context>;
   }
 }
+// endregion
 
-const lockKey = (key: string) => `{${key}}:lock`;
-
-export const tryLock = async (
-  key: string,
-  lockToken: string,
-  expireInMilliseconds: number,
-) => {
+const tryLock = async ({ key, token }: Lock, expireInMilliseconds: number) => {
   let previousLockToken: string | null = null;
 
   try {
     previousLockToken = await redis.set(
-      lockKey(key),
-      lockToken,
+      key,
+      token,
       "PX",
       expireInMilliseconds,
       "NX",
       "GET",
     );
   } catch (error) {
-    console.error(error);
+    logger.error(error, "TRY_LOCK_ERROR");
   }
 
-  return previousLockToken === null || previousLockToken === lockToken;
+  return previousLockToken === null || previousLockToken === token;
 };
 
-export const lock = async (
-  key: string,
-  lockToken: string,
-  expireInMilliseconds: number,
-) => {
-  while (!(await tryLock(key, lockToken, expireInMilliseconds))) {
+const lock = async (key: string, expireInMilliseconds: number) => {
+  const lockKey = `{${key}}:lock`;
+  const lockObject = {
+    key: lockKey,
+    token: uuid(),
+  };
+
+  while (!(await tryLock(lockObject, expireInMilliseconds))) {
     let untilLockExpires = 0;
 
     try {
-      untilLockExpires = await redis.pttl(lockKey(key));
+      untilLockExpires = await redis.pttl(lockKey);
     } catch (error) {
-      console.error(error);
+      logger.error(error, "LOCK_ERROR");
     }
 
     await sleep(untilLockExpires);
   }
+
+  return lockObject;
 };
 
-export const extendLock = async (
-  key: string,
-  lockToken: string,
+const extendLock = async (
+  { key, token }: Lock,
   expireInMilliseconds: number,
 ) => {
   try {
-    await redis.extendLock(lockKey(key), lockToken, expireInMilliseconds);
+    await redis.extendLock(key, token, expireInMilliseconds);
   } catch (error) {
-    console.error(error);
+    logger.error(error, "EXTEND_LOCK_ERROR");
   }
 };
 
-export const atomicSet = async (
+const unlock = async ({ key, token }: Lock) => {
+  try {
+    await redis.unlock(key, token);
+  } catch (error) {
+    logger.error("UNLOCK_ERROR");
+  }
+};
+
+export default async <T>(
   key: string,
-  lockToken: string,
-  value: string,
-  expireInMilliseconds: number,
+  callback: (lock: Lock) => NonNullable<T> | Promise<NonNullable<T>>,
+  expireInMilliseconds = 1_000,
 ) => {
-  try {
-    await redis.atomicSet(
-      lockKey(key),
-      key,
-      lockToken,
-      value,
-      expireInMilliseconds,
-    );
-  } catch (error) {
-    console.error(error);
-  }
-};
+  const lockObject = await lock(key, expireInMilliseconds);
 
-export const unlock = async (key: string, lockToken: string) => {
   try {
-    await redis.unlock(lockKey(key), lockToken);
-  } catch (error) {
-    console.error(error);
+    let callbackResult = callback(lockObject);
+
+    while (callbackResult instanceof Promise) {
+      await extendLock(lockObject, expireInMilliseconds);
+      const sleepPromise = sleep(expireInMilliseconds / 2);
+      const result = await Promise.race([callbackResult, sleepPromise]);
+      callbackResult = result === undefined ? callbackResult : result;
+    }
+
+    return callbackResult;
+  } finally {
+    await unlock(lockObject);
   }
 };

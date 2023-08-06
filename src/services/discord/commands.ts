@@ -8,6 +8,7 @@ import type {
   UserContextMenuCommandInteraction,
 } from "discord.js";
 import { Events, Routes } from "discord.js";
+import loggerFactory from "pino";
 
 import discord from "./index";
 
@@ -40,6 +41,12 @@ type Command<T extends ApplicationCommandType = ApplicationCommandType> = {
 export type ChatInputCommand = Command<ApplicationCommandType.ChatInput>;
 export type UserCommand = Command<ApplicationCommandType.User>;
 export type MessageCommand = Command<ApplicationCommandType.Message>;
+// endregion
+
+// region Module Objects
+const logger = loggerFactory({
+  name: __filename,
+});
 // endregion
 
 // region createCommands
@@ -79,10 +86,11 @@ const createCommands = async (client: Client<true>, commands: Command[]) => {
     if (interaction.isCommand()) {
       for (const { json, onInteraction } of commands) {
         if (json.name === interaction.commandName) {
-          let result = onInteraction(interaction);
-          result = result instanceof Promise ? result : Promise.resolve();
-          await result.catch(console.error);
-          break;
+          try {
+            await onInteraction(interaction);
+          } catch (error) {
+            logger.error(error, "ON_INTERACTION_ERROR");
+          }
         }
       }
     }

@@ -19,6 +19,7 @@ import {
 } from "discord.js";
 import { compress } from "compress-tag";
 import { v4 as uuid } from "uuid";
+import loggerFactory from "pino";
 
 import { Color, JsonError } from "../../../../services/discord";
 import { getChannelUrl, getThumbnailUrl } from "../../../../services/youtube";
@@ -29,10 +30,16 @@ import * as creatorsDatabase from "../../database";
 import { CreatorType } from "../../constants";
 import * as youtube from "../../youtube";
 
+// region Module Objects
 const database = {
   ...localDatabase,
   ...creatorsDatabase,
 };
+
+const logger = loggerFactory({
+  name: __filename,
+});
+// endregion
 
 export enum Option {
   NAME = "name",
@@ -94,11 +101,11 @@ export default async (interaction: ChatInputCommandInteraction) => {
   const guildId = guild.id;
 
   const settingsPromise = guildSettings(guildId);
-  const creatorChannelIdsPromise = database.getCreatorChannelIds(guildId);
+  const creatorChannelsPromise = database.getCreatorChannels(guildId);
   const { maxCreatorSubscriptions } = await settingsPromise;
-  const creatorChannelIds = await creatorChannelIdsPromise;
+  const creatorChannels = await creatorChannelsPromise;
 
-  const creatorChannelPromises = creatorChannelIds
+  const channelPromises = creatorChannels
     .filter((id) => id.creatorSubscriptionCount < maxCreatorSubscriptions)
     // Delete from database if channel does not exist
     .map(async ({ id }) => {
@@ -108,8 +115,8 @@ export default async (interaction: ChatInputCommandInteraction) => {
         throw new JsonError(interaction);
       } catch (error) {
         if (error instanceof DiscordAPIError && error.status === 404) {
+          logger.info(error, "GUILD_CHANNEL_MANAGER_FETCH_ERROR");
           await database.deleteCreatorChannel(id);
-          console.info(error);
           return undefined;
         }
 
@@ -117,12 +124,12 @@ export default async (interaction: ChatInputCommandInteraction) => {
       }
     });
 
-  const creatorChannelsRaw = await Promise.all(creatorChannelPromises);
-  const creatorChannels = creatorChannelsRaw
+  const channelsRaw = await Promise.all(channelPromises);
+  const channels = channelsRaw
     .filter((channel) => channel !== undefined)
     .map((channel) => channel as NonNullable<typeof channel>);
 
-  if (creatorChannels.length === 0) {
+  if (channels.length === 0) {
     const description = compress`
       Your request for creating a creator subscription has been denied because
       this server currently has no creator channels ${bold("or")} no creator
@@ -173,11 +180,11 @@ export default async (interaction: ChatInputCommandInteraction) => {
   const applyButtonId = uuid();
   const cancelButtonId = uuid();
 
-  const { id: defaultCreatorChannelId } = creatorChannels[0] ?? {};
+  const { id: defaultCreatorChannelId } = channels[0] ?? {};
   if (defaultCreatorChannelId === undefined) throw new JsonError(interaction);
 
   let selectedCreatorChannelIds: string[] =
-    creatorChannels.length === 1 ? [defaultCreatorChannelId] : [];
+    channels.length === 1 ? [defaultCreatorChannelId] : [];
   let selectedYoutubeChannel: YoutubeChannel | undefined;
   let page = 1;
 
@@ -197,7 +204,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
       \n\nPage ${page} of ${maxPage}
     `;
 
-    const selectMenuOptions = creatorChannels.map(({ id, name }) =>
+    const selectMenuOptions = channels.map(({ id, name }) =>
       new StringSelectMenuOptionBuilder()
         .setDefault(selectedCreatorChannelIds.includes(id))
         .setLabel(name)
@@ -298,8 +305,8 @@ export default async (interaction: ChatInputCommandInteraction) => {
     if (!interaction.isButton()) throw new JsonError(interaction);
     buttonInteraction = interaction;
   } catch (error) {
+    logger.info(error, "NO_CREATOR_CHANNEL_IDS_SELECTED");
     await response.delete();
-    console.info(error);
     return response;
   }
 

@@ -2,10 +2,10 @@ import type { ChatInputCommandInteraction } from "discord.js";
 
 import { JsonError } from "../../../services/discord";
 
-import onGuild from "./guild";
+import onServer from "./server";
 
 export enum Subcommand {
-  GUILD = "guild",
+  SERVER = "server",
 }
 
 export default (interaction: ChatInputCommandInteraction) => {
@@ -13,8 +13,8 @@ export default (interaction: ChatInputCommandInteraction) => {
   const subcommand = options.getSubcommand();
 
   switch (subcommand) {
-    case Subcommand.GUILD:
-      return onGuild(interaction);
+    case Subcommand.SERVER:
+      return onServer(interaction);
     default:
       throw new JsonError(interaction);
   }

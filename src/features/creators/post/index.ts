@@ -1,6 +1,7 @@
 import type { Guild } from "discord.js";
 import { bold, DiscordAPIError, Events, roleMention } from "discord.js";
 import { compress } from "compress-tag";
+import loggerFactory from "pino";
 
 import discord from "../../../services/discord";
 import { getThumbnailUrl, getVideoUrl } from "../../../services/youtube";
@@ -12,10 +13,16 @@ import * as creatorsDatabase from "../database";
 import * as youtube from "../youtube";
 import { CreatorType } from "../constants";
 
+// region Module Objects
 const database = {
   ...localDatabase,
   ...creatorsDatabase,
 };
+
+const logger = loggerFactory({
+  name: __filename,
+});
+// endregion
 
 const getWebhook = async ({
   creatorChannelId,
@@ -27,7 +34,7 @@ const getWebhook = async ({
   } catch (error) {
     if (error instanceof DiscordAPIError && error.status === 404) {
       await database.deleteCreatorChannel(creatorChannelId);
-      console.info(error);
+      logger.info(error, "GET_WEBHOOK_ERROR");
       return undefined;
     }
 
@@ -126,7 +133,7 @@ discord.once(Events.ClientReady, async (client) => {
     try {
       await Promise.all(promises);
     } catch (error) {
-      console.error(error);
+      logger.error(error, "POSTING_ERROR");
     }
   }
 });

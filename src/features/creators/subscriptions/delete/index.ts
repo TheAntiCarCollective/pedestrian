@@ -19,6 +19,7 @@ import {
 } from "discord.js";
 import { compress } from "compress-tag";
 import { v4 as uuid } from "uuid";
+import loggerFactory from "pino";
 
 import { Color, JsonError } from "../../../../services/discord";
 
@@ -28,15 +29,21 @@ import * as creatorsDatabase from "../../database";
 import { CreatorType } from "../../constants";
 import * as youtube from "../../youtube";
 
+// region Types
+type Creators = {
+  [CreatorType.YOUTUBE]: Record<string, YoutubeChannel>;
+};
+// endregion
+
+// region Module Objects
 const database = {
   ...localDatabase,
   ...creatorsDatabase,
 };
 
-// region Types
-type Creators = {
-  [CreatorType.YOUTUBE]: Record<string, YoutubeChannel>;
-};
+const logger = loggerFactory({
+  name: __filename,
+});
 // endregion
 
 const getCreatorChannels = async (
@@ -61,8 +68,8 @@ const getCreatorChannels = async (
       })
       .catch(async (error) => {
         if (error instanceof DiscordAPIError && error.status === 404) {
+          logger.info(error, "GET_CREATOR_CHANNELS_ERROR");
           await database.deleteCreatorChannel(creatorChannelId);
-          console.info(error);
           return undefined;
         }
 
@@ -315,8 +322,8 @@ export default async (interaction: ChatInputCommandInteraction) => {
     if (!interaction.isButton()) throw new JsonError(interaction);
     buttonInteraction = interaction;
   } catch (error) {
+    logger.info(error, "NO_CREATOR_SUBSCRIPTION_IDS_SELECTED");
     await response.delete();
-    console.info(error);
     return response;
   }
 

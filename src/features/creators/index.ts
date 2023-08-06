@@ -12,7 +12,7 @@ import { JsonError } from "../../services/discord";
 import onChannels, { Subcommand as ChannelsSubcommand } from "./channels";
 import { Option as ChannelsCreateOption } from "./channels/create";
 import onRoles, { Subcommand as RolesSubcommand } from "./roles";
-import { Option as RolesGuildOption } from "./roles/guild";
+import { Option as RolesServerOption } from "./roles/server";
 import onSubscriptions, {
   Subcommand as SubscriptionsSubcommand,
 } from "./subscriptions";
@@ -71,11 +71,11 @@ const json = new SlashCommandBuilder()
       .setDescription("Manage roles for creators")
       .addSubcommand((subcommand) =>
         subcommand
-          .setName(RolesSubcommand.GUILD)
+          .setName(RolesSubcommand.SERVER)
           .setDescription("Set default role to mention in creator posts")
           .addRoleOption((roleOption) =>
             roleOption
-              .setName(RolesGuildOption.ROLE)
+              .setName(RolesServerOption.ROLE)
               .setDescription("Role to mention in creator posts"),
           ),
       ),
