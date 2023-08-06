@@ -11,8 +11,6 @@ import {
   ButtonBuilder,
   ButtonStyle,
   channelMention,
-  ChannelType,
-  DiscordAPIError,
   EmbedBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
@@ -25,21 +23,14 @@ import { Color, JsonError } from "../../../../services/discord";
 import { getChannelUrl, getThumbnailUrl } from "../../../../services/youtube";
 import guildSettings from "../../../../settings/guild";
 
-import * as localDatabase from "./database";
-import * as creatorsDatabase from "../../database";
+import * as database from "./database";
+import { getCreatorChannels } from "../../functions";
 import { CreatorType } from "../../constants";
 import * as youtube from "../../youtube";
-
-// region Module Objects
-const database = {
-  ...localDatabase,
-  ...creatorsDatabase,
-};
 
 const logger = loggerFactory({
   name: __filename,
 });
-// endregion
 
 export enum Option {
   NAME = "name",
@@ -105,29 +96,11 @@ export default async (interaction: ChatInputCommandInteraction) => {
   const { maxCreatorSubscriptions } = await settingsPromise;
   const creatorChannels = await creatorChannelsPromise;
 
-  const channelPromises = creatorChannels
+  const channelIds = creatorChannels
     .filter((id) => id.creatorSubscriptionCount < maxCreatorSubscriptions)
-    // Delete from database if channel does not exist
-    .map(async ({ id }) => {
-      try {
-        const channel = await guildChannelManager.fetch(id);
-        if (channel?.type === ChannelType.GuildForum) return channel;
-        throw new JsonError(interaction);
-      } catch (error) {
-        if (error instanceof DiscordAPIError && error.status === 404) {
-          logger.info(error, "GUILD_CHANNEL_MANAGER_FETCH_ERROR");
-          await database.deleteCreatorChannel(id);
-          return undefined;
-        }
+    .map(({ id }) => id);
 
-        throw error;
-      }
-    });
-
-  const channelsRaw = await Promise.all(channelPromises);
-  const channels = channelsRaw
-    .filter((channel) => channel !== undefined)
-    .map((channel) => channel as NonNullable<typeof channel>);
+  const channels = await getCreatorChannels(guildChannelManager, channelIds);
 
   if (channels.length === 0) {
     const description = compress`

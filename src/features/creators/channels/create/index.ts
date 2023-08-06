@@ -14,7 +14,14 @@ import { Color, JsonError } from "../../../../services/discord";
 import guildSettings from "../../../../settings/guild";
 import Environment from "../../../../environment";
 
-import * as database from "./database";
+import * as localDatabase from "./database";
+import * as creatorsDatabase from "../../database";
+import { getCreatorChannels } from "../../functions";
+
+const database = {
+  ...localDatabase,
+  ...creatorsDatabase,
+};
 
 export enum Option {
   CATEGORY = "category",
@@ -30,11 +37,14 @@ export default async (interaction: ChatInputCommandInteraction) => {
   const guildId = guild.id;
 
   const settingsPromise = guildSettings(guildId);
-  const countPromise = database.getCountOfCreatorChannels(guildId);
-  const { maxCreatorChannels } = await settingsPromise;
-  const count = await countPromise;
+  const creatorChannelsPromise = database
+    .getCreatorChannelIds(guildId)
+    .then((ids) => getCreatorChannels(guildChannelManager, ids));
 
-  if (count >= maxCreatorChannels) {
+  const { maxCreatorChannels } = await settingsPromise;
+  const creatorChannels = await creatorChannelsPromise;
+
+  if (creatorChannels.length >= maxCreatorChannels) {
     const description = compress`
       Your request for creating a creator channel has been denied because this
       server is currently only permitted to have ${maxCreatorChannels} creator

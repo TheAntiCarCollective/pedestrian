@@ -12,11 +12,9 @@ export type Lock = {
 };
 // endregion
 
-// region Module Objects
 const logger = loggerFactory({
   name: __filename,
 });
-// endregion
 
 // region Redis
 redis.defineCommand("extendLock", {

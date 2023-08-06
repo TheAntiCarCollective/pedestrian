@@ -13,7 +13,6 @@ import * as creatorsDatabase from "../database";
 import * as youtube from "../youtube";
 import { CreatorType } from "../constants";
 
-// region Module Objects
 const database = {
   ...localDatabase,
   ...creatorsDatabase,
@@ -22,7 +21,6 @@ const database = {
 const logger = loggerFactory({
   name: __filename,
 });
-// endregion
 
 const getWebhook = async ({
   creatorChannelId,

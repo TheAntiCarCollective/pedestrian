@@ -1,4 +1,4 @@
-import postgresql, { useTransaction } from "../../../../services/postgresql";
+import { useClient, useTransaction } from "../../../../services/postgresql";
 
 import { CreatorType } from "../../constants";
 
@@ -47,39 +47,41 @@ const getOrCreateCreatorId = (domainId: string, creatorType: CreatorType) =>
     throw new Error(`${creatorType}: ${domainId}`);
   });
 
-export const getCreatorChannels = async (guildId: string) => {
-  const query = `
-    select
-      cc.id,
-      count(cs.id) as "creatorSubscriptionCount"
-    from creator_channel as cc
-    left join creator_subscription as cs
-      on cs.creator_channel_id = cc.id
-    where cc.guild_id = $1
-    group by cc.id
-  `;
+export const getCreatorChannels = (guildId: string) =>
+  useClient(async (client) => {
+    const query = `
+      select
+        cc.id,
+        count(cs.id) as "creatorSubscriptionCount"
+      from creator_channel as cc
+      left join creator_subscription as cs
+        on cs.creator_channel_id = cc.id
+      where cc.guild_id = $1
+      group by cc.id
+    `;
 
-  const values = [guildId];
-  const { rows } = await postgresql.query<CreatorChannel>(query, values);
-  return rows;
-};
+    const values = [guildId];
+    const { rows } = await client.query<CreatorChannel>(query, values);
+    return rows;
+  });
 
-export const createCreatorSubscriptions = async ({
+export const createCreatorSubscriptions = ({
   domainId,
   creatorType,
   creatorChannelIds,
-}: CreateCreatorSubscriptions) => {
-  const creatorId = await getOrCreateCreatorId(domainId, creatorType);
+}: CreateCreatorSubscriptions) =>
+  useClient(async (client) => {
+    const creatorId = await getOrCreateCreatorId(domainId, creatorType);
 
-  const query = `
-    insert into creator_subscription(creator_channel_id, creator_id)
-    values($1, $2)
-    on conflict do nothing
-  `;
+    const query = `
+      insert into creator_subscription(creator_channel_id, creator_id)
+      values($1, $2)
+      on conflict do nothing
+    `;
 
-  const promises = creatorChannelIds
-    .map((creatorChannelId) => [creatorChannelId, creatorId])
-    .map((values) => postgresql.query(query, values));
+    const promises = creatorChannelIds
+      .map((creatorChannelId) => [creatorChannelId, creatorId])
+      .map((values) => client.query(query, values));
 
-  return Promise.all(promises);
-};
+    return Promise.all(promises);
+  });

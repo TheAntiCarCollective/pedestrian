@@ -6,11 +6,9 @@ import Environment from "./environment";
 import type { Lock } from "./lock";
 import lock from "./lock";
 
-// region Module Objects
 const logger = loggerFactory({
   name: __filename,
 });
-// endregion
 
 // region CacheKey
 const normalizeInput = (value: string) =>

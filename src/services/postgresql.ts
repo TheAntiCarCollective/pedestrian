@@ -1,11 +1,16 @@
 import type { PoolClient } from "pg";
 import { Pool } from "pg";
+import loggerFactory from "pino";
 
 import Environment from "../environment";
 
 // region Types
 type Callback<T> = (client: PoolClient) => Promise<T>;
 // endregion
+
+const logger = loggerFactory({
+  name: __filename,
+});
 
 const postgresql = new Pool({
   host: Environment.POSTGRESQL_HOST,
@@ -38,5 +43,9 @@ export const useTransaction = <T>(callback: Callback<T>) =>
       throw error;
     }
   });
+
+postgresql.on("error", (error) => {
+  logger.error(error, "POSTGRESQL_ERROR");
+});
 
 export default postgresql;

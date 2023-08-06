@@ -4,15 +4,12 @@ import YoutubeChannel = youtube_v3.Schema$Channel;
 import type {
   ButtonInteraction,
   ChatInputCommandInteraction,
-  ForumChannel,
 } from "discord.js";
 import {
   ActionRowBuilder,
   bold,
   ButtonBuilder,
   ButtonStyle,
-  ChannelType,
-  DiscordAPIError,
   EmbedBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
@@ -24,10 +21,10 @@ import loggerFactory from "pino";
 import { Color, JsonError } from "../../../../services/discord";
 
 import type { CreatorSubscription } from "./database";
-import * as localDatabase from "./database";
-import * as creatorsDatabase from "../../database";
+import * as database from "./database";
 import { CreatorType } from "../../constants";
 import * as youtube from "../../youtube";
+import { getCreatorChannels } from "../../functions";
 
 // region Types
 type Creators = {
@@ -35,55 +32,9 @@ type Creators = {
 };
 // endregion
 
-// region Module Objects
-const database = {
-  ...localDatabase,
-  ...creatorsDatabase,
-};
-
 const logger = loggerFactory({
   name: __filename,
 });
-// endregion
-
-const getCreatorChannels = async (
-  creatorSubscriptions: CreatorSubscription[],
-  interaction: ChatInputCommandInteraction,
-) => {
-  const { guild } = interaction;
-  if (guild === null) throw new JsonError(interaction);
-  const guildChannelManager = guild.channels;
-
-  const creatorChannelIds = creatorSubscriptions
-    .map(({ creatorChannelId }) => creatorChannelId)
-    .reduce((set, id) => set.add(id), new Set<string>());
-
-  const creatorChannelPromises: Promise<ForumChannel | undefined>[] = [];
-  for (const creatorChannelId of creatorChannelIds) {
-    const creatorChannelPromise = guildChannelManager
-      .fetch(creatorChannelId)
-      .then((channel) => {
-        if (channel?.type === ChannelType.GuildForum) return channel;
-        throw new JsonError(interaction);
-      })
-      .catch(async (error) => {
-        if (error instanceof DiscordAPIError && error.status === 404) {
-          logger.info(error, "GET_CREATOR_CHANNELS_ERROR");
-          await database.deleteCreatorChannel(creatorChannelId);
-          return undefined;
-        }
-
-        throw error;
-      });
-
-    creatorChannelPromises.push(creatorChannelPromise);
-  }
-
-  const creatorChannelsRaw = await Promise.all(creatorChannelPromises);
-  return creatorChannelsRaw
-    .filter((channel) => channel !== undefined)
-    .map((channel) => channel as NonNullable<typeof channel>);
-};
 
 const getCreators = async (
   creatorSubscriptions: CreatorSubscription[],
@@ -139,11 +90,21 @@ const getCreators = async (
 export default async (interaction: ChatInputCommandInteraction) => {
   const { guild } = interaction;
   if (guild === null) throw new JsonError(interaction);
-  const { id: guildId } = guild;
+
+  const guildChannelManager = guild.channels;
+  const guildId = guild.id;
 
   const creatorSubscriptions = await database.getCreatorSubscriptions(guildId);
-  // prettier-ignore
-  const creatorChannels = await getCreatorChannels(creatorSubscriptions, interaction);
+
+  const creatorChannelIdsSet = creatorSubscriptions
+    .map(({ creatorChannelId }) => creatorChannelId)
+    .reduce((set, id) => set.add(id), new Set<string>());
+  const creatorChannelIds = [...creatorChannelIdsSet];
+
+  const creatorChannels = await getCreatorChannels(
+    guildChannelManager,
+    creatorChannelIds,
+  );
 
   if (creatorChannels.length === 0) {
     const description = compress`
@@ -163,7 +124,6 @@ export default async (interaction: ChatInputCommandInteraction) => {
     });
   }
 
-  const creatorChannelIds = creatorChannels.map(({ id }) => id);
   const creators = await getCreators(creatorSubscriptions, creatorChannelIds);
 
   const channelSelectMenuId = uuid();

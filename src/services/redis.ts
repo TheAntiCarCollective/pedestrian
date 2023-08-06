@@ -1,6 +1,11 @@
 import { Redis } from "ioredis";
+import loggerFactory from "pino";
 
 import Environment from "../environment";
+
+const logger = loggerFactory({
+  name: __filename,
+});
 
 const node = {
   host: Environment.REDIS_HOST,
@@ -25,6 +30,13 @@ const createRedisByClient = () =>
     ...user,
   });
 
-export default Environment.REDIS_CLUSTER === "true"
-  ? createRedisByCluster()
-  : createRedisByClient();
+const redis =
+  Environment.REDIS_CLUSTER === "true"
+    ? createRedisByCluster()
+    : createRedisByClient();
+
+redis.on("error", (error) => {
+  logger.error(error, "REDIS_ERROR");
+});
+
+export default redis;

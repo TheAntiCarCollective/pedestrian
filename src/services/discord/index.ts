@@ -1,5 +1,10 @@
 import type { JSONEncodable } from "discord.js";
-import { Client } from "discord.js";
+import { Events, Client } from "discord.js";
+import loggerFactory from "pino";
+
+const logger = loggerFactory({
+  name: __dirname,
+});
 
 export enum Color {
   ERROR = 0xed4245, // Red
@@ -15,6 +20,12 @@ export class JsonError<T> extends Error {
   }
 }
 
-export default new Client({
+const discord = new Client({
   intents: ["Guilds"],
 });
+
+discord.on(Events.Error, (error) => {
+  logger.error(error, "DISCORD_ERROR");
+});
+
+export default discord;

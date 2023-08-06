@@ -43,11 +43,9 @@ export type UserCommand = Command<ApplicationCommandType.User>;
 export type MessageCommand = Command<ApplicationCommandType.Message>;
 // endregion
 
-// region Module Objects
 const logger = loggerFactory({
   name: __filename,
 });
-// endregion
 
 // region createCommands
 const createCommands = async (client: Client<true>, commands: Command[]) => {

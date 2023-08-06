@@ -22,7 +22,8 @@
   "name": "pedestrian",
   "scripts": {
     "check": "prettier --check . && eslint .",
+    "dev": "node --trace-warnings -r ts-node/register src/index.ts",
     "prettier": "prettier --write .",
-    "start": "ts-node src/index.ts"
+    "start": "node --no-warnings -r ts-node/register src/index.ts"
   }
 }
