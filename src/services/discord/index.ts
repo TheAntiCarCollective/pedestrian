@@ -24,6 +24,14 @@ const discord = new Client({
   intents: ["Guilds"],
 });
 
+discord.on(Events.Debug, (debug) => {
+  logger.debug(debug, "DISCORD_DEBUG");
+});
+
+discord.on(Events.Warn, (warn) => {
+  logger.warn(warn, "DISCORD_WARN");
+});
+
 discord.on(Events.Error, (error) => {
   logger.error(error, "DISCORD_ERROR");
 });

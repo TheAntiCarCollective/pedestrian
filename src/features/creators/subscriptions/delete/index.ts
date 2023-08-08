@@ -1,4 +1,4 @@
-import { youtube_v3 } from "googleapis";
+import { youtube_v3 } from "@googleapis/youtube";
 import YoutubeChannel = youtube_v3.Schema$Channel;
 
 import type {
@@ -289,18 +289,28 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
   const { customId: buttonId } = buttonInteraction;
   const isApplyButton = buttonId === applyButtonId;
-  const { length } = selectedSubscriptionIds;
+  const countOfDeletedSubscriptions = selectedSubscriptionIds.length;
 
-  if (isApplyButton && length > 0) {
+  if (isApplyButton && countOfDeletedSubscriptions > 0) {
     await database.deleteCreatorSubscriptions(selectedSubscriptionIds);
   }
 
-  const count = bold(length.toString());
-  const s = length === 1 ? "" : "s";
+  const count = bold(countOfDeletedSubscriptions.toString());
+  const s = countOfDeletedSubscriptions === 1 ? "" : "s";
 
-  const description = isApplyButton
-    ? `Successfully deleted ${count} creator subscription${s}!`
-    : `Successfully cancelled deleting creator subscriptions!`;
+  let description: string;
+  if (isApplyButton) {
+    description = compress`
+      Successfully deleted ${count} creator subscription${s}! Posts will no
+      longer be automatically created with the ${count} selected creator${s} in
+      the selected creator channels.
+    `;
+  } else {
+    description = compress`
+      Successfully cancelled deleting creator subscriptions! No changes have
+      been applied.
+    `;
+  }
 
   const embed = new EmbedBuilder()
     .setColor(Color.SUCCESS)

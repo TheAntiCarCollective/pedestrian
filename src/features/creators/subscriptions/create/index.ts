@@ -1,4 +1,4 @@
-import { youtube_v3 } from "googleapis";
+import { youtube_v3 } from "@googleapis/youtube";
 import YoutubeChannel = youtube_v3.Schema$SearchResultSnippet;
 
 import type {

@@ -1,4 +1,4 @@
-import { google, youtube_v3 } from "googleapis";
+import { youtube, youtube_v3 } from "@googleapis/youtube";
 import Thumbnail = youtube_v3.Schema$Thumbnail;
 import ThumbnailDetails = youtube_v3.Schema$ThumbnailDetails;
 
@@ -26,7 +26,7 @@ export const getThumbnailUrl = (thumbnailDetails: ThumbnailDetails = {}) => {
 export const getVideoUrl = (videoId: string) =>
   `https://www.youtube.com/watch?v=${videoId}`;
 
-export default google.youtube({
+export default youtube({
   auth: Environment.YOUTUBE_API_KEY,
   version: "v3",
 });

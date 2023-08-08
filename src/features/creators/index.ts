@@ -87,7 +87,7 @@ const json = new SlashCommandBuilder()
       .addSubcommand((subcommand) =>
         subcommand
           .setName(SubscriptionsSubcommand.CREATE)
-          .setDescription("Create a channel subscription")
+          .setDescription("Create channel subscriptions")
           .addStringOption((option) =>
             option
               .setName(SubscriptionsCreateOption.NAME)

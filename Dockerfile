@@ -4,6 +4,8 @@ WORKDIR /pedestrian
 
 COPY package*.json ./
 
+ENV NODE_ENV=production
+
 RUN npm ci
 
 COPY . .
