@@ -11,8 +11,8 @@ import {
 import { compress } from "compress-tag";
 
 import { Color, JsonError } from "../../../../services/discord";
-import guildSettings from "../../../../settings/guild";
 import Environment from "../../../../environment";
+import guildSettings from "../../../bot/settings/guild";
 
 import * as localDatabase from "./database";
 import * as creatorsDatabase from "../../database";

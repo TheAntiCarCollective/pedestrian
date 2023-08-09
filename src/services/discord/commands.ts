@@ -30,7 +30,7 @@ type Interaction<T extends ApplicationCommandType> =
 
 type InteractionCallback<T extends ApplicationCommandType> = (
   interaction: Interaction<T>,
-) => Promise<void> | void;
+) => Promise<void>;
 
 type Command<T extends ApplicationCommandType = ApplicationCommandType> = {
   guildId?: string;

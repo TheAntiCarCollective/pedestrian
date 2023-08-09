@@ -21,7 +21,7 @@ import loggerFactory from "pino";
 
 import { Color, JsonError } from "../../../../services/discord";
 import { getChannelUrl, getThumbnailUrl } from "../../../../services/youtube";
-import guildSettings from "../../../../settings/guild";
+import guildSettings from "../../../bot/settings/guild";
 
 import * as database from "./database";
 import { getCreatorChannels } from "../../functions";

@@ -1,4 +1,4 @@
-import { useClient, useTransaction } from "../../services/postgresql";
+import { useClient, useTransaction } from "../../../../services/postgresql";
 
 import type { GuildSettings } from "./types";
 

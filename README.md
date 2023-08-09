@@ -14,6 +14,7 @@ Once environment variables are set then running the bot locally is as easy as `d
 
 | Environment Variable | Required | Default Value | Notes                                                                                                  |
 | -------------------- | -------- | ------------- | ------------------------------------------------------------------------------------------------------ |
+| BOT_GUILD_ID         | ❌       |               | Guild ID to enable `/bot`                                                                              |
 | DISCORD_TOKEN        | ✅       |               | [Create Discord Token](https://discord.com/developers/docs/getting-started#configuring-your-bot)       |
 | POSTGRESQL_HOST      | ❌       | localhost     |                                                                                                        |
 | POSTGRESQL_PORT      | ❌       | 5432          |                                                                                                        |

@@ -6,6 +6,7 @@ const getProcessEnv = (key: string, defaultValue?: string) => {
 };
 
 export default {
+  BOT_GUILD_ID: process.env["BOT_GUILD_ID"],
   DISCORD_TOKEN: getProcessEnv("DISCORD_TOKEN"),
   POSTGRESQL_HOST: getProcessEnv("POSTGRESQL_HOST", "localhost"),
   POSTGRESQL_PORT: getProcessEnv("POSTGRESQL_PORT", "5432"),
