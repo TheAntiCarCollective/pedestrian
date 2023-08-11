@@ -9,6 +9,8 @@ export const getChannels = (query: string) => {
   const key = CacheKey.channels(query);
   const callback = async () => {
     const { data } = await search.list({
+      fields:
+        "items(snippet(channelId,channelTitle,description,publishedAt,thumbnails,title))",
       maxResults: 50,
       part: ["snippet"],
       q: query,
@@ -30,19 +32,11 @@ export const getChannel = (channelId: string) => {
   const key = CacheKey.channel(channelId);
   const callback = async () => {
     const { data } = await channels.list({
+      fields:
+        "items(contentDetails(relatedPlaylists(uploads)),id,snippet(title,thumbnails))",
       id: [channelId],
       maxResults: 1,
-      part: [
-        "brandingSettings",
-        "contentDetails",
-        "contentOwnerDetails",
-        "id",
-        "localizations",
-        "snippet",
-        "statistics",
-        "status",
-        "topicDetails",
-      ],
+      part: ["contentDetails", "id", "snippet"],
     });
 
     const items = data.items ?? [];
@@ -59,6 +53,7 @@ export const getVideos = (playlistId: string) => {
   const key = CacheKey.videos(playlistId);
   const callback = async () => {
     const { data } = await playlistItems.list({
+      fields: "items(snippet(description,publishedAt,resourceId,title))",
       maxResults: 50,
       part: ["snippet"],
       playlistId,

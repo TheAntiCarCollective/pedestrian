@@ -284,13 +284,13 @@ export default async (interaction: ChatInputCommandInteraction) => {
   }
 
   const buttonId = buttonInteraction.customId;
-  const youtubeChannelId = selectedYoutubeChannel?.channelId;
+  const { channelId, channelTitle, title } = selectedYoutubeChannel ?? {};
 
-  if (buttonId === cancelButtonId || typeof youtubeChannelId !== "string")
+  if (buttonId === cancelButtonId || typeof channelId !== "string")
     return buttonInteraction.update(noResultsExistOptions(null));
 
   await database.createCreatorSubscriptions({
-    domainId: youtubeChannelId,
+    domainId: channelId,
     creatorType: CreatorType.YOUTUBE,
     creatorChannelIds: selectedCreatorChannelIds,
   });
@@ -300,7 +300,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
     .map(channelMention)
     .join(", ");
 
-  const youtubeChannelName = selectedYoutubeChannel?.title ?? name;
+  const youtubeChannelName = channelTitle ?? title ?? name;
   const description = compress`
     Successfully created a subscription for ${bold(youtubeChannelName)}! Posts
     will now be automatically created in ${channelMentions} when

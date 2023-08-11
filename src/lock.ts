@@ -132,10 +132,14 @@ export default async <T>(
     let callbackResult = callback(lockObject);
 
     while (callbackResult instanceof Promise) {
-      await extendLock(lockObject, expireInMilliseconds);
       const sleepPromise = sleep(expireInMilliseconds / 2);
       const result = await Promise.race([callbackResult, sleepPromise]);
-      callbackResult = result === undefined ? callbackResult : result;
+
+      if (result === undefined) {
+        await extendLock(lockObject, expireInMilliseconds);
+      } else {
+        callbackResult = result;
+      }
     }
 
     return callbackResult;

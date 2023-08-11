@@ -85,18 +85,25 @@ const computeIfAbsent = async <T>(
   key: string,
   callback: () => Promise<NonNullable<T>>,
   expireInMilliseconds = Number.MAX_VALUE,
-) =>
-  lock(key, async (lock) => {
-    let value = await get<NonNullable<T>>(key);
+) => {
+  let value = await get<NonNullable<T>>(key);
 
-    if (value === undefined) {
-      value = await callback();
-      const json = JSON.stringify(value);
-      await atomicSet(lock, key, json, expireInMilliseconds);
-    }
+  if (value === undefined) {
+    value = await lock(key, async (lock) => {
+      let value = await get<NonNullable<T>>(key);
 
-    return value;
-  });
+      if (value === undefined) {
+        value = await callback();
+        const json = JSON.stringify(value);
+        await atomicSet(lock, key, json, expireInMilliseconds);
+      }
+
+      return value;
+    });
+  }
+
+  return value;
+};
 
 export default {
   computeIfAbsent,
