@@ -1,11 +1,11 @@
-import type { ChatInputCommandInteraction } from "discord.js";
+import type { Interaction } from "discord.js";
 import {
   ChannelType,
+  ChatInputCommandInteraction,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
 
-import type { ChatInputCommand } from "../../services/discord/commands";
 import { registerCommand } from "../../services/discord/commands";
 import { JsonError } from "../../services/discord";
 
@@ -103,24 +103,26 @@ const json = new SlashCommandBuilder()
   )
   .toJSON();
 
-const onInteraction = async (interaction: ChatInputCommandInteraction) => {
+const onInteraction = (interaction: Interaction) => {
+  if (!(interaction instanceof ChatInputCommandInteraction))
+    throw new JsonError(interaction);
+
   const { options } = interaction;
   const subcommandGroup = options.getSubcommandGroup();
 
   switch (subcommandGroup) {
     case SubcommandGroup.CHANNELS:
-      await onChannels(interaction);
-      break;
+      return onChannels(interaction);
     case SubcommandGroup.ROLES:
-      await onRoles(interaction);
-      break;
+      return onRoles(interaction);
     case SubcommandGroup.SUBSCRIPTIONS:
-      await onSubscriptions(interaction);
-      break;
+      return onSubscriptions(interaction);
     default:
       throw new JsonError(interaction);
   }
 };
 
-const command: ChatInputCommand = { json, onInteraction };
-void registerCommand(command);
+void registerCommand({
+  json,
+  onInteraction,
+});

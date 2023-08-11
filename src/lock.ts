@@ -56,13 +56,14 @@ declare module "ioredis" {
 }
 // endregion
 
-const tryLock = async ({ key, token }: Lock, expireInMilliseconds: number) => {
+const tryLock = async (lockKey: string, expireInMilliseconds: number) => {
   let previousLockToken: string | null = null;
+  const lockToken = uuid();
 
   try {
     previousLockToken = await redis.set(
-      key,
-      token,
+      lockKey,
+      lockToken,
       "PX",
       expireInMilliseconds,
       "NX",
@@ -72,17 +73,20 @@ const tryLock = async ({ key, token }: Lock, expireInMilliseconds: number) => {
     logger.error(error, "TRY_LOCK_ERROR");
   }
 
-  return previousLockToken === null || previousLockToken === token;
+  if (previousLockToken !== null && previousLockToken !== lockToken)
+    return undefined;
+
+  return {
+    key: lockKey,
+    token: lockToken,
+  };
 };
 
 const lock = async (key: string, expireInMilliseconds: number) => {
   const lockKey = `{${key}}:lock`;
-  const lockObject = {
-    key: lockKey,
-    token: uuid(),
-  };
+  let lockObject = await tryLock(lockKey, expireInMilliseconds);
 
-  while (!(await tryLock(lockObject, expireInMilliseconds))) {
+  while (lockObject === undefined) {
     let untilLockExpires = 0;
 
     try {
@@ -92,6 +96,7 @@ const lock = async (key: string, expireInMilliseconds: number) => {
     }
 
     await sleep(untilLockExpires);
+    lockObject = await tryLock(lockKey, expireInMilliseconds);
   }
 
   return lockObject;

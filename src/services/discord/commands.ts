@@ -1,13 +1,11 @@
 import type {
-  ApplicationCommandType,
-  ChatInputCommandInteraction,
   Client,
   ContextMenuCommandBuilder,
-  MessageContextMenuCommandInteraction,
+  Interaction,
+  InteractionResponse,
   SlashCommandBuilder,
-  UserContextMenuCommandInteraction,
 } from "discord.js";
-import { Events, Routes } from "discord.js";
+import { Events, Routes, User } from "discord.js";
 import loggerFactory from "pino";
 
 import discord from "./index";
@@ -15,32 +13,13 @@ import discord from "./index";
 // region Types
 type ContextMenuCommandJson = ReturnType<ContextMenuCommandBuilder["toJSON"]>;
 type SlashCommandJson = ReturnType<SlashCommandBuilder["toJSON"]>;
-type CommandJson<T extends ApplicationCommandType = ApplicationCommandType> =
-  T extends ApplicationCommandType.ChatInput
-    ? SlashCommandJson
-    : ContextMenuCommandJson;
+type CommandJson = ContextMenuCommandJson | SlashCommandJson;
 
-type Interaction<T extends ApplicationCommandType> =
-  T extends ApplicationCommandType.ChatInput
-    ? ChatInputCommandInteraction
-    : // prettier-ignore
-    T extends ApplicationCommandType.User
-      ? UserContextMenuCommandInteraction
-      : MessageContextMenuCommandInteraction;
-
-type InteractionCallback<T extends ApplicationCommandType> = (
-  interaction: Interaction<T>,
-) => Promise<void>;
-
-type Command<T extends ApplicationCommandType = ApplicationCommandType> = {
+export type Command = {
   guildId?: string;
-  json: CommandJson<T>;
-  onInteraction: InteractionCallback<T>;
+  json: CommandJson;
+  onInteraction: (interaction: Interaction) => Promise<InteractionResponse>;
 };
-
-export type ChatInputCommand = Command<ApplicationCommandType.ChatInput>;
-export type UserCommand = Command<ApplicationCommandType.User>;
-export type MessageCommand = Command<ApplicationCommandType.Message>;
 // endregion
 
 const logger = loggerFactory({
@@ -116,3 +95,18 @@ discord.once(Events.ClientReady, async (client) => {
   bufferedCommands = [];
 });
 // endregion
+
+export const isUserOwner = async ({ client, user }: Interaction) => {
+  const { application } = client;
+  const { owner } = application.partial
+    ? await application.fetch()
+    : application;
+
+  if (owner === null) return false;
+
+  const { id: userId } = user;
+  if (owner instanceof User) return owner.id === userId;
+
+  const { members } = owner;
+  return members.has(userId);
+};

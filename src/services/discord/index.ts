@@ -3,7 +3,7 @@ import { Events, Client } from "discord.js";
 import loggerFactory from "pino";
 
 const logger = loggerFactory({
-  name: __dirname,
+  name: __filename,
 });
 
 export enum Color {

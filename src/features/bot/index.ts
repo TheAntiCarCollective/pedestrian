@@ -1,38 +1,41 @@
-import type { ChatInputCommandInteraction } from "discord.js";
+import type { Interaction } from "discord.js";
 import {
+  ChatInputCommandInteraction,
   EmbedBuilder,
   Events,
   PermissionFlagsBits,
   SlashCommandBuilder,
-  User,
 } from "discord.js";
 
-import type { ChatInputCommand } from "../../services/discord/commands";
-import { registerCommand } from "../../services/discord/commands";
+import { isUserOwner, registerCommand } from "../../services/discord/commands";
 import discord, { Color, JsonError } from "../../services/discord";
 import Environment from "../../environment";
 
 import onSettings, { Subcommand as SettingsSubcommand } from "./settings";
 import { Option as SettingsGuildOption } from "./settings/guild";
 
-const isUserOwner = async ({ client, user }: ChatInputCommandInteraction) => {
-  const { application } = client;
-  const { owner } = application.partial
-    ? await application.fetch()
-    : application;
-
-  if (owner === null) return false;
-
-  const { id: userId } = user;
-  if (owner instanceof User) return owner.id === userId;
-
-  const { members } = owner;
-  return members.has(userId);
-};
-
 export enum SubcommandGroup {
   SETTINGS = "settings",
 }
+
+const checkPermissionsResponse = async (
+  interaction: ChatInputCommandInteraction,
+) => {
+  if (await isUserOwner(interaction)) return undefined;
+
+  // prettier-ignore
+  const description =
+    `You must be an owner of ${Environment.PROJECT_NAME} to invoke this command.`;
+
+  const embed = new EmbedBuilder()
+    .setColor(Color.ERROR)
+    .setDescription(description);
+
+  return interaction.reply({
+    embeds: [embed],
+    ephemeral: true,
+  });
+};
 
 const json = new SlashCommandBuilder()
   .setName("bot")
@@ -71,36 +74,32 @@ const json = new SlashCommandBuilder()
   )
   .toJSON();
 
-const onInteraction = async (interaction: ChatInputCommandInteraction) => {
-  if (await isUserOwner(interaction)) {
-    const { options } = interaction;
-    const subcommandGroup = options.getSubcommandGroup();
+const onInteraction = async (interaction: Interaction) => {
+  if (!(interaction instanceof ChatInputCommandInteraction))
+    throw new JsonError(interaction);
 
-    switch (subcommandGroup) {
-      case SubcommandGroup.SETTINGS:
-        await onSettings(interaction);
-        return;
-      default:
-        throw new JsonError(interaction);
-    }
+  const response = await checkPermissionsResponse(interaction);
+  if (response !== undefined) return response;
+
+  const { options } = interaction;
+  const subcommandGroup = options.getSubcommandGroup();
+
+  switch (subcommandGroup) {
+    case SubcommandGroup.SETTINGS:
+      return onSettings(interaction);
+    default:
+      throw new JsonError(interaction);
   }
-
-  const description = `You must be an owner of ${Environment.PROJECT_NAME} to invoke this command.`;
-
-  const embed = new EmbedBuilder()
-    .setColor(Color.ERROR)
-    .setDescription(description);
-
-  await interaction.reply({
-    embeds: [embed],
-    ephemeral: true,
-  });
 };
 
 const guildId = Environment.BOT_GUILD_ID;
-const command: ChatInputCommand = { guildId, json, onInteraction };
 
-if (guildId !== undefined) void registerCommand(command);
+if (guildId !== undefined)
+  void registerCommand({
+    guildId,
+    json,
+    onInteraction,
+  });
 
 discord.once(Events.GuildCreate, async ({ commands, id }) => {
   // Detects guildId changes between restarts and

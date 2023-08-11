@@ -1,5 +1,5 @@
 import type { ChatInputCommandInteraction } from "discord.js";
-import { codeBlock, EmbedBuilder } from "discord.js";
+import { bold, codeBlock, EmbedBuilder } from "discord.js";
 import { compress } from "compress-tag";
 
 import { Color, JsonError } from "../../../../services/discord";
@@ -60,7 +60,7 @@ export const onGuild = async (interaction: ChatInputCommandInteraction) => {
   });
 
   const description = compress`
-    Successfully applied settings to guild ${guildId}:
+    Successfully applied settings to guild ${bold(guildId)}:
     \n${codeBlock(JSON.stringify(newGuildSettings, undefined, 2))}
   `;
 

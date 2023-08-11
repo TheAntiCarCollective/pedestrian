@@ -1,5 +1,6 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 import { EmbedBuilder, roleMention } from "discord.js";
+import { compress } from "compress-tag";
 
 import { Color, JsonError } from "../../../../services/discord";
 import guildSettings from "../../../bot/settings/guild";
@@ -25,10 +26,20 @@ export default async (interaction: ChatInputCommandInteraction) => {
       ? newCreatorMentionRoleId
       : roleMention(newCreatorMentionRoleId);
 
-  const description =
-    mentionRole === null
-      ? "No roles will be mentioned in creator posts!"
-      : `${mentionRole} will be mentioned in creator posts!`;
+  let description: string;
+  if (mentionRole === null) {
+    description = compress`
+      Successfully reset creator mention role! No role will be mentioned in
+      creator posts unless an override exists for the creator channel or
+      subscription.
+    `;
+  } else {
+    description = compress`
+      Successfully set ${mentionRole} as creator mention role! ${mentionRole}
+      will be mentioned in creator posts unless an override exists for the
+      creator channel or subscription.
+    `;
+  }
 
   const embed = new EmbedBuilder()
     .setColor(Color.SUCCESS)
