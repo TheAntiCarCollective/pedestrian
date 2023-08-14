@@ -4,15 +4,12 @@ import YoutubeChannel = youtube_v3.Schema$Channel;
 import type {
   ButtonInteraction,
   ChatInputCommandInteraction,
-  GuildBasedChannel,
-  GuildChannelManager,
 } from "discord.js";
 import {
   ActionRowBuilder,
   bold,
   ButtonBuilder,
   ButtonStyle,
-  DiscordAPIError,
   EmbedBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
@@ -27,6 +24,7 @@ import type { CreatorSubscription } from "./database";
 import * as database from "./database";
 import * as youtube from "../youtube";
 import { CreatorType } from "../constants";
+import { getChannels } from "../function";
 
 // region Types
 type Creators = {
@@ -83,48 +81,18 @@ const getCreators = async (creatorSubscriptions: CreatorSubscription[]) => {
   return Object.assign({}, ...creators) as Creators;
 };
 
-const getChannels = async (
-  creatorSubscriptions: CreatorSubscription[],
-  guildChannelManager: GuildChannelManager,
-) => {
-  const deletedSubscriptionIds: number[] = [];
-
-  const channelPromises = creatorSubscriptions.map(
-    async ({ id, creatorChannelId }) => {
-      try {
-        const channel = await guildChannelManager.fetch(creatorChannelId);
-        if (channel === null) throw new Error(creatorChannelId);
-        return channel;
-      } catch (error) {
-        if (error instanceof DiscordAPIError && error.status === 404) {
-          logger.info(error, "GET_CREATORS_ERROR");
-          deletedSubscriptionIds.push(id);
-          return undefined;
-        }
-
-        throw error;
-      }
-    },
-  );
-
-  const channelsRaw = await Promise.all(channelPromises);
-  await database.deleteCreatorSubscriptions(deletedSubscriptionIds);
-
-  return channelsRaw
-    .filter((channel) => channel !== undefined)
-    .map((channel) => channel as NonNullable<typeof channel>)
-    .reduce(
-      (channels, channel) => channels.set(channel.id, channel),
-      new Map<string, GuildBasedChannel>(),
-    );
-};
-
 export default async (interaction: ChatInputCommandInteraction) => {
   const { guild } = interaction;
   if (guild === null) throw new JsonError(interaction);
   const { channels: guildChannelManager, id: guildId } = guild;
 
-  const creatorSubscriptions = await database.getCreatorSubscriptions(guildId);
+  let creatorSubscriptions = await database.getCreatorSubscriptions(guildId);
+  const channels = await getChannels(creatorSubscriptions, guildChannelManager);
+
+  // prettier-ignore
+  creatorSubscriptions = creatorSubscriptions
+    .filter(({ creatorChannelId }) => channels.has(creatorChannelId));
+
   if (creatorSubscriptions.length === 0) {
     const description = compress`
       Your request for unsubscribing has been denied because this server
@@ -143,12 +111,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
     });
   }
 
-  const creatorsPromise = getCreators(creatorSubscriptions);
-  // prettier-ignore
-  const channelsPromise = getChannels(creatorSubscriptions, guildChannelManager);
-
-  const creators = await creatorsPromise;
-  const channels = await channelsPromise;
+  const creators = await getCreators(creatorSubscriptions);
 
   const indexSelectMenuId = uuid();
   const applyButtonId = uuid();
@@ -260,7 +223,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
   const isApplyButton = buttonId === applyButtonId;
   const countOfDeletedSubscriptions = selectedIndexes.length;
 
-  if (isApplyButton && countOfDeletedSubscriptions > 0) {
+  if (isApplyButton) {
     const creatorSubscriptionIds = creatorSubscriptions
       .filter((_, index) => selectedIndexes.includes(index))
       .map(({ id }) => id);

@@ -5,8 +5,8 @@ import { useClient, useTransaction } from "../../../services/postgresql";
 import { CreatorType } from "../constants";
 
 // region Types
-type Count = {
-  count: string;
+type CreatorSubscription = {
+  creatorChannelId: string;
 };
 
 type CreatorChannel = {
@@ -36,10 +36,10 @@ type CreateCreatorSubscriptions = {
 };
 // endregion
 
-export const getCreatorSubscriptionsCount = (guildId: string) =>
+export const getCreatorSubscriptions = (guildId: string) =>
   useClient(async (client) => {
     const query = `
-      select count(*) as "count"
+      select cc.id as "creatorChannelId"
       from creator_subscription as cs
       inner join creator_channel as cc
         on cc.id = cs.creator_channel_id
@@ -47,11 +47,8 @@ export const getCreatorSubscriptionsCount = (guildId: string) =>
     `;
 
     const values = [guildId];
-    const { rows } = await client.query<Count>(query, values);
-
-    const { count } = rows[0] ?? {};
-    if (count === undefined) throw new Error(guildId);
-    return parseInt(count);
+    const { rows } = await client.query<CreatorSubscription>(query, values);
+    return rows;
   });
 
 export const getCreatorChannels = (guildId: string) =>

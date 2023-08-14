@@ -32,6 +32,7 @@ import guildSettings from "../../bot/settings/guild";
 import * as database from "./database";
 import * as youtube from "../youtube";
 import { CreatorType, SUPPORTED_CHANNEL_TYPES } from "../constants";
+import { getChannels } from "../function";
 
 // region Types
 type Webhook = {
@@ -180,11 +181,17 @@ export default async (interaction: ChatInputCommandInteraction) => {
   if (guild === null) throw new JsonError(interaction);
   const { id: guildId, channels: guildChannelManager } = guild;
 
-  const creatorSubscriptionsCountPromise =
-    database.getCreatorSubscriptionsCount(guildId);
+  const creatorSubscriptionsPromise = database.getCreatorSubscriptions(guildId);
   const guildSettingsPromise = guildSettings(guildId);
 
-  const creatorSubscriptionsCount = await creatorSubscriptionsCountPromise;
+  let creatorSubscriptions = await creatorSubscriptionsPromise;
+  const channels = await getChannels(creatorSubscriptions, guildChannelManager);
+
+  // prettier-ignore
+  creatorSubscriptions = creatorSubscriptions
+    .filter(({ creatorChannelId }) => channels.has(creatorChannelId));
+
+  const creatorSubscriptionsCount = creatorSubscriptions.length;
   const { maxCreatorSubscriptions } = await guildSettingsPromise;
 
   const name = options.getString(Option.NAME, true);
