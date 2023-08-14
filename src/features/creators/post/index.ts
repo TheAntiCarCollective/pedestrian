@@ -2,7 +2,13 @@ import { youtube_v3 } from "@googleapis/youtube";
 import PlaylistItemSnippet = youtube_v3.Schema$PlaylistItemSnippet;
 
 import type { Guild } from "discord.js";
-import { bold, DiscordAPIError, Events, roleMention } from "discord.js";
+import {
+  bold,
+  ChannelType,
+  DiscordAPIError,
+  Events,
+  roleMention,
+} from "discord.js";
 import { compress } from "compress-tag";
 import loggerFactory from "pino";
 
@@ -11,13 +17,19 @@ import { getThumbnailUrl, getVideoUrl } from "../../../services/youtube";
 import sleep from "../../../sleep";
 
 import type { CreatorSubscription } from "./database";
-import * as database from "./database";
+import * as localDatabase from "./database";
+import * as creatorsDatabase from "../database";
 import * as youtube from "../youtube";
 import { CreatorType } from "../constants";
 
 const logger = loggerFactory({
   name: __filename,
 });
+
+const database = {
+  ...localDatabase,
+  ...creatorsDatabase,
+};
 
 const getWebhook = async ({
   creatorChannelId,
@@ -28,7 +40,7 @@ const getWebhook = async ({
     return await discord.fetchWebhook(webhookId, webhookToken);
   } catch (error) {
     if (error instanceof DiscordAPIError && error.status === 404) {
-      await database.deleteCreatorChannel(creatorChannelId);
+      await database.deleteCreatorChannels([creatorChannelId]);
       logger.info(error, "GET_WEBHOOK_ERROR");
       return undefined;
     }
@@ -46,6 +58,7 @@ const postFromYouTube = async (creatorSubscription: CreatorSubscription) => {
     creatorType,
     lastContentId,
     creatorChannelId,
+    creatorChannelType,
     creatorParentId,
     createdAt,
     creatorMentionRoleId,
@@ -85,24 +98,38 @@ const postFromYouTube = async (creatorSubscription: CreatorSubscription) => {
     `;
 
     const content = rawContent.substring(0, 2000);
-    const threadName = `${channelName} - ${title}`.substring(0, 100);
     const threadId = creatorParentId === null ? undefined : creatorChannelId;
+    const threadName = `${channelName} - ${title}`.substring(0, 100);
 
-    const { id } = await webhook.send({
+    const webhookThreadName =
+      creatorChannelType === ChannelType.GuildForum ? threadName : undefined;
+
+    const message = await webhook.send({
       avatarURL: getThumbnailUrl(thumbnails),
       content,
       username: channelName,
       threadId,
-      threadName,
+      threadName: webhookThreadName,
     });
 
     await database.createCreatorPost({
-      id,
+      id: message.id,
       creatorChannelId,
       creatorType,
       creatorDomainId,
       contentId: videoId,
     });
+
+    switch (creatorChannelType) {
+      case ChannelType.GuildAnnouncement:
+        await message.crosspost();
+      // falls through
+      case ChannelType.GuildText:
+        await message.startThread({ name: threadName });
+      // falls through
+      default:
+        break;
+    }
 
     return lastContentId !== null;
   };
@@ -117,13 +144,19 @@ const postFromYouTube = async (creatorSubscription: CreatorSubscription) => {
 
 const postInGuild = async ({ id }: Guild) => {
   const creatorSubscriptions = await database.getCreatorSubscriptions(id);
-  const promises = creatorSubscriptions.map((creatorSubscription) => {
+  const promises = creatorSubscriptions.map(async (creatorSubscription) => {
     const { creatorType } = creatorSubscription;
-    switch (creatorType) {
-      case CreatorType.YOUTUBE:
-        return postFromYouTube(creatorSubscription);
-      default:
-        throw new Error(creatorType);
+
+    try {
+      switch (creatorType) {
+        case CreatorType.YOUTUBE:
+          await postFromYouTube(creatorSubscription);
+          break;
+        default:
+          throw new Error(creatorType);
+      }
+    } catch (error) {
+      logger.error(error, "POSTING_ERROR");
     }
   });
 
@@ -140,10 +173,6 @@ discord.once(Events.ClientReady, async (client) => {
     const guilds = guildManager.valueOf();
     const promises = guilds.map(postInGuild);
 
-    try {
-      await Promise.all(promises);
-    } catch (error) {
-      logger.error(error, "POSTING_ERROR");
-    }
+    await Promise.all(promises);
   }
 });

@@ -1,3 +1,5 @@
+import { ChannelType } from "discord.js";
+
 import { useClient } from "../../../services/postgresql";
 
 import type { CreatorType } from "../constants";
@@ -9,6 +11,7 @@ export type CreatorSubscription = {
   creatorType: CreatorType;
   lastContentId: string | null;
   creatorChannelId: string;
+  creatorChannelType: ChannelType;
   creatorParentId: string | null;
   webhookId: string;
   webhookToken: string;
@@ -33,6 +36,7 @@ export const getCreatorSubscriptions = (guildId: string) =>
         c.type as "creatorType",
         cp.content_id as "lastContentId",
         cc.id as "creatorChannelId",
+        cc.type as "creatorChannelType",
         cc.parent_id as "creatorParentId",
         cc.webhook_id as "webhookId",
         cc.webhook_token as "webhookToken",
@@ -89,15 +93,4 @@ export const createCreatorPost = ({
       creatorType,
       contentId,
     ]);
-  });
-
-export const deleteCreatorChannel = (channelId: string) =>
-  useClient((client) => {
-    const query = `
-      delete from creator_channel
-      where id = $1
-    `;
-
-    const values = [channelId];
-    return client.query(query, values);
   });
