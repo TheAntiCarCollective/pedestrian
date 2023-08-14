@@ -3,6 +3,7 @@ import type {
   ContextMenuCommandBuilder,
   Interaction,
   InteractionResponse,
+  Message,
   SlashCommandBuilder,
 } from "discord.js";
 import { Events, Routes, User } from "discord.js";
@@ -15,10 +16,13 @@ type ContextMenuCommandJson = ReturnType<ContextMenuCommandBuilder["toJSON"]>;
 type SlashCommandJson = ReturnType<SlashCommandBuilder["toJSON"]>;
 type CommandJson = ContextMenuCommandJson | SlashCommandJson;
 
+type OnInteractionResponse = Promise<InteractionResponse | Message>;
+type OnInteraction = (interaction: Interaction) => OnInteractionResponse;
+
 export type Command = {
   guildId?: string;
   json: CommandJson;
-  onInteraction: (interaction: Interaction) => Promise<InteractionResponse>;
+  onInteraction: OnInteraction;
 };
 // endregion
 

@@ -14,7 +14,6 @@ type PartialGuildSettings = Partial<GuildSettings> & Pick<GuildSettings, "id">;
 
 export enum Option {
   ID = "id",
-  MAX_CREATOR_CHANNELS = "max_creator_channels",
   MAX_CREATOR_SUBSCRIPTIONS = "max_creator_subscriptions",
 }
 
@@ -48,14 +47,11 @@ export const onGuild = async (interaction: ChatInputCommandInteraction) => {
   if (defaultGuildId === null) throw new JsonError(interaction);
   const guildId = options.getString(Option.ID) ?? defaultGuildId;
 
-  const maxCreatorChannels =
-    options.getInteger(Option.MAX_CREATOR_CHANNELS) ?? undefined;
   const maxCreatorSubscriptions =
     options.getInteger(Option.MAX_CREATOR_SUBSCRIPTIONS) ?? undefined;
 
   const newGuildSettings = await guildSettings({
     id: guildId,
-    maxCreatorChannels,
     maxCreatorSubscriptions,
   });
 

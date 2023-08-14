@@ -2,39 +2,51 @@ import { youtube_v3 } from "@googleapis/youtube";
 import YoutubeChannel = youtube_v3.Schema$SearchResultSnippet;
 
 import type {
+  APIChannel,
   ButtonInteraction,
+  Channel,
   ChatInputCommandInteraction,
+  GuildChannelManager,
 } from "discord.js";
 import {
   ActionRowBuilder,
   bold,
   ButtonBuilder,
   ButtonStyle,
+  CategoryChannel,
   channelMention,
+  ChannelSelectMenuBuilder,
+  Collection,
   EmbedBuilder,
-  StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
+  ThreadChannel,
 } from "discord.js";
 import { compress } from "compress-tag";
 import { v4 as uuid } from "uuid";
 import loggerFactory from "pino";
 
-import { Color, JsonError } from "../../../../services/discord";
-import { getChannelUrl, getThumbnailUrl } from "../../../../services/youtube";
-import guildSettings from "../../../bot/settings/guild";
+import Environment from "../../../environment";
+import { Color, JsonError } from "../../../services/discord";
+import { getChannelUrl, getThumbnailUrl } from "../../../services/youtube";
+import guildSettings from "../../bot/settings/guild";
 
 import * as database from "./database";
-import { getCreatorChannels } from "../../functions";
-import { CreatorType } from "../../constants";
-import * as youtube from "../../youtube";
+import * as youtube from "../youtube";
+import { CreatorType, SUPPORTED_CHANNEL_TYPES } from "../constants";
 
-const logger = loggerFactory({
-  name: __filename,
-});
+// region Types
+type Webhook = {
+  id: string;
+  token: string;
+};
+// endregion
 
 export enum Option {
   NAME = "name",
 }
+
+const logger = loggerFactory({
+  name: __filename,
+});
 
 const getEmbedByYoutubeChannel = ({
   channelId,
@@ -84,31 +96,107 @@ const getEmbedByYoutubeChannel = ({
     .setURL(channelUrl);
 };
 
+const createCreatorChannels = async (
+  guildChannelManager: GuildChannelManager,
+  creatorChannels: Collection<string, Channel | APIChannel>,
+) => {
+  const { guild } = guildChannelManager;
+  const { id: guildId } = guild;
+
+  const existingCreatorChannels = await database.getCreatorChannels(guild.id);
+  const existingCreatorChannelIds = existingCreatorChannels.map(({ id }) => id);
+  const existingWebhooks = existingCreatorChannels.reduce(
+    (existingWebhooks, { id, parentId, webhookId, webhookToken }) => {
+      const webhook = { id: webhookId, token: webhookToken };
+      if (parentId !== null) existingWebhooks.set(parentId, webhook);
+      return existingWebhooks.set(id, webhook);
+    },
+    new Map<string, Webhook>(),
+  );
+
+  // It is possible 2 creator channel IDs are threads of the same channel where
+  // a webhook will be created. This makes the loop sequentially dependent
+  // which means optimizations such as parallelization (mapping each index to a
+  // Promise) not possible. At best, we can parallelize database inserts.
+  const promises: Promise<unknown>[] = [];
+
+  for (const [, { id, type }] of creatorChannels) {
+    const channel = await guildChannelManager.fetch(id);
+    if (channel === null) throw new JsonError(guild);
+    if (channel instanceof CategoryChannel) throw new JsonError(channel);
+
+    if (!existingCreatorChannelIds.includes(id)) {
+      let parentId: string | null = null;
+      let webhookId: string;
+      let webhookToken: string | null;
+
+      if (channel instanceof ThreadChannel) {
+        const { parent } = channel;
+        if (parent === null) throw new JsonError(channel);
+
+        parentId = parent.id;
+        const webhook = existingWebhooks.get(parentId);
+
+        if (webhook === undefined) {
+          const webhook = await parent.createWebhook({
+            name: Environment.PROJECT_NAME,
+          });
+
+          webhookId = webhook.id;
+          webhookToken = webhook.token;
+        } else {
+          webhookId = webhook.id;
+          webhookToken = webhook.token;
+        }
+      } else {
+        const webhook = await channel.createWebhook({
+          name: Environment.PROJECT_NAME,
+        });
+
+        webhookId = webhook.id;
+        webhookToken = webhook.token;
+      }
+
+      if (webhookToken === null) throw new JsonError(channel);
+
+      promises.push(
+        database.createCreatorChannel({
+          id,
+          type,
+          guildId,
+          parentId,
+          webhookId,
+          webhookToken,
+        }),
+      );
+    }
+  }
+
+  return Promise.all(promises);
+};
+
 export default async (interaction: ChatInputCommandInteraction) => {
   const { guild, options } = interaction;
   if (guild === null) throw new JsonError(interaction);
+  const { id: guildId, channels: guildChannelManager } = guild;
 
-  const guildChannelManager = guild.channels;
-  const guildId = guild.id;
+  const creatorSubscriptionsCountPromise =
+    database.getCreatorSubscriptionsCount(guildId);
+  const guildSettingsPromise = guildSettings(guildId);
 
-  const settingsPromise = guildSettings(guildId);
-  const creatorChannelsPromise = database.getCreatorChannels(guildId);
-  const { maxCreatorSubscriptions } = await settingsPromise;
-  const creatorChannels = await creatorChannelsPromise;
+  const creatorSubscriptionsCount = await creatorSubscriptionsCountPromise;
+  const { maxCreatorSubscriptions } = await guildSettingsPromise;
 
-  const channelIds = creatorChannels
-    .filter((id) => id.creatorSubscriptionCount < maxCreatorSubscriptions)
-    .map(({ id }) => id);
+  const name = options.getString(Option.NAME, true);
 
-  const channels = await getCreatorChannels(guildChannelManager, channelIds);
-
-  if (channels.length === 0) {
+  if (creatorSubscriptionsCount >= maxCreatorSubscriptions) {
+    const s = maxCreatorSubscriptions === 1 ? "" : "s";
     const description = compress`
-      Your request for creating a creator subscription has been denied because
-      this server currently has no creator channels ${bold("or")} no creator
-      channels exist with less than ${maxCreatorSubscriptions} creator
-      subscriptions. Use the following command to create a creator channel:
-      \n${bold("/creators channels create")}
+      Your request for subscribing to ${bold(name)} has been denied because
+      this server is currently only permitted to have
+      ${bold(maxCreatorSubscriptions.toString())} creator subscription${s}. Use
+      the following command to unsubscribe from creators.
+      \n${bold("/creators unsubscribe")}
     `;
 
     const embed = new EmbedBuilder()
@@ -121,14 +209,11 @@ export default async (interaction: ChatInputCommandInteraction) => {
     });
   }
 
-  const name = options.getString(Option.NAME);
-  if (name === null) throw new JsonError(interaction);
-
   const noResultsExistOptions = <T>(content: T) => {
     const description = compress`
-      Your request for creating a creator subscription has been denied because
-      no results exist for ${bold(name)}. Retry this command with a different
-      ${Option.NAME} value.
+      Your request for subscribing to ${bold(name)} has been denied because no
+      results exist for ${bold(name)}. Retry this command with a different
+      ${Option.NAME}.
     `;
 
     const embed = new EmbedBuilder()
@@ -147,17 +232,13 @@ export default async (interaction: ChatInputCommandInteraction) => {
   const maxPage = youtubeChannels.length;
   if (maxPage === 0) return interaction.reply(noResultsExistOptions(undefined));
 
-  const selectMenuId = uuid();
+  const channelSelectMenuId = uuid();
   const previousButtonId = uuid();
   const nextButtonId = uuid();
   const applyButtonId = uuid();
   const cancelButtonId = uuid();
 
-  const { id: defaultCreatorChannelId } = channels[0] ?? {};
-  if (defaultCreatorChannelId === undefined) throw new JsonError(interaction);
-
-  let selectedCreatorChannelIds: string[] =
-    channels.length === 1 ? [defaultCreatorChannelId] : [];
+  let selectedCreatorChannels = new Collection<string, Channel | APIChannel>();
   let selectedYoutubeChannel: YoutubeChannel | undefined;
   let page = 1;
 
@@ -167,27 +248,27 @@ export default async (interaction: ChatInputCommandInteraction) => {
     const { channelTitle, title } = selectedYoutubeChannel ?? {};
     const youtubeChannelName = channelTitle ?? title ?? name;
 
+    const channelSelectMenuMaxValues =
+      maxCreatorSubscriptions - creatorSubscriptionsCount;
+    const countOfSelectedCreatorChannels = selectedCreatorChannels.size;
+    const validApplyButton =
+      countOfSelectedCreatorChannels > 0 &&
+      channelSelectMenuMaxValues <= channelSelectMenuMaxValues;
+
     const applyButtonLabel = `I want to create a subscription for ${youtubeChannelName}`;
     // prettier-ignore
     const cancelButtonLabel = "None of these creators is the one I am searching for";
 
     const content = compress`
-      Posts will automatically be created in the selected creator channels
-      whenever ${bold(youtubeChannelName)} uploads.
+      Posts will automatically be created in the selected channels whenever
+      ${bold(youtubeChannelName)} uploads.
       \n\nPage ${page} of ${maxPage}
     `;
 
-    const selectMenuOptions = channels.map(({ id, name }) =>
-      new StringSelectMenuOptionBuilder()
-        .setDefault(selectedCreatorChannelIds.includes(id))
-        .setLabel(name)
-        .setValue(id),
-    );
-
-    const selectMenu = new StringSelectMenuBuilder()
-      .addOptions(selectMenuOptions)
-      .setCustomId(selectMenuId)
-      .setMaxValues(selectMenuOptions.length);
+    const channelSelectMenu = new ChannelSelectMenuBuilder()
+      .setChannelTypes(...SUPPORTED_CHANNEL_TYPES)
+      .setCustomId(channelSelectMenuId)
+      .setMaxValues(channelSelectMenuMaxValues);
 
     const previousButton = new ButtonBuilder()
       .setCustomId(previousButtonId)
@@ -203,7 +284,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
     const applyButton = new ButtonBuilder()
       .setCustomId(applyButtonId)
-      .setDisabled(selectedCreatorChannelIds.length === 0)
+      .setDisabled(!validApplyButton)
       .setLabel(applyButtonLabel)
       .setStyle(ButtonStyle.Success);
 
@@ -212,10 +293,10 @@ export default async (interaction: ChatInputCommandInteraction) => {
       .setLabel(cancelButtonLabel)
       .setStyle(ButtonStyle.Secondary);
 
-    const selectMenuActionRow =
+    const channelSelectMenuActionRow =
       // prettier-ignore
-      new ActionRowBuilder<StringSelectMenuBuilder>()
-        .addComponents(selectMenu);
+      new ActionRowBuilder<ChannelSelectMenuBuilder>()
+        .addComponents(channelSelectMenu);
     const pageActionRow =
       // prettier-ignore
       new ActionRowBuilder<ButtonBuilder>()
@@ -230,7 +311,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
         .addComponents(cancelButton);
 
     const components = [
-      selectMenuActionRow,
+      channelSelectMenuActionRow,
       pageActionRow,
       applyActionRow,
       cancelActionRow,
@@ -251,10 +332,10 @@ export default async (interaction: ChatInputCommandInteraction) => {
     const interaction = await response.awaitMessageComponent({
       filter: async (interaction) => {
         switch (interaction.customId) {
-          case selectMenuId:
-            if (!interaction.isStringSelectMenu())
+          case channelSelectMenuId:
+            if (!interaction.isChannelSelectMenu())
               throw new JsonError(interaction);
-            selectedCreatorChannelIds = interaction.values;
+            selectedCreatorChannels = interaction.channels;
             break;
           case previousButtonId:
             page -= 1;
@@ -278,7 +359,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
     if (!interaction.isButton()) throw new JsonError(interaction);
     buttonInteraction = interaction;
   } catch (error) {
-    logger.info(error, "NO_CREATOR_CHANNEL_IDS_SELECTED");
+    logger.info(error, "NO_SELECTED_CREATOR_CHANNELS_ERROR");
     await response.delete();
     return response;
   }
@@ -289,21 +370,28 @@ export default async (interaction: ChatInputCommandInteraction) => {
   if (buttonId === cancelButtonId || typeof channelId !== "string")
     return buttonInteraction.update(noResultsExistOptions(null));
 
+  // region Create Discord and Database Resources
+  // Defer since createCreatorChannels can potentially take too long
+  response = await buttonInteraction.deferUpdate();
+
+  await createCreatorChannels(guildChannelManager, selectedCreatorChannels);
+  const creatorChannelIds = [...selectedCreatorChannels.keys()];
+
   await database.createCreatorSubscriptions({
     domainId: channelId,
     creatorType: CreatorType.YOUTUBE,
-    creatorChannelIds: selectedCreatorChannelIds,
+    creatorChannelIds,
   });
 
   // prettier-ignore
-  const channelMentions = selectedCreatorChannelIds
+  const channelMentions = creatorChannelIds
     .map(channelMention)
     .join(", ");
 
   const youtubeChannelName = channelTitle ?? title ?? name;
   const description = compress`
-    Successfully created a subscription for ${bold(youtubeChannelName)}! Posts
-    will now be automatically created in ${channelMentions} when
+    Successfully subscribed to ${bold(youtubeChannelName)}! Posts will now be
+    automatically created in ${channelMentions} when
     ${bold(youtubeChannelName)} uploads.
     \n\nPlease allow up to an hour for posts to be created after an upload.
   `;
@@ -312,9 +400,10 @@ export default async (interaction: ChatInputCommandInteraction) => {
     .setColor(Color.SUCCESS)
     .setDescription(description);
 
-  return buttonInteraction.update({
+  return buttonInteraction.editReply({
     components: [],
     content: null,
     embeds: [embed],
   });
+  // endregion
 };

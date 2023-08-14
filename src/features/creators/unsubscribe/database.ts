@@ -1,12 +1,12 @@
-import { useClient } from "../../../../services/postgresql";
+import { useClient } from "../../../services/postgresql";
 
-import { CreatorType } from "../../constants";
+import type { CreatorType } from "../constants";
 
 // region Types
 export type CreatorSubscription = {
   id: number;
   creatorChannelId: string;
-  domainId: string;
+  creatorDomainId: string;
   creatorType: CreatorType;
 };
 // endregion
@@ -15,9 +15,9 @@ export const getCreatorSubscriptions = (guildId: string) =>
   useClient(async (client) => {
     const query = `
       select
-        cs.id,
+        cs.id as "id",
         cc.id as "creatorChannelId",
-        c.domain_id as "domainId",
+        c.domain_id as "creatorDomainId",
         c.type as "creatorType"
       from creator_subscription as cs
       inner join creator_channel as cc
@@ -25,6 +25,7 @@ export const getCreatorSubscriptions = (guildId: string) =>
       inner join creator as c
         on c.id = cs.creator_id
       where cc.guild_id = $1
+      order by c.id
     `;
 
     const values = [guildId];
@@ -36,7 +37,7 @@ export const deleteCreatorSubscriptions = (creatorSubscriptionIds: number[]) =>
   useClient((client) => {
     const query = `
       delete from creator_subscription
-      where id = ANY($1)
+      where id = any($1)
     `;
 
     const values = [creatorSubscriptionIds];

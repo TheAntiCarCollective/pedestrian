@@ -7,7 +7,6 @@ export const getOrCreateGuildSettings = (guildId: string) =>
     const query = `
       select
         id,
-        max_creator_channels as "maxCreatorChannels",
         max_creator_subscriptions as "maxCreatorSubscriptions",
         creator_mention_role_id as "creatorMentionRoleId"
       from guild
@@ -24,7 +23,6 @@ export const getOrCreateGuildSettings = (guildId: string) =>
         values($1)
         returning
           id,
-          max_creator_channels as "maxCreatorChannels",
           max_creator_subscriptions as "maxCreatorSubscriptions",
           creator_mention_role_id as "creatorMentionRoleId"
       `;
@@ -39,7 +37,6 @@ export const getOrCreateGuildSettings = (guildId: string) =>
 
 export const setGuildSettings = ({
   id,
-  maxCreatorChannels,
   maxCreatorSubscriptions,
   creatorMentionRoleId,
 }: GuildSettings) =>
@@ -47,15 +44,13 @@ export const setGuildSettings = ({
     const query = `
       update guild
       set
-        max_creator_channels = $2,
-        max_creator_subscriptions = $3,
-        creator_mention_role_id = $4
+        max_creator_subscriptions = $2,
+        creator_mention_role_id = $3
       where id = $1
     `;
 
     return client.query(query, [
       id,
-      maxCreatorChannels,
       maxCreatorSubscriptions,
       creatorMentionRoleId,
     ]);

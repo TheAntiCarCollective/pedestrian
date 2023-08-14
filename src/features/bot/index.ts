@@ -58,13 +58,6 @@ const json = new SlashCommandBuilder()
           .addIntegerOption((option) =>
             // prettier-ignore
             option
-              .setName(SettingsGuildOption.MAX_CREATOR_CHANNELS)
-              .setDescription(`Set ${SettingsGuildOption.MAX_CREATOR_CHANNELS} setting for guild`)
-              .setMinValue(1),
-          )
-          .addIntegerOption((option) =>
-            // prettier-ignore
-            option
               .setName(SettingsGuildOption.MAX_CREATOR_SUBSCRIPTIONS)
               .setDescription(`Set ${SettingsGuildOption.MAX_CREATOR_SUBSCRIPTIONS} setting for guild`)
               .setMinValue(1)

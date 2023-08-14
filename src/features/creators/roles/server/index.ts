@@ -12,22 +12,17 @@ export enum Option {
 export default async (interaction: ChatInputCommandInteraction) => {
   const { guildId, options } = interaction;
   if (guildId === null) throw new JsonError(interaction);
-  const { id: roleId } = options.getRole(Option.ROLE) ?? {};
 
-  const newGuildSettings = await guildSettings({
+  const { id: roleId } = options.getRole(Option.ROLE) ?? {};
+  const mentionRole = roleId === undefined ? roleId : roleMention(roleId);
+
+  await guildSettings({
     id: guildId,
     creatorMentionRoleId: roleId ?? null,
   });
 
-  const { creatorMentionRoleId: newCreatorMentionRoleId } = newGuildSettings;
-
-  const mentionRole =
-    newCreatorMentionRoleId === null
-      ? newCreatorMentionRoleId
-      : roleMention(newCreatorMentionRoleId);
-
   let description: string;
-  if (mentionRole === null) {
+  if (mentionRole === undefined) {
     description = compress`
       Successfully reset creator mention role! No role will be mentioned in
       creator posts unless an override exists for the creator channel or

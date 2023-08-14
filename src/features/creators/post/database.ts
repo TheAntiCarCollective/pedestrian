@@ -5,10 +5,11 @@ import type { CreatorType } from "../constants";
 // region Types
 export type CreatorSubscription = {
   createdAt: Date;
-  domainId: string;
+  creatorDomainId: string;
   creatorType: CreatorType;
   lastContentId: string | null;
   creatorChannelId: string;
+  creatorParentId: string | null;
   webhookId: string;
   webhookToken: string;
   creatorMentionRoleId: string | null;
@@ -17,7 +18,7 @@ export type CreatorSubscription = {
 type CreateCreatorPost = {
   id: string;
   creatorChannelId: string;
-  domainId: string;
+  creatorDomainId: string;
   creatorType: CreatorType;
   contentId: string;
 };
@@ -28,10 +29,11 @@ export const getCreatorSubscriptions = (guildId: string) =>
     const query = `
       select
         cs.created_at as "createdAt",
-        c.domain_id as "domainId",
+        c.domain_id as "creatorDomainId",
         c.type as "creatorType",
         cp.content_id as "lastContentId",
         cc.id as "creatorChannelId",
+        cc.parent_id as "creatorParentId",
         cc.webhook_id as "webhookId",
         cc.webhook_token as "webhookToken",
         g.creator_mention_role_id as "creatorMentionRoleId"
@@ -61,7 +63,7 @@ export const getCreatorSubscriptions = (guildId: string) =>
 export const createCreatorPost = ({
   id,
   creatorChannelId,
-  domainId,
+  creatorDomainId,
   creatorType,
   contentId,
 }: CreateCreatorPost) =>
@@ -83,8 +85,19 @@ export const createCreatorPost = ({
     return client.query(query, [
       id,
       creatorChannelId,
-      domainId,
+      creatorDomainId,
       creatorType,
       contentId,
     ]);
+  });
+
+export const deleteCreatorChannel = (channelId: string) =>
+  useClient((client) => {
+    const query = `
+      delete from creator_channel
+      where id = $1
+    `;
+
+    const values = [channelId];
+    return client.query(query, values);
   });
