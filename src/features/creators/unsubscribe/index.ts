@@ -121,11 +121,11 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
   const options = () => {
     // prettier-ignore
-    const applyButtonLabel = "I am finished selecting creators to unsubscribe to";
+    const applyButtonLabel = "I am finished selecting creators to unsubscribe from";
     const cancelButtonLabel = "I do not want to unsubscribe from any creators";
 
     const description =
-      "Use the select menu to choose the channel and creator to unsubscribe from.";
+      "Use the select menu to choose the creators to unsubscribe from.";
 
     const embed = new EmbedBuilder()
       .setColor(Color.INFORMATIONAL)

@@ -69,7 +69,7 @@ const getEmbedByYoutubeChannel = ({
     channelName === null
       ? null
       : {
-          iconUrl: thumbnailUrl,
+          iconURL: thumbnailUrl ?? undefined,
           name: channelName,
           url: channelUrl ?? undefined,
         };
@@ -78,7 +78,7 @@ const getEmbedByYoutubeChannel = ({
     channelName === null
       ? null
       : {
-          iconUrl: thumbnailUrl,
+          iconURL: thumbnailUrl ?? undefined,
           text: channelName,
         };
 

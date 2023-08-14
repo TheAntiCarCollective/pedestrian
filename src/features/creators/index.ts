@@ -65,7 +65,7 @@ const json = new SlashCommandBuilder()
   .addSubcommand((subcommand) =>
     subcommand
       .setName(Subcommand.UNSUBSCRIBE)
-      .setDescription("Unsubscribe to creators"),
+      .setDescription("Unsubscribe from creators"),
   )
   .toJSON();
 
