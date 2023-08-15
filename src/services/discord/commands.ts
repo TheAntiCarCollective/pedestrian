@@ -1,4 +1,5 @@
 import type {
+  ButtonInteraction,
   Client,
   ContextMenuCommandBuilder,
   Interaction,
@@ -18,6 +19,11 @@ type CommandJson = ContextMenuCommandJson | SlashCommandJson;
 
 type OnInteractionResponse = Promise<InteractionResponse | Message>;
 type OnInteraction = (interaction: Interaction) => OnInteractionResponse;
+
+type OnButtonInteraction = (
+  interaction: ButtonInteraction,
+  id: string,
+) => OnInteractionResponse;
 
 export type Command = {
   guildId?: string;
@@ -113,4 +119,22 @@ export const isUserOwner = async ({ client, user }: Interaction) => {
 
   const { members } = owner;
   return members.has(userId);
+};
+
+export const registerButton = (
+  prefix: string,
+  callback: OnButtonInteraction,
+) => {
+  discord.on(Events.InteractionCreate, async (interaction) => {
+    if (!interaction.isButton()) return;
+    const { customId } = interaction;
+    if (!customId.startsWith(prefix)) return;
+    const id = customId.slice(prefix.length);
+
+    try {
+      await callback(interaction, id);
+    } catch (error) {
+      logger.error(error, "REGISTER_BUTTON_ERROR");
+    }
+  });
 };
