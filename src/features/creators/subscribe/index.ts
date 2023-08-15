@@ -104,7 +104,7 @@ const createCreatorChannels = async (
   const { guild } = guildChannelManager;
   const { id: guildId } = guild;
 
-  const existingCreatorChannels = await database.getCreatorChannels(guild.id);
+  const existingCreatorChannels = await database.getCreatorChannels(guildId);
   const existingCreatorChannelIds = existingCreatorChannels.map(({ id }) => id);
   const existingWebhooks = existingCreatorChannels.reduce(
     (existingWebhooks, { id, parentId, webhookId, webhookToken }) => {
@@ -122,55 +122,59 @@ const createCreatorChannels = async (
   const promises: Promise<unknown>[] = [];
 
   for (const [, { id, type }] of creatorChannels) {
+    if (existingCreatorChannelIds.includes(id)) continue;
+
     const channel = await guildChannelManager.fetch(id);
     if (channel === null) throw new JsonError(guild);
     if (channel instanceof CategoryChannel) throw new JsonError(channel);
 
-    if (!existingCreatorChannelIds.includes(id)) {
-      let parentId: string | null = null;
-      let webhookId: string;
-      let webhookToken: string | null;
+    let parentId: string | null = null;
+    let webhookId: string;
+    let webhookToken: string | null;
 
-      if (channel instanceof ThreadChannel) {
-        const { parent } = channel;
-        if (parent === null) throw new JsonError(channel);
+    if (channel instanceof ThreadChannel) {
+      const { parent } = channel;
+      if (parent === null) throw new JsonError(channel);
 
-        parentId = parent.id;
-        const webhook = existingWebhooks.get(parentId);
+      parentId = parent.id;
+      const webhook = existingWebhooks.get(parentId);
 
-        if (webhook === undefined) {
-          const webhook = await parent.createWebhook({
-            name: Environment.PROJECT_NAME,
-          });
-
-          webhookId = webhook.id;
-          webhookToken = webhook.token;
-        } else {
-          webhookId = webhook.id;
-          webhookToken = webhook.token;
-        }
-      } else {
-        const webhook = await channel.createWebhook({
+      if (webhook === undefined) {
+        const webhook = await parent.createWebhook({
           name: Environment.PROJECT_NAME,
         });
 
         webhookId = webhook.id;
         webhookToken = webhook.token;
+      } else {
+        webhookId = webhook.id;
+        webhookToken = webhook.token;
       }
+    } else {
+      const webhook = await channel.createWebhook({
+        name: Environment.PROJECT_NAME,
+      });
 
-      if (webhookToken === null) throw new JsonError(channel);
-
-      promises.push(
-        database.createCreatorChannel({
-          id,
-          type,
-          guildId,
-          parentId,
-          webhookId,
-          webhookToken,
-        }),
-      );
+      webhookId = webhook.id;
+      webhookToken = webhook.token;
     }
+
+    if (webhookToken === null) throw new JsonError(channel);
+    const webhook = { id: webhookId, token: webhookToken };
+
+    existingWebhooks.set(id, webhook);
+    if (parentId !== null) existingWebhooks.set(parentId, webhook);
+
+    promises.push(
+      database.createCreatorChannel({
+        id,
+        type,
+        guildId,
+        parentId,
+        webhookId,
+        webhookToken,
+      }),
+    );
   }
 
   return Promise.all(promises);
@@ -377,10 +381,6 @@ export default async (interaction: ChatInputCommandInteraction) => {
   if (buttonId === cancelButtonId || typeof channelId !== "string")
     return buttonInteraction.update(noResultsExistOptions(null));
 
-  // region Create Discord and Database Resources
-  // Defer since createCreatorChannels can potentially take too long
-  response = await buttonInteraction.deferUpdate();
-
   await createCreatorChannels(guildChannelManager, selectedCreatorChannels);
   const creatorChannelIds = [...selectedCreatorChannels.keys()];
 
@@ -407,10 +407,9 @@ export default async (interaction: ChatInputCommandInteraction) => {
     .setColor(Color.SUCCESS)
     .setDescription(description);
 
-  return buttonInteraction.editReply({
+  return buttonInteraction.update({
     components: [],
     content: null,
     embeds: [embed],
   });
-  // endregion
 };
