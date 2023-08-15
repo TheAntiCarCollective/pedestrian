@@ -1,4 +1,4 @@
-import type { EmbedBuilder, JSONEncodable } from "discord.js";
+import type { JSONEncodable } from "discord.js";
 import { Events, Client } from "discord.js";
 import loggerFactory from "pino";
 
@@ -19,16 +19,6 @@ export class JsonError<T> extends Error {
     super(message);
   }
 }
-
-export const addField = (
-  embed: EmbedBuilder,
-  name: string,
-  value: string | null | undefined,
-  inline?: boolean,
-) => {
-  if (typeof value !== "string") return embed;
-  return embed.addFields({ name, value, inline });
-};
 
 const discord = new Client({
   intents: ["Guilds"],

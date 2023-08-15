@@ -15,7 +15,7 @@ import {
 import loggerFactory from "pino";
 
 import { registerButton } from "../../../services/discord/commands";
-import discord, { addField, Color } from "../../../services/discord";
+import discord, { Color } from "../../../services/discord";
 import {
   getChannelUrl,
   getThumbnailUrl,
@@ -193,13 +193,8 @@ registerButton(DESCRIPTION_BUTTON_ID_PREFIX, async (interaction, videoId) => {
   const video = await youtube.getVideo(videoId);
   const { snippet: videoSnippet, statistics } = video;
 
-  const {
-    channelId,
-    description: rawDescription,
-    publishedAt,
-    tags,
-    title,
-  } = videoSnippet ?? {};
+  let { description } = videoSnippet ?? {};
+  const { channelId, publishedAt, tags, title } = videoSnippet ?? {};
 
   if (typeof channelId !== "string") throw new Error(videoId);
   const { snippet: channelSnippet } = await youtube.getChannel(channelId);
@@ -229,43 +224,47 @@ registerButton(DESCRIPTION_BUTTON_ID_PREFIX, async (interaction, videoId) => {
   const timestamp =
     typeof publishedAt === "string" ? new Date(publishedAt) : null;
 
-  let description: string | null = rawDescription ?? "";
-  description = description.length > 0 ? description : null;
-
   let embed = new EmbedBuilder()
     .setAuthor(author)
     .setColor(Color.INFORMATIONAL)
-    .setDescription(description)
     .setFooter(footer)
     .setTimestamp(timestamp)
     .setTitle(title ?? null)
     .setURL(videoUrl);
 
   const source = statistics ?? {};
-  const getValue = (property: keyof typeof source) => {
+  const addField = (name: string, property: keyof typeof source) => {
     const rawValue = source[property];
-    if (typeof rawValue !== "string") return rawValue;
+    if (typeof rawValue !== "string") return embed;
+
     const value = parseInt(rawValue);
-    return value.toLocaleString();
+    return embed.addFields({
+      name,
+      value: value.toLocaleString(),
+      inline: true,
+    });
   };
 
-  embed = addField(embed, "Views", getValue("viewCount"), true);
-  embed = addField(embed, "Likes", getValue("likeCount"), true);
-  embed = addField(embed, "Dislikes", getValue("dislikeCount"), true);
-  embed = addField(embed, "Comments", getValue("commentCount"), true);
-  embed = addField(embed, "Favorites", getValue("favoriteCount"), true);
+  embed = addField("Views", "viewCount");
+  embed = addField("Likes", "likeCount");
+  embed = addField("Dislikes", "dislikeCount");
+  embed = addField("Comments", "commentCount");
+  embed = addField("Favorites", "favoriteCount");
 
   const tagsValue = tags?.reduce((tagsValue, tag) => {
-    const newTagsValue = tagsValue === "" ? `#${tag}` : `${tagsValue} #${tag}`;
+    const newTagsValue =
+      tagsValue.length > 0 ? `${tagsValue} #${tag}` : `#${tag}`;
     return newTagsValue.length > 1024 ? tagsValue : newTagsValue;
   }, "");
 
-  const { length: embedLength } = embed;
-  const { length: tagsLength } = tagsValue ?? "";
+  if (tagsValue !== undefined && tagsValue.length > 0)
+    embed = embed.addFields({ name: "Tags", value: tagsValue });
 
-  if (embedLength > 6000) embed = embed.setDescription(null);
-  if (tagsLength > 0 && embedLength + tagsLength <= 6000)
-    embed = addField(embed, "Tags", tagsValue, false);
+  description ??= "";
+  description = description.substring(0, 4096);
+  const { length: descriptionLength } = description;
+  if (descriptionLength > 0 && descriptionLength + embed.length <= 6000)
+    embed = embed.setDescription(description);
 
   return interaction.reply({
     embeds: [embed],
