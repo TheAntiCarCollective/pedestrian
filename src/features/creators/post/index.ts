@@ -3,17 +3,23 @@ import PlaylistItemSnippet = youtube_v3.Schema$PlaylistItemSnippet;
 
 import type { Guild } from "discord.js";
 import {
-  bold,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   ChannelType,
   DiscordAPIError,
+  EmbedBuilder,
   Events,
   roleMention,
 } from "discord.js";
-import { compress } from "compress-tag";
 import loggerFactory from "pino";
 
-import discord from "../../../services/discord";
-import { getThumbnailUrl, getVideoUrl } from "../../../services/youtube";
+import discord, { addField, Color } from "../../../services/discord";
+import {
+  getChannelUrl,
+  getThumbnailUrl,
+  getVideoUrl,
+} from "../../../services/youtube";
 import sleep from "../../../sleep";
 
 import type { CreatorSubscription } from "./database";
@@ -21,6 +27,9 @@ import * as localDatabase from "./database";
 import * as creatorsDatabase from "../database";
 import * as youtube from "../youtube";
 import { CreatorType } from "../constants";
+
+const DESCRIPTION_BUTTON_ID_PREFIX = // DO NOT CHANGE
+  "GLOBAL_8f75c929-77a9-469c-8662-fec4a8c26a95_";
 
 const logger = loggerFactory({
   name: __filename,
@@ -72,8 +81,8 @@ const postFromYouTube = async (creatorSubscription: CreatorSubscription) => {
   const { title: channelName, thumbnails } = snippet ?? {};
   if (typeof channelName !== "string") return;
 
-  const post = async (video: PlaylistItemSnippet = {}) => {
-    const { description, publishedAt, resourceId, title } = video;
+  const post = async (video: PlaylistItemSnippet) => {
+    const { publishedAt, resourceId, title } = video;
     const { videoId } = resourceId ?? {};
 
     // prettier-ignore
@@ -84,28 +93,30 @@ const postFromYouTube = async (creatorSubscription: CreatorSubscription) => {
     if (videoDate < createdAt) return false;
 
     const videoUrl = getVideoUrl(videoId);
-    const header =
+    const content =
       creatorMentionRoleId === null
         ? videoUrl
         : `${roleMention(creatorMentionRoleId)}\n${videoUrl}`;
 
-    const rawContent = compress`
-      ${header}
-      \n\n${bold("Title")}
-      \n${title}
-      \n\n${bold("Description")}
-      \n${description ?? ""}
-    `;
-
-    const content = rawContent.substring(0, 2000);
     const threadId = creatorParentId === null ? undefined : creatorChannelId;
     const threadName = `${channelName} - ${title}`.substring(0, 100);
-
     const webhookThreadName =
       creatorChannelType === ChannelType.GuildForum ? threadName : undefined;
 
+    const button = new ButtonBuilder()
+      .setEmoji("📰")
+      .setLabel("| Click Here for Description |")
+      .setStyle(ButtonStyle.Primary)
+      .setCustomId(`${DESCRIPTION_BUTTON_ID_PREFIX}${videoId}`);
+
+    const buttonActionRow =
+      // prettier-ignore
+      new ActionRowBuilder<ButtonBuilder>()
+        .addComponents(button);
+
     const message = await webhook.send({
       avatarURL: getThumbnailUrl(thumbnails),
+      components: [buttonActionRow],
       content,
       username: channelName,
       threadId,
@@ -175,4 +186,75 @@ discord.once(Events.ClientReady, async (client) => {
 
     await Promise.all(promises);
   }
+});
+
+discord.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isButton()) return;
+
+  const { customId } = interaction;
+  if (!customId.startsWith(DESCRIPTION_BUTTON_ID_PREFIX)) return;
+
+  const videoId = customId.slice(DESCRIPTION_BUTTON_ID_PREFIX.length);
+  const video = await youtube.getVideo(videoId);
+  const { snippet: videoSnippet, statistics } = video;
+
+  const { channelId, description, publishedAt, tags, title } =
+    videoSnippet ?? {};
+
+  if (typeof channelId !== "string") throw new Error(videoId);
+  const { snippet: channelSnippet } = await youtube.getChannel(channelId);
+  const { title: channelName, thumbnails } = channelSnippet ?? {};
+
+  const channelUrl = getChannelUrl(channelId);
+  const channelThumbnailUrl = getThumbnailUrl(thumbnails);
+  const videoUrl = getVideoUrl(videoId);
+
+  const author =
+    typeof channelName === "string"
+      ? {
+          iconURL: channelThumbnailUrl,
+          name: channelName,
+          url: channelUrl,
+        }
+      : null;
+
+  const footer =
+    typeof title === "string"
+      ? {
+          iconURL: channelThumbnailUrl,
+          text: title,
+        }
+      : null;
+
+  const timestamp =
+    typeof publishedAt === "string" ? new Date(publishedAt) : null;
+
+  let embed = new EmbedBuilder()
+    .setAuthor(author)
+    .setColor(Color.INFORMATIONAL)
+    .setDescription(description ?? null)
+    .setFooter(footer)
+    .setTimestamp(timestamp)
+    .setTitle(title ?? null)
+    .setURL(videoUrl);
+
+  const tagsValue = tags?.reduce((tagsValue, tag) => {
+    if (tagsValue === "") return `#${tag}`;
+    const newTagsValue = `${tagsValue} #${tag}`;
+    return newTagsValue.length > 6000 - embed.length ? tagsValue : newTagsValue;
+  }, "");
+
+  embed = addField(embed, "Views", statistics?.viewCount, true);
+  embed = addField(embed, "Likes", statistics?.likeCount, true);
+  embed = addField(embed, "Dislikes", statistics?.dislikeCount, true);
+  embed = addField(embed, "Comments", statistics?.commentCount, true);
+  embed = addField(embed, "Favorites", statistics?.favoriteCount, true);
+  embed = addField(embed, "Tags", tagsValue, false);
+
+  if (embed.length > 6000) embed = embed.setDescription(null);
+
+  await interaction.reply({
+    embeds: [embed],
+    ephemeral: true,
+  });
 });

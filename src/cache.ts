@@ -20,6 +20,7 @@ export const CacheKey = {
   channel: (channelId: string) => `${keyPrefix}:channel:${channelId}`,
   channels: (query: string) => `${keyPrefix}:channels:${normalizeInput(query)}`,
   videos: (playlistId: string) => `${keyPrefix}:videos:${playlistId}`,
+  video: (videoId: string) => `${keyPrefix}:video:${videoId}`,
 } as const;
 // endregion
 

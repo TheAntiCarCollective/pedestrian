@@ -1,7 +1,7 @@
 import youtube from "../../services/youtube";
 import cache, { CacheKey } from "../../cache";
 
-const { channels, playlistItems, search } = youtube;
+const { channels, playlistItems, search, videos } = youtube;
 const EXPIRE_IN_30_DAYS = 2_592_000_000;
 const EXPIRE_IN_30_MINUTES = 1_800_000;
 
@@ -53,7 +53,7 @@ export const getVideos = (playlistId: string) => {
   const key = CacheKey.videos(playlistId);
   const callback = async () => {
     const { data } = await playlistItems.list({
-      fields: "items(snippet(description,publishedAt,resourceId,title))",
+      fields: "items(snippet(publishedAt,resourceId,title))",
       maxResults: 50,
       part: ["snippet"],
       playlistId,
@@ -66,6 +66,27 @@ export const getVideos = (playlistId: string) => {
       .filter((snippet) => snippet !== undefined)
       .map((snippet) => snippet as NonNullable<typeof snippet>)
       .filter(({ resourceId }) => resourceId?.kind === "youtube#video");
+  };
+
+  return cache.computeIfAbsent(key, callback, EXPIRE_IN_30_MINUTES);
+};
+
+export const getVideo = (videoId: string) => {
+  const key = CacheKey.video(videoId);
+  const callback = async () => {
+    const { data } = await videos.list({
+      fields:
+        "items(snippet(channelId,description,publishedAt,tags,title),statistics)",
+      id: [videoId],
+      maxResults: 1,
+      part: ["snippet, statistics"],
+    });
+
+    const items = data.items ?? [];
+    const item = items[0];
+
+    if (item !== undefined) return item;
+    throw new Error(videoId);
   };
 
   return cache.computeIfAbsent(key, callback, EXPIRE_IN_30_MINUTES);
