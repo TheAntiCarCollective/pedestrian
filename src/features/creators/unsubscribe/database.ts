@@ -1,15 +1,6 @@
 import { useClient } from "../../../services/postgresql";
 
-import type { CreatorType } from "../constants";
-
-// region Types
-export type CreatorSubscription = {
-  id: number;
-  creatorChannelId: string;
-  creatorDomainId: string;
-  creatorType: CreatorType;
-};
-// endregion
+import type { CreatorSubscription } from "./types";
 
 export const getCreatorSubscriptions = (guildId: string) =>
   useClient(async (client) => {

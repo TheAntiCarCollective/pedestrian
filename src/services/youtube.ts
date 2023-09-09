@@ -3,6 +3,7 @@ import Thumbnail = youtube_v3.Schema$Thumbnail;
 import ThumbnailDetails = youtube_v3.Schema$ThumbnailDetails;
 
 import Environment from "../environment";
+import { isNonNullable } from "../helpers/array";
 
 export const getChannelUrl = (channelId: string) =>
   `https://www.youtube.com/channel/${channelId}`;
@@ -17,8 +18,7 @@ export const getThumbnailUrl = (thumbnailDetails: ThumbnailDetails = {}) => {
       return bResolution - aResolution;
     })
     .map(({ url }) => url)
-    .filter((url) => typeof url === "string")
-    .map((url) => url as NonNullable<typeof url>);
+    .filter(isNonNullable);
 
   return urls[0];
 };
@@ -27,6 +27,6 @@ export const getVideoUrl = (videoId: string) =>
   `https://www.youtube.com/watch?v=${videoId}`;
 
 export default youtube({
-  auth: Environment.YOUTUBE_API_KEY,
+  auth: Environment.YoutubeApiKey,
   version: "v3",
 });

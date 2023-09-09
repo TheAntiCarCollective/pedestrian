@@ -1,21 +1,37 @@
 import { ChannelType } from "discord.js";
+import assert from "node:assert";
 
 import { useClient } from "../../../services/postgresql";
 
 import type { CreatorType } from "../constants";
 
 // region Types
+type CreatorPost = {
+  contentId: string;
+  creatorType: CreatorType;
+};
+
 export type CreatorSubscription = {
   createdAt: Date;
   creatorDomainId: string;
   creatorType: CreatorType;
-  lastContentId: string | null;
   creatorChannelId: string;
   creatorChannelType: ChannelType;
   creatorParentId: string | null;
   webhookId: string;
   webhookToken: string;
   creatorMentionRoleId: string | null;
+};
+
+type DoesCreatorPostExist = {
+  contentId: string;
+  creatorChannelId: string;
+  creatorDomainId: string;
+  creatorType: CreatorType;
+};
+
+type Exists = {
+  exists: boolean;
 };
 
 type CreateCreatorPost = {
@@ -27,6 +43,28 @@ type CreateCreatorPost = {
 };
 // endregion
 
+export const getCreatorPost = (postId: string) =>
+  useClient(async (client) => {
+    const query = `
+      select
+        cp.content_id as "contentId",
+        c.type as "creatorType"
+      from creator_post as cp
+      inner join creator_subscription cs
+        on cs.id = cp.creator_subscription_id
+      inner join creator c
+        on c.id = cs.creator_id
+      where cp.id = $1
+    `;
+
+    const values = [postId];
+    const { rows } = await client.query<CreatorPost>(query, values);
+
+    const row = rows[0];
+    assert(row !== undefined);
+    return row;
+  });
+
 export const getCreatorSubscriptions = (guildId: string) =>
   useClient(async (client) => {
     const query = `
@@ -34,7 +72,6 @@ export const getCreatorSubscriptions = (guildId: string) =>
         cs.created_at as "createdAt",
         c.domain_id as "creatorDomainId",
         c.type as "creatorType",
-        cp.content_id as "lastContentId",
         cc.id as "creatorChannelId",
         cc.type as "creatorChannelType",
         cc.parent_id as "creatorParentId",
@@ -48,20 +85,42 @@ export const getCreatorSubscriptions = (guildId: string) =>
         on cc.id = cs.creator_channel_id
       inner join guild as g
         on g.id = cc.guild_id
-      left join lateral
-        ( select cp.content_id
-          from creator_post as cp
-          where cp.creator_subscription_id = cs.id
-          order by cp.id desc
-          limit 1
-        ) as cp
-        on true
       where g.id = $1
     `;
 
     const values = [guildId];
     const { rows } = await client.query<CreatorSubscription>(query, values);
     return rows;
+  });
+
+export const doesCreatorPostExist = ({
+  contentId,
+  creatorChannelId,
+  creatorDomainId,
+  creatorType,
+}: DoesCreatorPostExist) =>
+  useClient(async (client) => {
+    const query = `
+      select exists(
+        select cp.id
+        from creator_post as cp
+        inner join creator_subscription as cs
+          on cs.id = cp.creator_subscription_id
+        inner join creator as c
+          on c.id = cs.creator_id
+        where cp.content_id = $1
+          and cs.creator_channel_id = $2
+          and c.domain_id = $3
+          and c.type = $4
+      ) as exists
+    `;
+
+    const values = [contentId, creatorChannelId, creatorDomainId, creatorType];
+    const { rows } = await client.query<Exists>(query, values);
+
+    const { exists } = rows[0] ?? {};
+    assert(exists !== undefined);
+    return exists;
   });
 
 export const createCreatorPost = ({

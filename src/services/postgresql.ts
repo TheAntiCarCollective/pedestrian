@@ -13,11 +13,11 @@ const logger = loggerFactory({
 });
 
 const postgresql = new Pool({
-  host: Environment.POSTGRESQL_HOST,
-  port: parseInt(Environment.POSTGRESQL_PORT),
-  database: Environment.POSTGRESQL_DATABASE,
-  user: Environment.POSTGRESQL_USER,
-  password: Environment.POSTGRESQL_PASSWORD,
+  host: Environment.PostgresqlHost,
+  port: parseInt(Environment.PostgresqlPort),
+  database: Environment.PostgresqlDatabase,
+  user: Environment.PostgresqlUser,
+  password: Environment.PostgresqlPassword,
 });
 
 export const useClient = async <T>(callback: Callback<T>) => {

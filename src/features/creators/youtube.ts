@@ -1,9 +1,12 @@
+import assert from "node:assert";
+
 import youtube from "../../services/youtube";
-import cache, { CacheKey } from "../../cache";
+import CacheKey, * as cache from "../../cache";
+import { isNonNullable } from "../../helpers/array";
 
 const { channels, playlistItems, search, videos } = youtube;
-const EXPIRE_IN_30_DAYS = 2_592_000_000;
-const EXPIRE_IN_30_MINUTES = 1_800_000;
+const ExpireIn30Days = 2_592_000_000;
+const ExpireIn30Minutes = 1_800_000;
 
 export const getChannels = (query: string) => {
   const key = CacheKey.channels(query);
@@ -19,13 +22,13 @@ export const getChannels = (query: string) => {
 
     const items = data.items ?? [];
 
+    // prettier-ignore
     return items
       .map(({ snippet }) => snippet)
-      .filter((snippet) => snippet !== undefined)
-      .map((snippet) => snippet as NonNullable<typeof snippet>);
+      .filter(isNonNullable);
   };
 
-  return cache.computeIfAbsent(key, callback, EXPIRE_IN_30_DAYS);
+  return cache.computeIfAbsent(key, callback, ExpireIn30Days);
 };
 
 export const getChannel = (channelId: string) => {
@@ -42,11 +45,11 @@ export const getChannel = (channelId: string) => {
     const items = data.items ?? [];
     const item = items[0];
 
-    if (item !== undefined) return item;
-    throw new Error(channelId);
+    assert(item !== undefined);
+    return item;
   };
 
-  return cache.computeIfAbsent(key, callback, EXPIRE_IN_30_DAYS);
+  return cache.computeIfAbsent(key, callback, ExpireIn30Days);
 };
 
 export const getVideos = (playlistId: string) => {
@@ -63,12 +66,11 @@ export const getVideos = (playlistId: string) => {
 
     return items
       .map(({ snippet }) => snippet)
-      .filter((snippet) => snippet !== undefined)
-      .map((snippet) => snippet as NonNullable<typeof snippet>)
+      .filter(isNonNullable)
       .filter(({ resourceId }) => resourceId?.kind === "youtube#video");
   };
 
-  return cache.computeIfAbsent(key, callback, EXPIRE_IN_30_MINUTES);
+  return cache.computeIfAbsent(key, callback, ExpireIn30Minutes);
 };
 
 export const getVideo = (videoId: string) => {
@@ -85,9 +87,9 @@ export const getVideo = (videoId: string) => {
     const items = data.items ?? [];
     const item = items[0];
 
-    if (item !== undefined) return item;
-    throw new Error(videoId);
+    assert(item !== undefined);
+    return item;
   };
 
-  return cache.computeIfAbsent(key, callback, EXPIRE_IN_30_MINUTES);
+  return cache.computeIfAbsent(key, callback, ExpireIn30Minutes);
 };

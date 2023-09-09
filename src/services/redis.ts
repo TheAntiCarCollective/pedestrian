@@ -8,13 +8,13 @@ const logger = loggerFactory({
 });
 
 const node = {
-  host: Environment.REDIS_HOST,
-  port: parseInt(Environment.REDIS_PORT),
+  host: Environment.RedisHost,
+  port: parseInt(Environment.RedisPort),
 };
 
 const user = {
-  username: Environment.REDIS_USERNAME,
-  password: Environment.REDIS_PASSWORD,
+  username: Environment.RedisUsername,
+  password: Environment.RedisPassword,
 };
 
 const createRedisByCluster = () =>
@@ -31,7 +31,7 @@ const createRedisByClient = () =>
   });
 
 const redis =
-  Environment.REDIS_CLUSTER === "true"
+  Environment.RedisCluster === "true"
     ? createRedisByCluster()
     : createRedisByClient();
 

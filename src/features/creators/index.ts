@@ -1,12 +1,8 @@
-import type { Interaction } from "discord.js";
-import {
-  ChatInputCommandInteraction,
-  PermissionFlagsBits,
-  SlashCommandBuilder,
-} from "discord.js";
+import type { CommandInteraction } from "discord.js";
+import { PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
+import assert, { fail as error } from "node:assert";
 
-import { registerCommand } from "../../services/discord/commands";
-import { JsonError } from "../../services/discord";
+import { registerCommand } from "../../services/discord";
 
 import onRoles, { Subcommand as RolesSubcommand } from "./roles";
 import { Option as RolesServerOption } from "./roles/server";
@@ -17,12 +13,12 @@ import onUnsubscribe from "./unsubscribe";
 import "./post";
 
 export enum SubcommandGroup {
-  ROLES = "roles",
+  Roles = "roles",
 }
 
 export enum Subcommand {
-  SUBSCRIBE = "subscribe",
-  UNSUBSCRIBE = "unsubscribe",
+  Subscribe = "subscribe",
+  Unsubscribe = "unsubscribe",
 }
 
 const json = new SlashCommandBuilder()
@@ -38,63 +34,57 @@ const json = new SlashCommandBuilder()
   )
   .addSubcommandGroup((subcommandGroup) =>
     subcommandGroup
-      .setName(SubcommandGroup.ROLES)
+      .setName(SubcommandGroup.Roles)
       .setDescription("Manage roles for creators")
       .addSubcommand((subcommand) =>
         subcommand
-          .setName(RolesSubcommand.SERVER)
+          .setName(RolesSubcommand.Server)
           .setDescription("Set default role to mention in creator posts")
           .addRoleOption((roleOption) =>
             roleOption
-              .setName(RolesServerOption.ROLE)
+              .setName(RolesServerOption.Role)
               .setDescription("Role to mention in creator posts"),
           ),
       ),
   )
   .addSubcommand((subcommand) =>
     subcommand
-      .setName(Subcommand.SUBSCRIBE)
+      .setName(Subcommand.Subscribe)
       .setDescription("Subscribe to a creator")
       .addStringOption((option) =>
         option
-          .setName(SubscribeOption.NAME)
+          .setName(SubscribeOption.Name)
           .setDescription("Name of the creator to subscribe to")
           .setRequired(true),
       ),
   )
   .addSubcommand((subcommand) =>
     subcommand
-      .setName(Subcommand.UNSUBSCRIBE)
+      .setName(Subcommand.Unsubscribe)
       .setDescription("Unsubscribe from creators"),
   )
   .toJSON();
 
-const onInteraction = (interaction: Interaction) => {
-  if (!(interaction instanceof ChatInputCommandInteraction))
-    throw new JsonError(interaction);
+const onCommand = (interaction: CommandInteraction) => {
+  assert(interaction.isChatInputCommand());
 
   const { options } = interaction;
   const subcommandGroup = options.getSubcommandGroup();
   const subcommand = options.getSubcommand();
 
   switch (subcommandGroup) {
-    case SubcommandGroup.ROLES:
+    case SubcommandGroup.Roles:
       return onRoles(interaction);
     case null:
       switch (subcommand) {
-        case Subcommand.SUBSCRIBE:
+        case Subcommand.Subscribe:
           return onSubscribe(interaction);
-        case Subcommand.UNSUBSCRIBE:
+        case Subcommand.Unsubscribe:
           return onUnsubscribe(interaction);
-        default:
-          throw new JsonError(interaction);
       }
-    default:
-      throw new JsonError(interaction);
   }
+
+  error();
 };
 
-void registerCommand({
-  json,
-  onInteraction,
-});
+registerCommand(json, undefined, onCommand);

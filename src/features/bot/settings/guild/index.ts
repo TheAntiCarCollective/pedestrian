@@ -1,8 +1,9 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 import { bold, codeBlock, EmbedBuilder } from "discord.js";
 import { compress } from "compress-tag";
+import assert from "node:assert";
 
-import { Color, JsonError } from "../../../../services/discord";
+import { Color } from "../../../../services/discord";
 
 import type * as types from "./types";
 import * as database from "./database";
@@ -13,8 +14,8 @@ type PartialGuildSettings = Partial<GuildSettings> & Pick<GuildSettings, "id">;
 // endregion
 
 export enum Option {
-  ID = "id",
-  MAX_CREATOR_SUBSCRIPTIONS = "max_creator_subscriptions",
+  Id = "id",
+  MaxCreatorSubscriptions = "max_creator_subscriptions",
 }
 
 const guildSettings = async (parameter: string | PartialGuildSettings) => {
@@ -44,11 +45,11 @@ const guildSettings = async (parameter: string | PartialGuildSettings) => {
 
 export const onGuild = async (interaction: ChatInputCommandInteraction) => {
   const { guildId: defaultGuildId, options } = interaction;
-  if (defaultGuildId === null) throw new JsonError(interaction);
-  const guildId = options.getString(Option.ID) ?? defaultGuildId;
+  assert(defaultGuildId !== null);
+  const guildId = options.getString(Option.Id) ?? defaultGuildId;
 
   const maxCreatorSubscriptions =
-    options.getInteger(Option.MAX_CREATOR_SUBSCRIPTIONS) ?? undefined;
+    options.getInteger(Option.MaxCreatorSubscriptions) ?? undefined;
 
   const newGuildSettings = await guildSettings({
     id: guildId,
@@ -61,7 +62,7 @@ export const onGuild = async (interaction: ChatInputCommandInteraction) => {
   `;
 
   const embed = new EmbedBuilder()
-    .setColor(Color.SUCCESS)
+    .setColor(Color.Success)
     .setDescription(description);
 
   return interaction.reply({

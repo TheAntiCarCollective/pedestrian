@@ -8,38 +8,28 @@ import {
   ButtonStyle,
   ChannelType,
   DiscordAPIError,
-  EmbedBuilder,
   Events,
   roleMention,
 } from "discord.js";
 import loggerFactory from "pino";
 
-import { registerButton } from "../../../services/discord/commands";
-import discord, { Color } from "../../../services/discord";
-import {
-  getChannelUrl,
-  getThumbnailUrl,
-  getVideoUrl,
-} from "../../../services/youtube";
+import discord from "../../../services/discord";
+import { getThumbnailUrl, getVideoUrl } from "../../../services/youtube";
 import sleep from "../../../sleep";
 
 import type { CreatorSubscription } from "./database";
-import * as localDatabase from "./database";
+import * as postDatabase from "./database";
 import * as creatorsDatabase from "../database";
 import * as youtube from "../youtube";
 import { CreatorType } from "../constants";
 
-const DESCRIPTION_BUTTON_ID_PREFIX = // DO NOT CHANGE
-  "GLOBAL_8f75c929-77a9-469c-8662-fec4a8c26a95_";
+// Install
+import ComponentId from "./components";
+import "./components/description.button";
 
 const logger = loggerFactory({
   name: __filename,
 });
-
-const database = {
-  ...localDatabase,
-  ...creatorsDatabase,
-};
 
 const getWebhook = async ({
   creatorChannelId,
@@ -50,7 +40,7 @@ const getWebhook = async ({
     return await discord.fetchWebhook(webhookId, webhookToken);
   } catch (error) {
     if (error instanceof DiscordAPIError && error.status === 404) {
-      await database.deleteCreatorChannels([creatorChannelId]);
+      await creatorsDatabase.deleteCreatorChannels([creatorChannelId]);
       logger.info(error, "GET_WEBHOOK_ERROR");
       return undefined;
     }
@@ -66,7 +56,6 @@ const postFromYouTube = async (creatorSubscription: CreatorSubscription) => {
   const {
     creatorDomainId,
     creatorType,
-    lastContentId,
     creatorChannelId,
     creatorChannelType,
     creatorParentId,
@@ -86,12 +75,19 @@ const postFromYouTube = async (creatorSubscription: CreatorSubscription) => {
     const { publishedAt, resourceId, title } = video;
     const { videoId } = resourceId ?? {};
 
-    // prettier-ignore
-    if (typeof publishedAt !== "string" || typeof title !== "string") return false;
-    if (typeof videoId !== "string" || videoId === lastContentId) return false;
+    if (typeof videoId !== "string") return;
+    const exists = await postDatabase.doesCreatorPostExist({
+      contentId: videoId,
+      creatorChannelId,
+      creatorDomainId,
+      creatorType,
+    });
+
+    if (exists) return;
+    if (typeof publishedAt !== "string" || typeof title !== "string") return;
 
     const videoDate = new Date(publishedAt);
-    if (videoDate < createdAt) return false;
+    if (videoDate < createdAt) return;
 
     const videoUrl = getVideoUrl(videoId);
     const content =
@@ -106,9 +102,9 @@ const postFromYouTube = async (creatorSubscription: CreatorSubscription) => {
 
     const button = new ButtonBuilder()
       .setEmoji("📰")
-      .setLabel("| Click Here for Description |")
+      .setLabel("| View Description")
       .setStyle(ButtonStyle.Primary)
-      .setCustomId(`${DESCRIPTION_BUTTON_ID_PREFIX}${videoId}`);
+      .setCustomId(ComponentId.DescriptionButton);
 
     const buttonActionRow =
       // prettier-ignore
@@ -124,13 +120,18 @@ const postFromYouTube = async (creatorSubscription: CreatorSubscription) => {
       threadName: webhookThreadName,
     });
 
-    await database.createCreatorPost({
-      id: message.id,
-      creatorChannelId,
-      creatorType,
-      creatorDomainId,
-      contentId: videoId,
-    });
+    try {
+      await postDatabase.createCreatorPost({
+        id: message.id,
+        creatorChannelId,
+        creatorType,
+        creatorDomainId,
+        contentId: videoId,
+      });
+    } catch (error) {
+      await webhook.deleteMessage(message, threadId);
+      throw error;
+    }
 
     switch (creatorChannelType) {
       case ChannelType.GuildAnnouncement:
@@ -138,37 +139,34 @@ const postFromYouTube = async (creatorSubscription: CreatorSubscription) => {
       // falls through
       case ChannelType.GuildText:
         await message.startThread({ name: threadName });
-      // falls through
-      default:
-        break;
     }
-
-    return lastContentId !== null;
   };
 
   const videos = await youtube.getVideos(uploads);
-  // Post videos until caught up to lastContentId
-  for (const video of videos) {
-    const continuePosting = await post(video);
-    if (!continuePosting) break;
-  }
+  videos.sort(({ publishedAt: a }, { publishedAt: b }) => {
+    if (typeof a !== "string" || typeof b !== "string") return 0;
+    const aDate = new Date(a);
+    const bDate = new Date(b);
+    return aDate.getTime() - bDate.getTime();
+  });
+
+  const promises = videos.map(post);
+  await Promise.all(promises);
 };
 
-const postInGuild = async ({ id }: Guild) => {
-  const creatorSubscriptions = await database.getCreatorSubscriptions(id);
-  const promises = creatorSubscriptions.map(async (creatorSubscription) => {
-    const { creatorType } = creatorSubscription;
+const postInGuild = async ({ id: guildId }: Guild) => {
+  const creatorSubscriptions =
+    await postDatabase.getCreatorSubscriptions(guildId);
 
+  const promises = creatorSubscriptions.map(async (creatorSubscription) => {
     try {
-      switch (creatorType) {
-        case CreatorType.YOUTUBE:
+      switch (creatorSubscription.creatorType) {
+        case CreatorType.YouTube:
           await postFromYouTube(creatorSubscription);
-          break;
-        default:
-          throw new Error(creatorType);
+          return;
       }
     } catch (error) {
-      logger.error(error, "POSTING_ERROR");
+      logger.error(error, "POST_IN_GUILD_ERROR");
     }
   });
 
@@ -181,93 +179,10 @@ discord.once(Events.ClientReady, async (client) => {
     const untilNextHour = 3600000 - (now.getTime() % 3600000);
     await sleep(untilNextHour);
 
-    const guildManager = client.guilds;
+    const { guilds: guildManager } = client;
     const guilds = guildManager.valueOf();
     const promises = guilds.map(postInGuild);
 
     await Promise.all(promises);
   }
-});
-
-registerButton(DESCRIPTION_BUTTON_ID_PREFIX, async (interaction, videoId) => {
-  const video = await youtube.getVideo(videoId);
-  const { snippet: videoSnippet, statistics } = video;
-
-  let { description } = videoSnippet ?? {};
-  const { channelId, publishedAt, tags, title } = videoSnippet ?? {};
-
-  if (typeof channelId !== "string") throw new Error(videoId);
-  const { snippet: channelSnippet } = await youtube.getChannel(channelId);
-  const { title: channelName, thumbnails } = channelSnippet ?? {};
-
-  const channelUrl = getChannelUrl(channelId);
-  const channelThumbnailUrl = getThumbnailUrl(thumbnails);
-  const videoUrl = getVideoUrl(videoId);
-
-  const author =
-    typeof channelName === "string"
-      ? {
-          iconURL: channelThumbnailUrl,
-          name: channelName,
-          url: channelUrl,
-        }
-      : null;
-
-  const footer =
-    typeof title === "string"
-      ? {
-          iconURL: channelThumbnailUrl,
-          text: title,
-        }
-      : null;
-
-  const timestamp =
-    typeof publishedAt === "string" ? new Date(publishedAt) : null;
-
-  let embed = new EmbedBuilder()
-    .setAuthor(author)
-    .setColor(Color.INFORMATIONAL)
-    .setFooter(footer)
-    .setTimestamp(timestamp)
-    .setTitle(title ?? null)
-    .setURL(videoUrl);
-
-  const source = statistics ?? {};
-  const addField = (name: string, property: keyof typeof source) => {
-    const rawValue = source[property];
-    if (typeof rawValue !== "string") return embed;
-
-    const value = parseInt(rawValue);
-    return embed.addFields({
-      name,
-      value: value.toLocaleString(),
-      inline: true,
-    });
-  };
-
-  embed = addField("Views", "viewCount");
-  embed = addField("Likes", "likeCount");
-  embed = addField("Dislikes", "dislikeCount");
-  embed = addField("Comments", "commentCount");
-  embed = addField("Favorites", "favoriteCount");
-
-  const tagsValue = tags?.reduce((tagsValue, tag) => {
-    const newTagsValue =
-      tagsValue.length > 0 ? `${tagsValue} #${tag}` : `#${tag}`;
-    return newTagsValue.length > 1024 ? tagsValue : newTagsValue;
-  }, "");
-
-  if (tagsValue !== undefined && tagsValue.length > 0)
-    embed = embed.addFields({ name: "Tags", value: tagsValue });
-
-  description ??= "";
-  description = description.substring(0, 4096);
-  const { length: descriptionLength } = description;
-  if (descriptionLength > 0 && descriptionLength + embed.length <= 6000)
-    embed = embed.setDescription(description);
-
-  return interaction.reply({
-    embeds: [embed],
-    ephemeral: true,
-  });
 });

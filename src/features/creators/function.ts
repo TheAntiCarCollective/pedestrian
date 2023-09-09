@@ -1,6 +1,7 @@
 import type { GuildBasedChannel, GuildChannelManager } from "discord.js";
 import { DiscordAPIError } from "discord.js";
 import loggerFactory from "pino";
+import assert from "node:assert";
 
 import * as database from "./database";
 
@@ -20,15 +21,14 @@ export const getChannels = async (
 ) => {
   const channelIdsRaw = creatorSubscriptions
     .map(({ creatorChannelId }) => creatorChannelId)
-    .reduce((ids, id) => ids.add(id), new Set<string>());
+    .reduce((set, id) => set.add(id), new Set<string>());
   const channelIds = [...channelIdsRaw];
 
   const deletedCreatorChannelIds: string[] = [];
-
   const channelPromises = channelIds.map(async (channelId) => {
     try {
       const channel = await guildChannelManager.fetch(channelId);
-      if (channel === null) throw new Error(channelId);
+      assert(channel !== null);
       return channel;
     } catch (error) {
       if (error instanceof DiscordAPIError && error.status === 404) {
@@ -47,8 +47,8 @@ export const getChannels = async (
     await database.deleteCreatorChannels(deletedCreatorChannelIds);
 
   return channelsRaw.reduce(
-    (channels, channel) =>
-      channel === undefined ? channels : channels.set(channel.id, channel),
+    // prettier-ignore
+    (map, channel) => channel === undefined ? map : map.set(channel.id, channel),
     new Map<string, GuildBasedChannel>(),
   );
 };

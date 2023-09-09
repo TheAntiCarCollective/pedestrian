@@ -40,6 +40,7 @@ redis.defineCommand("unlock", {
 });
 
 declare module "ioredis" {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
   interface RedisCommander<Context> {
     extendLock(
       lockKey: string, // KEYS[1]
@@ -117,7 +118,7 @@ const unlock = async ({ key, token }: Lock) => {
   try {
     await redis.unlock(key, token);
   } catch (error) {
-    logger.error("UNLOCK_ERROR");
+    logger.error(error, "UNLOCK_ERROR");
   }
 };
 

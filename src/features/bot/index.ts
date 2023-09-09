@@ -1,34 +1,42 @@
-import type { Interaction } from "discord.js";
-import {
+import type {
   ChatInputCommandInteraction,
+  CommandInteraction,
+} from "discord.js";
+import {
   EmbedBuilder,
   Events,
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
+import assert, { fail as error } from "node:assert";
 
-import { isUserOwner, registerCommand } from "../../services/discord/commands";
-import discord, { Color, JsonError } from "../../services/discord";
+import discord, {
+  Color,
+  isUserOwner,
+  registerCommand,
+} from "../../services/discord";
 import Environment from "../../environment";
 
 import onSettings, { Subcommand as SettingsSubcommand } from "./settings";
 import { Option as SettingsGuildOption } from "./settings/guild";
 
 export enum SubcommandGroup {
-  SETTINGS = "settings",
+  Settings = "settings",
 }
 
 const checkPermissionsResponse = async (
   interaction: ChatInputCommandInteraction,
 ) => {
-  if (await isUserOwner(interaction)) return undefined;
+  const { user } = interaction;
+  const { id: userId } = user;
+  if (isUserOwner(userId)) return undefined;
 
   // prettier-ignore
   const description =
-    `You must be an owner of ${Environment.PROJECT_NAME} to invoke this command.`;
+    `You must be an owner of ${Environment.ProjectName} to invoke this command.`;
 
   const embed = new EmbedBuilder()
-    .setColor(Color.ERROR)
+    .setColor(Color.Error)
     .setDescription(description);
 
   return interaction.reply({
@@ -39,27 +47,27 @@ const checkPermissionsResponse = async (
 
 const json = new SlashCommandBuilder()
   .setName("bot")
-  .setDescription(`Manage ${Environment.PROJECT_NAME}`)
+  .setDescription(`Manage ${Environment.ProjectName}`)
   .setDMPermission(false)
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addSubcommandGroup((subcommandGroup) =>
     subcommandGroup
-      .setName(SubcommandGroup.SETTINGS)
+      .setName(SubcommandGroup.Settings)
       .setDescription("Manage bot settings")
       .addSubcommand((subcommand) =>
         subcommand
-          .setName(SettingsSubcommand.GUILD)
+          .setName(SettingsSubcommand.Guild)
           .setDescription("Manage guild settings")
           .addStringOption((option) =>
             option
-              .setName(SettingsGuildOption.ID)
+              .setName(SettingsGuildOption.Id)
               .setDescription("ID of the guild to apply settings"),
           )
           .addIntegerOption((option) =>
             // prettier-ignore
             option
-              .setName(SettingsGuildOption.MAX_CREATOR_SUBSCRIPTIONS)
-              .setDescription(`Set ${SettingsGuildOption.MAX_CREATOR_SUBSCRIPTIONS} setting for guild`)
+              .setName(SettingsGuildOption.MaxCreatorSubscriptions)
+              .setDescription(`Set ${SettingsGuildOption.MaxCreatorSubscriptions} setting for guild`)
               .setMinValue(1)
               .setMaxValue(25),
           ),
@@ -67,10 +75,8 @@ const json = new SlashCommandBuilder()
   )
   .toJSON();
 
-const onInteraction = async (interaction: Interaction) => {
-  if (!(interaction instanceof ChatInputCommandInteraction))
-    throw new JsonError(interaction);
-
+const onCommand = async (interaction: CommandInteraction) => {
+  assert(interaction.isChatInputCommand());
   const response = await checkPermissionsResponse(interaction);
   if (response !== undefined) return response;
 
@@ -78,21 +84,15 @@ const onInteraction = async (interaction: Interaction) => {
   const subcommandGroup = options.getSubcommandGroup();
 
   switch (subcommandGroup) {
-    case SubcommandGroup.SETTINGS:
+    case SubcommandGroup.Settings:
       return onSettings(interaction);
-    default:
-      throw new JsonError(interaction);
   }
+
+  error();
 };
 
-const guildId = Environment.BOT_GUILD_ID;
-
-if (guildId !== undefined)
-  void registerCommand({
-    guildId,
-    json,
-    onInteraction,
-  });
+const guildId = Environment.BotGuildId;
+if (guildId !== undefined) registerCommand(json, guildId, onCommand);
 
 discord.once(Events.GuildCreate, async ({ commands, id }) => {
   // Detects guildId changes between restarts and

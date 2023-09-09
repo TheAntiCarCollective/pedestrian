@@ -11,16 +11,15 @@ const logger = loggerFactory({
 });
 
 // region CacheKey
-const normalizeInput = (value: string) =>
-  value.replace(/\s+/g, "").toLowerCase();
+const normalize = (value: string) => value.replace(/\s+/g, "").toLowerCase();
 
-const keyPrefix = normalizeInput(Environment.PROJECT_NAME);
+const cacheKey = (key: string) => `${Environment.ProjectName}:${key}`;
 
-export const CacheKey = {
-  channel: (channelId: string) => `${keyPrefix}:channel:${channelId}`,
-  channels: (query: string) => `${keyPrefix}:channels:${normalizeInput(query)}`,
-  videos: (playlistId: string) => `${keyPrefix}:videos:${playlistId}`,
-  video: (videoId: string) => `${keyPrefix}:video:${videoId}`,
+const CacheKey = {
+  channel: (channelId: string) => cacheKey(`channel:${channelId}`),
+  channels: (query: string) => cacheKey(`channels:${normalize(query)}`),
+  video: (videoId: string) => cacheKey(`video:${videoId}`),
+  videos: (playlistId: string) => cacheKey(`videos:${playlistId}`),
 } as const;
 // endregion
 
@@ -37,6 +36,7 @@ redis.defineCommand("atomicSet", {
 });
 
 declare module "ioredis" {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
   interface RedisCommander<Context> {
     atomicSet(
       lockKey: string, // KEYS[1]
@@ -49,7 +49,7 @@ declare module "ioredis" {
   }
 }
 
-export const atomicSet = async (
+const atomicSet = async (
   lock: Lock,
   key: string,
   value: string,
@@ -82,7 +82,7 @@ const get = async <T>(key: string) => {
 };
 // endregion
 
-const computeIfAbsent = async <T>(
+export const computeIfAbsent = async <T>(
   key: string,
   callback: () => Promise<NonNullable<T>>,
   expireInMilliseconds = Number.MAX_VALUE,
@@ -106,6 +106,4 @@ const computeIfAbsent = async <T>(
   return value;
 };
 
-export default {
-  computeIfAbsent,
-};
+export default CacheKey;

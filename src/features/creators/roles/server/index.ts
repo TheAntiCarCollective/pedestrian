@@ -1,19 +1,20 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 import { EmbedBuilder, roleMention } from "discord.js";
 import { compress } from "compress-tag";
+import assert from "node:assert";
 
-import { Color, JsonError } from "../../../../services/discord";
+import { Color } from "../../../../services/discord";
 import guildSettings from "../../../bot/settings/guild";
 
 export enum Option {
-  ROLE = "role",
+  Role = "role",
 }
 
 export default async (interaction: ChatInputCommandInteraction) => {
   const { guildId, options } = interaction;
-  if (guildId === null) throw new JsonError(interaction);
+  assert(guildId !== null);
 
-  const { id: roleId } = options.getRole(Option.ROLE) ?? {};
+  const { id: roleId } = options.getRole(Option.Role) ?? {};
   const mentionRole = roleId === undefined ? roleId : roleMention(roleId);
 
   await guildSettings({
@@ -37,7 +38,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
   }
 
   const embed = new EmbedBuilder()
-    .setColor(Color.SUCCESS)
+    .setColor(Color.Success)
     .setDescription(description);
 
   return interaction.reply({

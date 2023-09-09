@@ -1,10 +1,10 @@
 import { ChannelType } from "discord.js";
 
 export enum CreatorType {
-  YOUTUBE = "YouTube",
+  YouTube = "YouTube",
 }
 
-export const SUPPORTED_CHANNEL_TYPES = [
+export const SupportedChannelTypes = [
   ChannelType.GuildText,
   ChannelType.GuildVoice,
   ChannelType.GuildAnnouncement,

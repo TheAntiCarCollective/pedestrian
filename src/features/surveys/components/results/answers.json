@@ -1,0 +1,118 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "width": 800,
+  "height": 0,
+  "background": "white",
+  "padding": 8,
+
+  "title": {
+    "text": "How many people selected a Choice?",
+    "subtitle": "Total may be lower or higher than # of Answers because of skipped answers and multiple selections",
+    "subtitleFontStyle": "italic"
+  },
+
+  "data": [
+    {
+      "name": "table",
+      "values": [
+        {
+          "choice": "",
+          "selections": 0
+        }
+      ]
+    }
+  ],
+
+  "scales": [
+    {
+      "name": "x",
+      "type": "linear",
+      "domain": {
+        "data": "table",
+        "field": "selections"
+      },
+      "range": "width"
+    },
+    {
+      "name": "y",
+      "type": "band",
+      "domain": {
+        "data": "table",
+        "field": "choice"
+      },
+      "range": "height",
+      "padding": 0.1
+    }
+  ],
+
+  "axes": [
+    {
+      "scale": "x",
+      "orient": "bottom",
+      "title": "# of People",
+      "tickMinStep": 1
+    },
+    {
+      "scale": "y",
+      "orient": "left",
+      "title": "Choice"
+    }
+  ],
+
+  "marks": [
+    {
+      "type": "rect",
+      "name": "bars",
+      "from": {
+        "data": "table"
+      },
+      "encode": {
+        "enter": {
+          "x": {
+            "scale": "x",
+            "value": 0
+          },
+          "x2": {
+            "scale": "x",
+            "field": "selections"
+          },
+          "y": {
+            "scale": "y",
+            "field": "choice"
+          },
+          "height": {
+            "scale": "y",
+            "band": 1
+          }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "from": {
+        "data": "bars"
+      },
+      "encode": {
+        "enter": {
+          "x": {
+            "field": "x2",
+            "offset": 8
+          },
+          "y": {
+            "field": "y",
+            "offset": {
+              "field": "height",
+              "mult": 0.5
+            }
+          },
+          "baseline": {
+            "value": "middle"
+          },
+          "text": {
+            "field": "datum.selections"
+          }
+        }
+      }
+    }
+  ]
+}

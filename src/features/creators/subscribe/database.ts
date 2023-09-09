@@ -1,4 +1,6 @@
-import { ChannelType } from "discord.js";
+import type { PoolClient } from "pg";
+import type { ChannelType } from "discord.js";
+import assert from "node:assert";
 
 import { useClient, useTransaction } from "../../../services/postgresql";
 
@@ -93,41 +95,45 @@ export const createCreatorChannel = ({
     ]);
   });
 
-const getOrCreateCreatorId = (domainId: string, creatorType: CreatorType) =>
-  useTransaction(async (client) => {
+const getOrCreateCreatorId = async (
+  client: PoolClient,
+  domainId: string,
+  creatorType: CreatorType,
+) => {
+  const query = `
+    select id
+    from creator
+    where domain_id = $1
+      and type = $2
+  `;
+
+  const values = [domainId, creatorType];
+  const { rows } = await client.query<CreatorId>(query, values);
+  let row = rows[0];
+
+  if (row === undefined) {
     const query = `
-      select id
-      from creator
-      where domain_id = $1
-        and type = $2
+      insert into creator(domain_id, type)
+      values($1, $2)
+      returning id
     `;
 
-    const values = [domainId, creatorType];
     const { rows } = await client.query<CreatorId>(query, values);
-    let row = rows[0];
+    row = rows[0];
+  }
 
-    if (row === undefined) {
-      const query = `
-        insert into creator(domain_id, type)
-        values($1, $2)
-        returning id
-      `;
-
-      const { rows } = await client.query<CreatorId>(query, values);
-      row = rows[0];
-    }
-
-    if (row !== undefined) return row.id;
-    throw new Error(`${creatorType}: ${domainId}`);
-  });
+  const { id } = row ?? {};
+  assert(id !== undefined);
+  return id;
+};
 
 export const createCreatorSubscriptions = ({
   domainId,
   creatorType,
   creatorChannelIds,
 }: CreateCreatorSubscriptions) =>
-  useClient(async (client) => {
-    const creatorId = await getOrCreateCreatorId(domainId, creatorType);
+  useTransaction(async (client) => {
+    const creatorId = await getOrCreateCreatorId(client, domainId, creatorType);
 
     const query = `
       insert into creator_subscription(creator_channel_id, creator_id)
@@ -135,9 +141,8 @@ export const createCreatorSubscriptions = ({
       on conflict do nothing
     `;
 
-    const promises = creatorChannelIds
-      .map((creatorChannelId) => [creatorChannelId, creatorId])
-      .map((values) => client.query(query, values));
-
-    return Promise.all(promises);
+    for (const creatorChannelId of creatorChannelIds) {
+      const values = [creatorChannelId, creatorId];
+      await client.query(query, values);
+    }
   });

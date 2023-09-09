@@ -1,3 +1,5 @@
+import assert from "node:assert";
+
 import { useClient, useTransaction } from "../../../../services/postgresql";
 
 import type { GuildSettings } from "./types";
@@ -8,7 +10,8 @@ export const getOrCreateGuildSettings = (guildId: string) =>
       select
         id,
         max_creator_subscriptions as "maxCreatorSubscriptions",
-        creator_mention_role_id as "creatorMentionRoleId"
+        creator_mention_role_id as "creatorMentionRoleId",
+        survey_creator_role_id as "surveyCreatorRoleId"
       from guild
       where id = $1
     `;
@@ -24,28 +27,31 @@ export const getOrCreateGuildSettings = (guildId: string) =>
         returning
           id,
           max_creator_subscriptions as "maxCreatorSubscriptions",
-          creator_mention_role_id as "creatorMentionRoleId"
+          creator_mention_role_id as "creatorMentionRoleId",
+          survey_creator_role_id as "surveyCreatorRoleId"
       `;
 
       const { rows } = await client.query<GuildSettings>(query, values);
       guildSettings = rows[0];
     }
 
-    if (guildSettings !== undefined) return guildSettings;
-    throw new Error(guildId);
+    assert(guildSettings !== undefined);
+    return guildSettings;
   });
 
 export const setGuildSettings = ({
   id,
   maxCreatorSubscriptions,
   creatorMentionRoleId,
+  surveyCreatorRoleId,
 }: GuildSettings) =>
   useClient((client) => {
     const query = `
       update guild
       set
         max_creator_subscriptions = $2,
-        creator_mention_role_id = $3
+        creator_mention_role_id = $3,
+        survey_creator_role_id = $4
       where id = $1
     `;
 
@@ -53,5 +59,6 @@ export const setGuildSettings = ({
       id,
       maxCreatorSubscriptions,
       creatorMentionRoleId,
+      surveyCreatorRoleId,
     ]);
   });
