@@ -10,6 +10,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from "discord.js";
+import { compress } from "compress-tag";
 import { fail as error } from "node:assert";
 
 import { Color } from "../../../../services/discord";
@@ -24,7 +25,7 @@ import { QuestionType } from "../../constants";
 
 // region No Results
 const noResultsEmbeds = ({ title }: Survey) => {
-  const description = `
+  const description = compress`
     No results currently exist for ${bold(title)}! Results will be available
     when someone completes the survey.
   `;
