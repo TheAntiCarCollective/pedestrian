@@ -31,18 +31,18 @@ registerComponent(
         }));
 
         const rows = answers.map((answer) => {
-          if (isSkipped(answer)) {
-            return choices.map(() => null);
-          } else if (isSelected(answer)) {
-            const row = choices.reduce((map, _, index) => {
+          const row = choices.reduce((map, _, index) => {
+            if (isSkipped(answer)) {
+              return map.set(`${index}`, answer);
+            } else if (isSelected(answer)) {
               const cell = answer.includes(index) ? "✅" : "❌";
               return map.set(`${index}`, cell);
-            }, new Map<string, string>());
+            } else {
+              error();
+            }
+          }, new Map<string, string | null>());
 
-            return Object.fromEntries(row);
-          } else {
-            error();
-          }
+          return Object.fromEntries(row);
         });
 
         stream = stringify(rows, {
@@ -52,9 +52,11 @@ registerComponent(
 
         break;
       }
-      case QuestionType.OpenAnswer:
-        stream = stringify(answers);
+      case QuestionType.OpenAnswer: {
+        const rows = answers.map((answer) => [answer]);
+        stream = stringify(rows);
         break;
+      }
     }
 
     const attachment = new AttachmentBuilder(stream, {

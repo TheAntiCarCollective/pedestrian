@@ -1,5 +1,6 @@
 import { AttachmentBuilder } from "discord.js";
 import { stringify } from "csv-stringify";
+import assert from "node:assert";
 
 import { registerComponent } from "../../../../../services/discord";
 import * as session from "../../../../../session";
@@ -7,14 +8,14 @@ import * as session from "../../../../../session";
 import ComponentId from "./index";
 import type Context from "../context";
 import * as withContext from "../context";
-import type { OpenAnswer, SkippedAnswer } from "../../../types";
-import { isSelected } from "../../../functions";
+import type { Answer } from "../../../types";
 
 registerComponent(
   ComponentId.SurveyCsvButton,
   async (interaction, sessionId) => {
     const context = await session.read<Context>(sessionId);
     const questions = withContext.getQuestions(context);
+    const answers = withContext.getAnswers(context);
     const { survey, results } = context;
 
     const columns = questions.map(({ ask: header }, index) => ({
@@ -22,11 +23,14 @@ registerComponent(
       header,
     }));
 
-    const rows = results.map((answers) => {
-      const row = answers.reduce((map, cell, index) => {
-        if (isSelected(cell)) cell = JSON.stringify(cell);
-        return map.set(`${index}`, cell);
-      }, new Map<string, OpenAnswer | SkippedAnswer>());
+    const rows = answers.map((_, answerIndex) => {
+      const row = questions.reduce((map, _, questionIndex) => {
+        const answers = results[questionIndex];
+        assert(answers !== undefined);
+        const cell = answers[answerIndex];
+        assert(cell !== undefined);
+        return map.set(`${questionIndex}`, cell);
+      }, new Map<string, Answer>());
 
       return Object.fromEntries(row);
     });
