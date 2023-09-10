@@ -186,8 +186,14 @@ discord.on(Events.InteractionCreate, async (interaction) => {
         }
       }
     } else if (interaction.isMessageComponent()) {
-      const { customId } = interaction;
+      let { customId } = interaction;
       for (const [componentId, onComponent] of components) {
+        const legacyPrefix = `GLOBAL_${componentId}_`;
+        if (customId.startsWith(legacyPrefix)) {
+          const id = customId.slice(legacyPrefix.length);
+          customId = `${componentId}${id}`;
+        }
+
         if (customId.startsWith(componentId)) {
           const id = customId.slice(componentId.length);
           const result = await onComponent(interaction, id);

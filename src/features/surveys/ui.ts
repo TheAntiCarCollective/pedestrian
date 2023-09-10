@@ -99,13 +99,13 @@ const surveyComponents = (survey: Survey | Omit<Survey, "id">) => {
 
 const surveyEmbeds = (
   survey: Survey | Omit<Survey, "id">,
-  member: GuildMember,
+  member: GuildMember | undefined,
 ) => {
   const { title, description, questions } = survey;
-  const iconURL = member.displayAvatarURL();
-  const name = member.displayName;
+  const iconURL = member?.displayAvatarURL();
+  const name = member?.displayName;
 
-  const author = { iconURL, name };
+  const author = name === undefined ? null : { iconURL, name };
   const footer = { iconURL, text: title };
 
   const numberOfQuestionsField = {
@@ -132,7 +132,7 @@ const surveyEmbeds = (
 
 export const survey = (
   survey: Survey | Omit<Survey, "id">,
-  member: GuildMember,
+  member: GuildMember | undefined,
 ) => ({
   components: surveyComponents(survey),
   embeds: surveyEmbeds(survey, member),

@@ -1,11 +1,29 @@
 import { useClient } from "../../../services/postgresql";
 
 // region Types
-type DeletedSurvey = {
+type PartialSurvey = {
   id: string;
   channelId: string;
+  createdBy: string;
 };
 // endregion
+
+export const getPartialSurvey = (guildId: string, title: string) =>
+  useClient(async (client) => {
+    const query = `
+      select
+        id,
+        channel_id as "channelId",
+        created_by as "createdBy"
+      from survey
+      where guild_id = $1
+        and title = $2
+    `;
+
+    const values = [guildId, title];
+    const { rows } = await client.query<PartialSurvey>(query, values);
+    return rows[0];
+  });
 
 export const deleteSurvey = (guildId: string, title: string) =>
   useClient(async (client) => {
@@ -13,12 +31,8 @@ export const deleteSurvey = (guildId: string, title: string) =>
       delete from survey
       where guild_id = $1
         and title = $2
-      returning
-        id,
-        channel_id as "channelId"
     `;
 
     const values = [guildId, title];
-    const { rows } = await client.query<DeletedSurvey>(query, values);
-    return rows[0];
+    return client.query(query, values);
   });

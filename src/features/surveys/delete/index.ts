@@ -19,25 +19,31 @@ const checkPermissionsResponse = (interaction: ChatInputCommandInteraction) => {
 };
 
 export default async (interaction: ChatInputCommandInteraction) => {
-  const { guild, options } = interaction;
+  const { guild, options, user } = interaction;
   assert(guild !== null);
   const { id: guildId, channels: guildChannelManager } = guild;
 
-  let response = await checkPermissionsResponse(interaction);
-  if (response !== undefined) return response;
-
   const title = options.getString(Option.Title, true);
-  const survey = await database.deleteSurvey(guildId, title);
-  response = await interaction.reply(ui.deletedSurvey(title));
+  const partialSurvey = await database.getPartialSurvey(guildId, title);
 
-  if (survey === undefined) return response;
-  const { id: messageId, channelId } = survey;
+  if (partialSurvey?.createdBy !== user.id) {
+    const response = await checkPermissionsResponse(interaction);
+    if (response !== undefined) return response;
+  }
 
-  const channel = await guildChannelManager.fetch(channelId);
-  assert(channel !== null);
-  assert(channel.isTextBased());
-  const { messages: guildMessageManager } = channel;
+  await database.deleteSurvey(guildId, title);
+  const response = await interaction.reply(ui.deletedSurvey(title));
 
-  await guildMessageManager.delete(messageId);
+  if (partialSurvey !== undefined) {
+    const { id: messageId, channelId } = partialSurvey;
+
+    const channel = await guildChannelManager.fetch(channelId);
+    assert(channel !== null);
+    assert(channel.isTextBased());
+
+    const { messages: guildMessageManager } = channel;
+    await guildMessageManager.delete(messageId);
+  }
+
   return response;
 };
