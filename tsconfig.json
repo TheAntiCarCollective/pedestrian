@@ -1,11 +1,21 @@
 {
-  "extends": "ts-node/node16/tsconfig.json",
   "compilerOptions": {
+    "declaration": false,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "inlineSourceMap": false,
+    "inlineSources": true,
+    "lib": ["es2021"],
+    "module": "node16",
+    "moduleResolution": "node16",
+    "noEmit": false,
     "noUncheckedIndexedAccess": true,
-    "resolveJsonModule": true
+    "outDir": "build",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "es2021"
   },
-  "include": [".eslintrc.js", "src"],
-  "ts-node": {
-    "swc": true
-  }
+  "include": [".eslintrc.js", "src"]
 }

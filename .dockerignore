@@ -1,19 +1,25 @@
-flyway
+/LICENSE
+/README.md
+/build
+/flyway
 
 # Docker
-.dockerignore
-Dockerfile
-docker-compose.yml
+/.dockerignore
+/Dockerfile
+/docker-compose.yml
 
 # Git
-.git
-.gitignore
+/.git
+/.gitignore
 
 # GitHub
-.github
+/.github
 
 # JetBrains
-.idea
+/.idea
 
 # Node.js
-node_modules
+/node_modules
+
+# Prettier
+/.prettierignore
