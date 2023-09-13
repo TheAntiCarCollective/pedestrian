@@ -10,7 +10,7 @@ import type {
 } from "discord.js";
 import { Events, Client, User, Routes } from "discord.js";
 import loggerFactory from "pino";
-import { Counter, Histogram } from "prom-client";
+import { Histogram } from "prom-client";
 import assert, { fail as error } from "node:assert";
 
 // region Logger and Metrics
@@ -21,12 +21,6 @@ const logger = loggerFactory({
 const interactionRequestDuration = new Histogram({
   name: "interaction_request_duration_milliseconds",
   help: "Interaction request duration in milliseconds",
-  labelNames: ["status", "handler"],
-});
-
-const interactionRequestTotal = new Counter({
-  name: "interaction_request_total",
-  help: "Interaction request total",
   labelNames: ["status", "handler"],
 });
 // endregion
@@ -173,7 +167,6 @@ discord.on(Events.InteractionCreate, async (interaction) => {
 
       const labels = { status, handler };
       interactionRequestDuration.observe(labels, requestDuration);
-      interactionRequestTotal.inc(labels);
 
       const childLogger = logger.child({
         labels,
