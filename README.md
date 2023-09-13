@@ -8,7 +8,7 @@ Pedestrian is written in [TypeScript](https://www.typescriptlang.org/) using [No
 
 Pedestrian uses [docker-compose](https://docs.docker.com/compose/) and [Flyway](https://flywaydb.org/) to make development as easy as possible. Flyway is installed automatically with this project's docker-compose setup; so only docker-compose is required to be installed.
 
-Once environment variables are set then running the bot locally is as easy as `docker-compose up -d`, `npm install`, `npm run dev`.
+Once environment variables are set then running the bot locally is as easy as `docker-compose up -d`, `npm install`, `npm run build`, `npm run start`.
 
 ### Environment Variables
 
@@ -27,4 +27,5 @@ Once environment variables are set then running the bot locally is as easy as `d
 | REDIS_CLUSTER        | ❌       |               | IIF value is "true" then Redis will run in [cluster mode](https://redis.io/docs/management/scaling/)   |
 | REDIS_USERNAME       | ❌       |               |                                                                                                        |
 | REDIS_PASSWORD       | ❌       |               |                                                                                                        |
+| SERVER_PORT          | ❌       | 8080          |                                                                                                        |
 | YOUTUBE_API_KEY      | ✅       |               | [Create YouTube API Key](https://console.cloud.google.com/apis/api/youtube.googleapis.com/credentials) |

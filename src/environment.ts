@@ -22,5 +22,6 @@ export default {
   RedisCluster: environmentVariables.REDIS_CLUSTER,
   RedisUsername: environmentVariables.REDIS_USERNAME,
   RedisPassword: environmentVariables.REDIS_PASSWORD,
+  ServerPort: environmentVariable("SERVER_PORT", "8080"),
   YoutubeApiKey: environmentVariable("YOUTUBE_API_KEY"),
 } as const;

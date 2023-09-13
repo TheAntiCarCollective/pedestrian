@@ -10,11 +10,26 @@ import type {
 } from "discord.js";
 import { Events, Client, User, Routes } from "discord.js";
 import loggerFactory from "pino";
+import { Counter, Histogram } from "prom-client";
 import assert, { fail as error } from "node:assert";
 
+// region Logger and Metrics
 const logger = loggerFactory({
   name: __filename,
 });
+
+const interactionRequestDuration = new Histogram({
+  name: "interaction_request_duration_milliseconds",
+  help: "Interaction request duration in milliseconds",
+  labelNames: ["status", "handler"],
+});
+
+const interactionRequestTotal = new Counter({
+  name: "interaction_request_total",
+  help: "Interaction request total",
+  labelNames: ["status", "handler"],
+});
+// endregion
 
 // region Constants
 export enum Color {
@@ -150,72 +165,90 @@ export const refreshCommands = async () => {
 discord.once(Events.ClientReady, refreshCommands);
 
 discord.on(Events.InteractionCreate, async (interaction) => {
-  const startTime = performance.now();
-  const onInteraction = (status: "complete" | "error", result?: unknown) => {
-    const endTime = performance.now();
-    const responseTime = endTime - startTime;
-    const childLogger = logger.child({ interaction, responseTime });
+  const startRequestTime = performance.now();
+  const onInteraction =
+    (status: "success" | "error", handler: string) => (result: unknown) => {
+      const endRequestTime = performance.now();
+      const requestDuration = endRequestTime - startRequestTime;
 
-    switch (status) {
-      case "complete":
-        childLogger.info(result, "ON_INTERACTION_COMPLETE");
-        break;
-      case "error": {
-        childLogger.error(result, "ON_INTERACTION_ERROR");
-        break;
+      const labels = { status, handler };
+      interactionRequestDuration.observe(labels, requestDuration);
+      interactionRequestTotal.inc(labels);
+
+      const childLogger = logger.child({
+        labels,
+        interaction,
+        requestDuration,
+      });
+
+      switch (status) {
+        case "success":
+          childLogger.info(result, "ON_INTERACTION_SUCCESS");
+          break;
+        case "error":
+          childLogger.error(result, "ON_INTERACTION_ERROR");
+          break;
+      }
+    };
+
+  if (interaction.isCommand()) {
+    for (const [name, { onCommand }] of commands) {
+      if (name === interaction.commandName) {
+        let handler = name;
+        if (interaction.isChatInputCommand()) {
+          const { options } = interaction;
+          const subcommandGroup = options.getSubcommandGroup();
+          const subcommand = options.getSubcommand();
+          handler += `_${subcommandGroup}_${subcommand}`;
+        }
+
+        return onCommand(interaction)
+          .then(onInteraction("success", handler))
+          .catch(onInteraction("error", handler));
       }
     }
-  };
+  } else if (interaction.isAutocomplete()) {
+    const { commandName, options } = interaction;
+    for (const [name, { onAutocomplete }] of commands) {
+      if (name === commandName) {
+        assert(onAutocomplete !== undefined);
 
-  try {
-    if (interaction.isCommand()) {
-      for (const [name, { onCommand }] of commands) {
-        if (name === interaction.commandName) {
-          const result = await onCommand(interaction);
-          onInteraction("complete", result);
-          return;
-        }
-      }
-    } else if (interaction.isAutocomplete()) {
-      for (const [name, { onAutocomplete }] of commands) {
-        if (name === interaction.commandName) {
-          assert(onAutocomplete !== undefined);
-          await onAutocomplete(interaction);
-          onInteraction("complete");
-          return;
-        }
-      }
-    } else if (interaction.isMessageComponent()) {
-      let { customId } = interaction;
-      for (const [componentId, onComponent] of components) {
-        const legacyPrefix = `GLOBAL_${componentId}_`;
-        if (customId.startsWith(legacyPrefix)) {
-          const id = customId.slice(legacyPrefix.length);
-          customId = `${componentId}${id}`;
-        }
+        const { name: option } = options.getFocused(true);
+        const handler = `${name}_${option}`;
 
-        if (customId.startsWith(componentId)) {
-          const id = customId.slice(componentId.length);
-          const result = await onComponent(interaction, id);
-          onInteraction("complete", result);
-          return;
-        }
-      }
-    } else if (interaction.isModalSubmit()) {
-      const { customId } = interaction;
-      for (const [modalId, onModal] of modals) {
-        if (customId.startsWith(modalId)) {
-          const id = customId.slice(modalId.length);
-          const result = await onModal(interaction, id);
-          onInteraction("complete", result);
-          return;
-        }
+        return onAutocomplete(interaction)
+          .then(onInteraction("success", handler))
+          .catch(onInteraction("error", handler));
       }
     }
+  } else if (interaction.isMessageComponent()) {
+    let { customId } = interaction;
+    for (const [componentId, onComponent] of components) {
+      const legacyPrefix = `GLOBAL_${componentId}_`;
+      if (customId.startsWith(legacyPrefix)) {
+        const id = customId.slice(legacyPrefix.length);
+        customId = `${componentId}${id}`;
+      }
 
-    error();
-  } catch (error) {
-    onInteraction("error", error);
+      if (customId.startsWith(componentId)) {
+        const id = customId.slice(componentId.length);
+        return onComponent(interaction, id)
+          .then(onInteraction("success", componentId))
+          .catch(onInteraction("error", componentId));
+      }
+    }
+  } else if (interaction.isModalSubmit()) {
+    const { customId } = interaction;
+    for (const [modalId, onModal] of modals) {
+      if (customId.startsWith(modalId)) {
+        const id = customId.slice(modalId.length);
+        return onModal(interaction, id)
+          .then(onInteraction("success", modalId))
+          .catch(onInteraction("error", modalId));
+      }
+    }
   }
+
+  error();
 });
 // endregion
