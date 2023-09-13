@@ -9,9 +9,6 @@ import { Option as RolesServerOption } from "./roles/server";
 import onSubscribe, { Option as SubscribeOption } from "./subscribe";
 import onUnsubscribe from "./unsubscribe";
 
-// Install
-import "./post";
-
 export enum SubcommandGroup {
   Roles = "roles",
 }

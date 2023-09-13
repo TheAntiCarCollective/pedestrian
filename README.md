@@ -8,7 +8,7 @@ Pedestrian is written in [TypeScript](https://www.typescriptlang.org/) using [No
 
 Pedestrian uses [docker-compose](https://docs.docker.com/compose/) and [Flyway](https://flywaydb.org/) to make development as easy as possible. Flyway is installed automatically with this project's docker-compose setup; so only docker-compose is required to be installed.
 
-Once environment variables are set then running the bot locally is as easy as `docker-compose up -d`, `npm install`, `npm run build`, `npm run start`.
+Once environment variables are set then running the bot locally is as easy as `npm install`, `npm run build`, `npm run services`, `npm run start`.
 
 ### Environment Variables
 

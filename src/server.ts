@@ -3,8 +3,6 @@ import pinoBundle from "pino-http";
 import promBundle from "express-prom-bundle";
 import loggerFactory from "pino";
 
-import Environment from "./environment";
-
 const server = express();
 
 // region Logger and Metrics
@@ -26,7 +24,4 @@ server.use(
 );
 // endregion
 
-const serverPort = parseInt(Environment.ServerPort);
-export default server.listen(serverPort, () => {
-  logger.info(serverPort, "SERVER_LISTEN");
-});
+export default server;

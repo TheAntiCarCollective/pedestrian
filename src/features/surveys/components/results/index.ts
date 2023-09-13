@@ -10,17 +10,6 @@ import * as ui from "./ui";
 import ComponentId from "../index";
 import * as surveysDatabase from "../../database";
 
-// Install
-import "./components/answerNumber.button";
-import "./components/answerNumber.modal";
-import "./components/answersCsv.button";
-import "./components/close.button";
-import "./components/nextAnswer.button";
-import "./components/nextQuestion.button";
-import "./components/previousAnswer.button";
-import "./components/previousQuestion.button";
-import "./components/surveyCsv.button";
-
 registerComponent(
   ComponentId.SurveyResultsButton,
   async (interaction, surveyId) => {

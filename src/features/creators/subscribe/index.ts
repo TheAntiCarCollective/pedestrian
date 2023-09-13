@@ -10,13 +10,6 @@ import * as ui from "./ui";
 import * as youtube from "../youtube";
 import { getChannels } from "../function";
 
-// Install
-import "./components/channel.select";
-import "./components/previousCreator.button";
-import "./components/nextCreator.button";
-import "./components/apply.button";
-import "./components/cancel.button";
-
 export enum Option {
   Name = "name",
 }

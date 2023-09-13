@@ -17,15 +17,12 @@ import discord from "../../../services/discord";
 import { getThumbnailUrl, getVideoUrl } from "../../../services/youtube";
 import sleep from "../../../sleep";
 
+import ComponentId from "./components";
 import type { CreatorSubscription } from "./database";
 import * as postDatabase from "./database";
 import * as creatorsDatabase from "../database";
 import * as youtube from "../youtube";
 import { CreatorType } from "../constants";
-
-// Install
-import ComponentId from "./components";
-import "./components/description.button";
 
 const logger = loggerFactory({
   name: __filename,

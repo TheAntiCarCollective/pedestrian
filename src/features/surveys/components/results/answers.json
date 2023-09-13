@@ -6,7 +6,7 @@
   "padding": 8,
 
   "title": {
-    "text": "How many people selected a Choice?",
+    "text": "",
     "subtitle": "Total may be lower or higher than # of Answers because of skipped answers and multiple selections",
     "subtitleFontStyle": "italic"
   },

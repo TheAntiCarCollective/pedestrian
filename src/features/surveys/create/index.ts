@@ -10,25 +10,6 @@ import * as ui from "./ui";
 import * as database from "./database";
 import { InitialQuestion } from "../constants";
 
-// Install
-import "./components/addChoice.button";
-import "./components/addQuestion.button";
-import "./components/cancel.button";
-import "./components/choice.modal";
-import "./components/choice.select";
-import "./components/choiceSettings.modal";
-import "./components/create.button";
-import "./components/createSurvey.modal";
-import "./components/editChoice.button";
-import "./components/editChoiceSettings.button";
-import "./components/editQuestion.button";
-import "./components/nextQuestion.button";
-import "./components/previousQuestion.button";
-import "./components/question.modal";
-import "./components/questionType.select";
-import "./components/removeChoice.button";
-import "./components/removeQuestion.button";
-
 export enum Option {
   Title = "title",
 }

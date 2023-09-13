@@ -13,11 +13,6 @@ import * as youtube from "../youtube";
 import { CreatorType } from "../constants";
 import { getChannels } from "../function";
 
-// Install
-import "./components/index.select";
-import "./components/apply.button";
-import "./components/cancel.button";
-
 const getCreators = async (creatorSubscriptions: CreatorSubscription[]) => {
   const creatorDomains = {
     [CreatorType.YouTube]: new Set<string>(),

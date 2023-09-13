@@ -10,10 +10,6 @@ import onRole, { Option as RoleOption } from "./role";
 import onSearch, { Option as SearchOption } from "./search";
 import onAutocomplete from "./autocomplete";
 
-// Install
-import "./components/results";
-import "./components/start";
-
 export enum Subcommand {
   Create = "create",
   Delete = "delete",

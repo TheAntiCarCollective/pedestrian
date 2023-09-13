@@ -10,7 +10,7 @@ import type {
 } from "discord.js";
 import { Events, Client, User, Routes } from "discord.js";
 import loggerFactory from "pino";
-import { Histogram } from "prom-client";
+import { Histogram, exponentialBuckets } from "prom-client";
 import assert, { fail as error } from "node:assert";
 
 // region Logger and Metrics
@@ -22,6 +22,8 @@ const interactionRequestDuration = new Histogram({
   name: "interaction_request_duration_milliseconds",
   help: "Interaction request duration in milliseconds",
   labelNames: ["status", "handler"],
+  // Create 9 buckets, starting on 10 and with a factor of 2
+  buckets: exponentialBuckets(10, 2, 9),
 });
 // endregion
 

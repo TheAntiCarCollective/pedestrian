@@ -75,6 +75,9 @@ export const getAnswersPng = async (context: Context) => {
   const answersJson = produce(initialAnswersJson, (draft) => {
     draft.height = choices.length * 32;
 
+    const { title } = draft;
+    title.text = question.ask;
+
     const table = draft.data[0];
     assert(table !== undefined);
     table.values = values;
