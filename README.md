@@ -6,7 +6,7 @@ A custom bot designed for [The Anti-Car Collective](https://discord.gg/anticar) 
 
 [Node.js](https://nodejs.org/en) and [docker-compose](https://docs.docker.com/compose) is required for development.
 
-Starting (`npm run start`) requires the project to be installed (`npm install`), built (`npm run build`), have services running (`npm run services`), database migrated (`npm run migrate`), and required [environment variables](#environment-variables) configured.
+Starting (`npm run start`) requires the project to be installed (`npm install`), built (`npm run build`), have services running (`npm run services`), and required [environment variables](#environment-variables) configured.
 
 Code must pass minimum quality standards checks (`npm run check`) to be merged:
 

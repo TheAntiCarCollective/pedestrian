@@ -1,5 +1,5 @@
 import type { Callback, Result } from "ioredis";
-import { v4 as uuid } from "uuid";
+import { randomBytes } from "crypto";
 import loggerFactory from "pino";
 
 import redis from "./services/redis";
@@ -59,7 +59,8 @@ declare module "ioredis" {
 
 const tryLock = async (lockKey: string, expireInMilliseconds: number) => {
   let previousLockToken: string | null = null;
-  const lockToken = uuid();
+  const lockTokenBytes = randomBytes(16);
+  const lockToken = lockTokenBytes.toString("hex");
 
   try {
     previousLockToken = await redis.set(
@@ -74,13 +75,12 @@ const tryLock = async (lockKey: string, expireInMilliseconds: number) => {
     logger.error(error, "TRY_LOCK_ERROR");
   }
 
-  if (previousLockToken !== null && previousLockToken !== lockToken)
-    return undefined;
-
-  return {
-    key: lockKey,
-    token: lockToken,
-  };
+  return previousLockToken === null
+    ? {
+        key: lockKey,
+        token: lockToken,
+      }
+    : undefined;
 };
 
 const lock = async (key: string, expireInMilliseconds: number) => {

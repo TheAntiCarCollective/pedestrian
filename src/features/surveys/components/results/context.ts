@@ -7,11 +7,10 @@ import { AttachmentBuilder } from "discord.js";
 import type { Canvas } from "canvas";
 import type { Spec } from "vega";
 import { View, parse } from "vega";
-import { produce } from "immer";
 import assert from "node:assert";
 
 import * as ui from "./ui";
-import initialAnswersJson from "./answers.json";
+import initialSpec from "./spec.json";
 import type { Answer, Survey } from "../../types";
 import { isMultipleChoice, isSelected, surveyCreator } from "../../functions";
 
@@ -55,7 +54,7 @@ export const getAnswersPng = async (context: Context) => {
   const question = getQuestion(context);
   if (!isMultipleChoice(question)) return undefined;
 
-  const { choices } = question;
+  const { ask, choices } = question;
   const values = choices.map(({ label }) => ({
     choice: label,
     selections: 0,
@@ -72,25 +71,21 @@ export const getAnswersPng = async (context: Context) => {
     }
   }
 
-  const answersJson = produce(initialAnswersJson, (draft) => {
-    draft.height = choices.length * 32;
+  const initialSpecJson = JSON.stringify(initialSpec);
+  const spec = JSON.parse(initialSpecJson) as typeof initialSpec;
+  const { title, data } = spec;
 
-    const { title } = draft;
-    title.text = question.ask;
+  // region Configure spec
+  spec.height = choices.length * 32;
 
-    const table = draft.data[0];
-    assert(table !== undefined);
-    table.values = values;
-  });
+  title.text = ask;
 
-  // https://vega.github.io/vega/docs/data
-  // https://immerjs.github.io/immer/freezing
-  // https://github.com/vega/vega/issues/2125
-  // Deep copy answersJson using JSON functions as a workaround
-  const answersJsonString = JSON.stringify(answersJson);
-  const spec = JSON.parse(answersJsonString) as Spec;
+  const table = data[0];
+  assert(table !== undefined);
+  table.values = values;
+  // endregion
 
-  const runtime = parse(spec);
+  const runtime = parse(spec as Spec);
   const view = new View(runtime, {
     renderer: "none",
   });

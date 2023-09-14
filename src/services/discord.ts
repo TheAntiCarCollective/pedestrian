@@ -189,12 +189,18 @@ discord.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.isCommand()) {
     for (const [name, { onCommand }] of commands) {
       if (name === interaction.commandName) {
-        let handler = name;
+        let handler: string;
+
         if (interaction.isChatInputCommand()) {
           const { options } = interaction;
-          const subcommandGroup = options.getSubcommandGroup();
-          const subcommand = options.getSubcommand();
-          handler += `_${subcommandGroup}_${subcommand}`;
+          const subcommandGroup = options.getSubcommandGroup(false);
+          const subcommand = options.getSubcommand(false);
+
+          handler = `/${name}`;
+          handler += subcommandGroup === null ? "" : ` ${subcommandGroup}`;
+          handler += subcommand === null ? "" : ` ${subcommand}`;
+        } else {
+          handler = name;
         }
 
         return onCommand(interaction)
@@ -209,7 +215,7 @@ discord.on(Events.InteractionCreate, async (interaction) => {
         assert(onAutocomplete !== undefined);
 
         const { name: option } = options.getFocused(true);
-        const handler = `${name}_${option}`;
+        const handler = `${name}#${option}`;
 
         return onAutocomplete(interaction)
           .then(onInteraction("success", handler))
