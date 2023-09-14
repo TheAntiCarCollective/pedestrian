@@ -4,11 +4,15 @@ A custom bot designed for [The Anti-Car Collective](https://discord.gg/anticar) 
 
 ## Development
 
-Pedestrian is written in [TypeScript](https://www.typescriptlang.org/) using [Node.js](https://nodejs.org/en) as the runtime and [npm](https://www.npmjs.com/) as the package manager. TypeScript is installed automatically with this project's npm setup and npm is installed automatically with Node.js; so only Node.js is required to be installed.
+[Node.js](https://nodejs.org/en) and [docker-compose](https://docs.docker.com/compose) is required for development.
 
-Pedestrian uses [docker-compose](https://docs.docker.com/compose/) and [Flyway](https://flywaydb.org/) to make development as easy as possible. Flyway is installed automatically with this project's docker-compose setup; so only docker-compose is required to be installed.
+Starting (`npm run start`) requires the project to be installed (`npm install`), built (`npm run build`), have services running (`npm run services`), database migrated (`npm run migrate`), and required [environment variables](#environment-variables) configured.
 
-Once environment variables are set then running the bot locally is as easy as `npm install`, `npm run build`, `npm run services`, `npm run start`.
+Code must pass minimum quality standards checks (`npm run check`) to be merged:
+
+- Must be buildable/compilable using `tsc`
+- [ESLint](https://eslint.org) must not emit any errors
+- Must be formatted with [Prettier](https://prettier.io) (`npm run prettier`)
 
 ### Environment Variables
 

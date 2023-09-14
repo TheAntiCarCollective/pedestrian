@@ -16,11 +16,10 @@ collectDefaultMetrics();
 // endregion
 
 const main = async () => {
+  // Import all modules automatically to trigger side effects
   const importPaths = await glob(`${__dirname}/**/*.js`);
   const imports = importPaths
     .map((importPath) => path.relative(__dirname, importPath))
-    .map((importPath) => importPath.replaceAll("\\", "/"))
-    .filter((importPath) => importPath !== "index.js")
     .map((importPath) => import(`./${importPath}`));
   await Promise.all(imports);
 

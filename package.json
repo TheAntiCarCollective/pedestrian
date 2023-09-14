@@ -34,8 +34,9 @@
   "scripts": {
     "build": "tsc",
     "check": "tsc --noemit && eslint . && prettier --check .",
+    "migrate": "docker rm pedestrian-flyway-1 && docker rmi pedestrian-flyway && npm run services",
     "prettier": "prettier --write .",
-    "services": "docker-compose up -d",
+    "services": "docker-compose up --detach",
     "start": "node --trace-warnings --enable-source-maps build/index.js | pino-pretty"
   }
 }

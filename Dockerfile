@@ -21,4 +21,5 @@ WORKDIR /pedestrian
 COPY --from=dependencies /pedestrian/node_modules node_modules
 COPY --from=build /pedestrian/build build
 
+EXPOSE 8080
 CMD node --no-warnings --enable-source-maps build/index.js
