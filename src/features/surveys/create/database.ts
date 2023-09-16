@@ -36,14 +36,14 @@ const createQuestions = (
       $1 as survey_id,
       q.ask,
       q.description,
-      q.minValues,
-      q.maxValues
+      q."minValues" as min_values,
+      q."maxValues" as max_values
     from jsonb_to_recordset($2::jsonb) as q(
       type survey_question_type,
       ask text,
       description text,
-      minValues int,
-      maxValues int
+      "minValues" int,
+      "maxValues" int
     )
   `;
 
@@ -78,12 +78,12 @@ const createChoices = (
   const query = `
     insert into survey_question_choice(survey_question_id, label, description)
     select
-      sq.id,
+      sq.id as survey_question_id,
       c.label,
       c.description
     from
       jsonb_to_recordset($2::jsonb) as c(
-        questionIndex int,
+        "questionIndex" int,
         label text,
         description text
       ) cross join lateral(
@@ -92,7 +92,7 @@ const createChoices = (
         where survey_id = $1
         order by id
         limit 1
-        offset c.questionIndex
+        offset c."questionIndex"
       ) as sq
   `;
 
