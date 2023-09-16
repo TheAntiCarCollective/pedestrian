@@ -2,9 +2,13 @@ import assert from "node:assert";
 
 import { useClient } from "../services/postgresql";
 
-import type { Context, PartialContext } from "./types";
-
 // region Types
+export type Context = {
+  sessionId: string;
+};
+
+export type PartialContext<T extends Context> = Omit<T, "sessionId">;
+
 type ContextRow<T extends Context> = {
   context: PartialContext<T>;
 };
@@ -24,9 +28,9 @@ export const createSession = <T extends Context>(
     await client.query(query, values);
 
     return {
-      sessionId,
       ...context,
-    } as T;
+      sessionId,
+    };
   });
 
 export const readSession = <T extends Context>(sessionId: string) =>
@@ -44,9 +48,9 @@ export const readSession = <T extends Context>(sessionId: string) =>
     assert(context !== undefined);
 
     return {
-      sessionId,
       ...context,
-    } as T;
+      sessionId,
+    };
   });
 
 export const updateSession = <T extends Context>(
@@ -63,9 +67,9 @@ export const updateSession = <T extends Context>(
     await client.query(query, values);
 
     return {
-      sessionId: newSessionId,
       ...context,
-    } as T;
+      sessionId: newSessionId,
+    };
   });
 
 export const destroySession = (sessionId: string) =>

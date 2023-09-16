@@ -6,6 +6,8 @@ import type Context from "../context";
 import * as ui from "../ui";
 
 registerComponent(ComponentId.CancelButton, async (interaction, sessionId) => {
-  const context = await session.destroy<Context>(sessionId);
-  return interaction.update(ui.cancelled(context));
+  const context = await session.read<Context>(sessionId);
+  const response = await interaction.update(ui.cancelled(context));
+  await session.destroy(sessionId);
+  return response;
 });

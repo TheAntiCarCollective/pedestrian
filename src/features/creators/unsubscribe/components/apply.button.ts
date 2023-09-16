@@ -7,7 +7,7 @@ import * as ui from "../ui";
 import * as database from "../database";
 
 registerComponent(ComponentId.ApplyButton, async (interaction, sessionId) => {
-  const context = await session.destroy<Context>(sessionId);
+  const context = await session.read<Context>(sessionId);
   const { creatorSubscriptions, selectedIndexes } = context;
 
   const creatorSubscriptionIds = creatorSubscriptions
@@ -15,5 +15,8 @@ registerComponent(ComponentId.ApplyButton, async (interaction, sessionId) => {
     .map(({ id }) => id);
 
   await database.deleteCreatorSubscriptions(creatorSubscriptionIds);
-  return interaction.update(ui.unsubscribed(context));
+
+  const response = await interaction.update(ui.unsubscribed(context));
+  await session.destroy(sessionId);
+  return response;
 });

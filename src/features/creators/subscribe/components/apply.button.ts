@@ -104,7 +104,7 @@ registerComponent(ComponentId.ApplyButton, async (interaction, sessionId) => {
   assert(guild !== null);
   const { channels: guildChannelManager } = guild;
 
-  const context = await session.destroy<Context>(sessionId);
+  const context = await session.read<Context>(sessionId);
   await createCreatorChannels(guildChannelManager, context);
 
   const { channelId } = withContext.getYoutubeChannel(context);
@@ -116,5 +116,7 @@ registerComponent(ComponentId.ApplyButton, async (interaction, sessionId) => {
     creatorChannelIds: context.selectedChannelIds,
   });
 
-  return interaction.update(ui.subscribed(context));
+  const response = await interaction.update(ui.subscribed(context));
+  await session.destroy(sessionId);
+  return response;
 });

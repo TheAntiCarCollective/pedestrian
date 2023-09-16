@@ -9,12 +9,14 @@ import * as database from "../database";
 registerComponent(
   ComponentId.CompleteButton,
   async (interaction, sessionId) => {
-    const context = await session.destroy<Context>(sessionId);
+    const context = await session.read<Context>(sessionId);
     const { survey, answers } = context;
 
     const { user: answerer } = interaction;
     await database.createAnswers(survey.id, answerer.id, answers);
 
-    return interaction.update(ui.completed(context));
+    const response = await interaction.update(ui.completed(context));
+    await session.destroy(sessionId);
+    return response;
   },
 );

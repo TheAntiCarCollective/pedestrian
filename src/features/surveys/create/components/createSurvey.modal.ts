@@ -17,7 +17,7 @@ registerModal(ComponentId.CreateSurveyModal, async (interaction, sessionId) => {
   const response = await interaction.deferUpdate();
   await response.delete();
 
-  const { survey: partialSurvey } = await session.destroy<Context>(sessionId);
+  const { survey: partialSurvey } = await session.read<Context>(sessionId);
   partialSurvey.description = fields.getTextInputValue(
     ComponentId.CreateSurveyDescriptionInput,
   );
@@ -31,9 +31,11 @@ registerModal(ComponentId.CreateSurveyModal, async (interaction, sessionId) => {
 
   try {
     await database.createSurvey(survey);
-    return message.edit(ui.survey(survey, member));
+    return await message.edit(ui.survey(survey, member));
   } catch (error) {
     await message.delete();
     throw error;
+  } finally {
+    await session.destroy(sessionId);
   }
 });
