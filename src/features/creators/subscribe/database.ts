@@ -1,6 +1,5 @@
 import type { PoolClient } from "pg";
 import type { ChannelType } from "discord.js";
-import assert from "node:assert";
 
 import { useClient, useTransaction } from "../../../services/postgresql";
 
@@ -99,32 +98,32 @@ const getOrCreateCreatorId = async (
   client: PoolClient,
   domainId: string,
   creatorType: CreatorType,
-) => {
+): Promise<number> => {
   const query = `
+    with creator_id as(
+      insert into creator(domain_id, type)
+      values($1, $2)
+      on conflict do nothing
+      returning id
+    )
+    select id
+    from creator_id
+    union all
     select id
     from creator
     where domain_id = $1
       and type = $2
+    limit 1
   `;
 
   const values = [domainId, creatorType];
   const { rows } = await client.query<CreatorId>(query, values);
-  let row = rows[0];
 
-  if (row === undefined) {
-    const query = `
-      insert into creator(domain_id, type)
-      values($1, $2)
-      returning id
-    `;
-
-    const { rows } = await client.query<CreatorId>(query, values);
-    row = rows[0];
-  }
-
-  const { id } = row ?? {};
-  assert(id !== undefined);
-  return id;
+  const { id: creatorId } = rows[0] ?? {};
+  // https://stackoverflow.com/a/15950324/5302085
+  // "Or loop until you actually get a row. The loop will hardly ever be
+  // triggered in common work loads anyway."
+  return creatorId ?? getOrCreateCreatorId(client, domainId, creatorType);
 };
 
 export const createCreatorSubscriptions = ({
@@ -137,12 +136,13 @@ export const createCreatorSubscriptions = ({
 
     const query = `
       insert into creator_subscription(creator_channel_id, creator_id)
-      values($1, $2)
+      select
+        creator_channel_id,
+        $2 as creator_id
+      from unnest($1::bigint[]) as cs(creator_channel_id)
       on conflict do nothing
     `;
 
-    for (const creatorChannelId of creatorChannelIds) {
-      const values = [creatorChannelId, creatorId];
-      await client.query(query, values);
-    }
+    const values = [creatorChannelIds, creatorId];
+    return client.query(query, values);
   });

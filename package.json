@@ -31,8 +31,10 @@
   "scripts": {
     "build": "tsc",
     "check": "tsc --noemit && eslint . && prettier --check .",
+    "dump": "docker exec --tty pedestrian-postgres-1 pg_dumpall --clean --username=user > dump.sql",
     "migrate": "docker rm pedestrian-flyway-1 && docker rmi pedestrian-flyway && npm run services",
     "prettier": "prettier --write .",
+    "restore": "bash -c 'cat dump.sql' | docker exec --interactive pedestrian-postgres-1 psql --username=user --dbname=postgres",
     "services": "docker-compose up --detach",
     "start": "node --trace-warnings --enable-source-maps build/index.js | pino-pretty"
   }

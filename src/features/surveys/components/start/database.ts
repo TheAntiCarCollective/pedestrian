@@ -1,4 +1,4 @@
-import { useClient, useTransaction } from "../../../../services/postgresql";
+import { useClient } from "../../../../services/postgresql";
 
 import type { Answer } from "../../types";
 
@@ -31,38 +31,21 @@ export const createAnswers = (
   createdBy: string,
   answers: Answer[],
 ) =>
-  useTransaction(async (client) => {
+  useClient(async (client) => {
     const query = `
-      delete from survey_answer sa
-      using survey_question sq
-      where sq.id = sa.survey_question_id
-        and sq.survey_id = $1
-        and sa.created_by = $2
+      insert into survey_answer(survey_question_id, created_by, answer)
+      select
+        id as survey_question_id,
+        $2 as created_by,
+        $3::jsonb -> (row_number() over (order by id) - 1)::int as answer
+      from survey_question
+      where survey_id = $1
+      order by id
+      on conflict(survey_question_id, created_by) do update
+      set answer = excluded.answer
     `;
 
-    const values = [surveyId, createdBy];
-    await client.query(query, values);
-
-    const indexedAnswers = answers.map(
-      (answer, index) => [answer, index] as const,
-    );
-
-    for (const [answer, index] of indexedAnswers) {
-      const query = `
-        insert into survey_answer(survey_question_id, created_by, answer)
-        select
-          id as survey_question_id,
-          $2 as created_by,
-          $3::jsonb as answer
-        from survey_question
-        where survey_id = $1
-        order by id
-        limit 1
-        offset $4
-      `;
-
-      const json = JSON.stringify(answer);
-      const values = [surveyId, createdBy, json, index];
-      await client.query(query, values);
-    }
+    const answersJson = JSON.stringify(answers);
+    const values = [surveyId, createdBy, answersJson];
+    return client.query(query, values);
   });

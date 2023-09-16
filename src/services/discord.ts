@@ -53,6 +53,11 @@ discord.on(Events.Error, (error) => {
   logger.error(error, "DISCORD_ERROR");
 });
 
+// Initialize ClientApplication for future uses
+discord.on(Events.ClientReady, async ({ application }) => {
+  if (application.partial) await application.fetch();
+});
+
 export default discord;
 // endregion
 

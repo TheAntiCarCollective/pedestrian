@@ -4,13 +4,15 @@ A custom bot designed for [The Anti-Car Collective](https://discord.gg/anticar) 
 
 ## Development
 
-[Node.js](https://nodejs.org/en) and [docker-compose](https://docs.docker.com/compose) is required for development.
+[Node.js](https://nodejs.org) and [docker-compose](https://docs.docker.com/compose) is required for development.
 
 Starting (`npm run start`) requires the project to be installed (`npm install`), built (`npm run build`), have services running (`npm run services`), and required [environment variables](#environment-variables) configured.
 
+It is recommended to dump (`npm run dump`) the database before migrating (`npm run migrate`) in case restoring (`npm run restore`) is required.
+
 Code must pass minimum quality standards checks (`npm run check`) to be merged:
 
-- Must be buildable/compilable using `tsc`
+- [tsc](https://www.typescriptlang.org/docs/handbook/compiler-options.html) must not emit any errors
 - [ESLint](https://eslint.org) must not emit any errors
 - Must be formatted with [Prettier](https://prettier.io) (`npm run prettier`)
 

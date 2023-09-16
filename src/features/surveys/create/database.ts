@@ -1,15 +1,10 @@
-import assert from "node:assert";
+import type { PoolClient } from "pg";
 
 import { useClient, useTransaction } from "../../../services/postgresql";
+import { isNonNullable } from "../../../helpers/array";
 
-import type { PartialSurvey, Survey } from "../types";
-import { QuestionType } from "../constants";
-
-// region Types
-type QuestionId = {
-  id: number;
-};
-// endregion
+import type { PartialSurvey, Question, Survey } from "../types";
+import { isMultipleChoice } from "../functions";
 
 export const getSurvey = (guildId: string, title: string) =>
   useClient(async (client) => {
@@ -29,6 +24,97 @@ export const getSurvey = (guildId: string, title: string) =>
     return rows[0];
   });
 
+const createQuestions = (
+  client: PoolClient,
+  surveyId: string,
+  rawQuestions: Question[],
+) => {
+  const query = `
+    insert into survey_question(type, survey_id, ask, description, min_values, max_values)
+    select
+      q.type,
+      $1 as survey_id,
+      q.ask,
+      q.description,
+      q.minValues,
+      q.maxValues
+    from jsonb_to_recordset($2::jsonb) as q(
+      type survey_question_type,
+      ask text,
+      description text,
+      minValues int,
+      maxValues int
+    )
+  `;
+
+  const questions = rawQuestions.map((rawQuestion) => {
+    const { type, ask, description } = rawQuestion;
+    const minValues = isMultipleChoice(rawQuestion)
+      ? rawQuestion.minValues
+      : null;
+    const maxValues = isMultipleChoice(rawQuestion)
+      ? rawQuestion.maxValues
+      : null;
+
+    return {
+      type,
+      ask,
+      description,
+      minValues,
+      maxValues,
+    };
+  });
+
+  const questionsJson = JSON.stringify(questions);
+  const values = [surveyId, questionsJson];
+  return client.query(query, values);
+};
+
+const createChoices = (
+  client: PoolClient,
+  surveyId: string,
+  questions: Question[],
+) => {
+  const query = `
+    insert into survey_question_choice(survey_question_id, label, description)
+    select
+      sq.id,
+      c.label,
+      c.description
+    from
+      jsonb_to_recordset($2::jsonb) as c(
+        questionIndex int,
+        label text,
+        description text
+      ) cross join lateral(
+        select id
+        from survey_question
+        where survey_id = $1
+        order by id
+        limit 1
+        offset c.questionIndex
+      ) as sq
+  `;
+
+  const choices = questions
+    .flatMap((question, questionIndex) => {
+      if (isMultipleChoice(question)) {
+        const { choices } = question;
+        return choices.map((choice) => ({
+          questionIndex,
+          ...choice,
+        }));
+      }
+
+      return undefined;
+    })
+    .filter(isNonNullable);
+
+  const choicesJson = JSON.stringify(choices);
+  const values = [surveyId, choicesJson];
+  return client.query(query, values);
+};
+
 export const createSurvey = ({
   id: surveyId,
   guildId,
@@ -44,60 +130,16 @@ export const createSurvey = ({
       values($1, $2, $3, $4, $5, $6)
     `;
 
-    await client.query(query, [
+    const values = [
       surveyId,
       guildId,
       title,
       description,
       channelId,
       createdBy,
-    ]);
+    ];
 
-    for (const question of questions) {
-      const { type, ask, description } = question;
-      switch (type) {
-        case QuestionType.MultipleChoice: {
-          const query = `
-            insert into survey_question(type, survey_id, ask, description, min_values, max_values)
-            values ($1, $2, $3, $4, $5, $6)
-            returning id
-          `;
-
-          const { minValues, maxValues, choices } = question;
-          const { rows } = await client.query<QuestionId>(query, [
-            type,
-            surveyId,
-            ask,
-            description,
-            minValues,
-            maxValues,
-          ]);
-
-          const { id: questionId } = rows[0] ?? {};
-          assert(questionId !== undefined);
-
-          for (const { label, description } of choices) {
-            const query = `
-              insert into survey_question_choice(survey_question_id, label, description)
-              values ($1, $2, $3)
-            `;
-
-            const values = [questionId, label, description];
-            await client.query(query, values);
-          }
-
-          break;
-        }
-        case QuestionType.OpenAnswer: {
-          const query = `
-            insert into survey_question(type, survey_id, ask, description)
-            values($1, $2, $3, $4)
-          `;
-
-          const values = [type, surveyId, ask, description];
-          await client.query(query, values);
-          break;
-        }
-      }
-    }
+    await client.query(query, values);
+    await createQuestions(client, surveyId, questions);
+    return createChoices(client, surveyId, questions);
   });

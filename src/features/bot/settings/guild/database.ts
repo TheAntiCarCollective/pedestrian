@@ -1,42 +1,49 @@
-import assert from "node:assert";
-
-import { useClient, useTransaction } from "../../../../services/postgresql";
+import { useClient } from "../../../../services/postgresql";
 
 import type { GuildSettings } from "./types";
 
 export const getOrCreateGuildSettings = (guildId: string) =>
-  useTransaction(async (client) => {
-    const query = `
-      select
-        id,
-        max_creator_subscriptions as "maxCreatorSubscriptions",
-        creator_mention_role_id as "creatorMentionRoleId",
-        survey_creator_role_id as "surveyCreatorRoleId"
-      from guild
-      where id = $1
-    `;
-
-    const values = [guildId];
-    const { rows } = await client.query<GuildSettings>(query, values);
-    let guildSettings = rows[0];
-
-    if (guildSettings === undefined) {
+  useClient((client) => {
+    const guildSettings = async (): Promise<GuildSettings> => {
       const query = `
-        insert into guild(id)
-        values($1)
-        returning
+        with guild_settings as(
+          insert into guild(id)
+          values($1)
+          on conflict do nothing
+          returning
+            id,
+            max_creator_subscriptions,
+            creator_mention_role_id,
+            survey_creator_role_id
+        )
+        select
           id,
           max_creator_subscriptions as "maxCreatorSubscriptions",
           creator_mention_role_id as "creatorMentionRoleId",
           survey_creator_role_id as "surveyCreatorRoleId"
+        from guild_settings
+        union all
+        select
+          id,
+          max_creator_subscriptions as "maxCreatorSubscriptions",
+          creator_mention_role_id as "creatorMentionRoleId",
+          survey_creator_role_id as "surveyCreatorRoleId"
+        from guild
+        where id = $1
+        limit 1
       `;
 
+      const values = [guildId];
       const { rows } = await client.query<GuildSettings>(query, values);
-      guildSettings = rows[0];
-    }
 
-    assert(guildSettings !== undefined);
-    return guildSettings;
+      const row = rows[0];
+      // https://stackoverflow.com/a/15950324/5302085
+      // "Or loop until you actually get a row. The loop will hardly ever be
+      // triggered in common work loads anyway."
+      return row ?? guildSettings();
+    };
+
+    return guildSettings();
   });
 
 export const setGuildSettings = ({
