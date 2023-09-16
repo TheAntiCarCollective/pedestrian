@@ -162,7 +162,7 @@ const getQuestions = async (client: PoolClient, surveyId: string) => {
 };
 
 export const getSurvey = (id: SurveyCompositeKey | string) =>
-  useTransaction(async (client) => {
+  useTransaction(`${__filename}#getSurvey`, async (client) => {
     const partialSurvey = await getPartialSurvey(client, id);
     if (partialSurvey === undefined) return undefined;
     const questions = await getQuestions(client, partialSurvey.id);

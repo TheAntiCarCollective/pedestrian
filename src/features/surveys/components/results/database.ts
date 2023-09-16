@@ -9,7 +9,7 @@ type Answers = {
 // endregion
 
 export const getResults = (surveyId: string) =>
-  useClient(async (client) => {
+  useClient(`${__filename}#getResults`, async (client) => {
     const query = `
       select
         array_agg(

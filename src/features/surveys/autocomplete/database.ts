@@ -7,7 +7,7 @@ type Title = {
 // endregion
 
 export const findTitles = (guildId: string, partialTitle: string) =>
-  useClient(async (client) => {
+  useClient(`${__filename}#findTitles`, async (client) => {
     const query = `
       select title
       from survey

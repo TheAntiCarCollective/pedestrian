@@ -38,7 +38,7 @@ type CreateCreatorSubscriptions = {
 // endregion
 
 export const getCreatorSubscriptions = (guildId: string) =>
-  useClient(async (client) => {
+  useClient(`${__filename}#getCreatorSubscriptions`, async (client) => {
     const query = `
       select cc.id as "creatorChannelId"
       from creator_subscription as cs
@@ -53,7 +53,7 @@ export const getCreatorSubscriptions = (guildId: string) =>
   });
 
 export const getCreatorChannels = (guildId: string) =>
-  useClient(async (client) => {
+  useClient(`${__filename}#getCreatorChannels`, async (client) => {
     const query = `
       select
         id,
@@ -77,7 +77,7 @@ export const createCreatorChannel = ({
   webhookId,
   webhookToken,
 }: CreateCreatorChannel) =>
-  useClient(async (client) => {
+  useClient(`${__filename}#createCreatorChannel`, async (client) => {
     const query = `
       insert into creator_channel(id, type, guild_id, parent_id, webhook_id, webhook_token)
       values($1, $2, $3, $4, $5, $6)
@@ -131,7 +131,7 @@ export const createCreatorSubscriptions = ({
   creatorType,
   creatorChannelIds,
 }: CreateCreatorSubscriptions) =>
-  useTransaction(async (client) => {
+  useTransaction(`${__filename}#createCreatorSubscriptions`, async (client) => {
     const creatorId = await getOrCreateCreatorId(client, domainId, creatorType);
 
     const query = `

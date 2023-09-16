@@ -3,7 +3,7 @@ import { useClient } from "../../../../services/postgresql";
 import type { GuildSettings } from "./types";
 
 export const getOrCreateGuildSettings = (guildId: string) =>
-  useClient((client) => {
+  useClient(`${__filename}#getOrCreateGuildSettings`, (client) => {
     const guildSettings = async (): Promise<GuildSettings> => {
       const query = `
         with guild_settings as(
@@ -52,7 +52,7 @@ export const setGuildSettings = ({
   creatorMentionRoleId,
   surveyCreatorRoleId,
 }: GuildSettings) =>
-  useClient((client) => {
+  useClient(`${__filename}#setGuildSettings`, (client) => {
     const query = `
       update guild
       set

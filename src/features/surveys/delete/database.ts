@@ -9,7 +9,7 @@ type PartialSurvey = {
 // endregion
 
 export const getPartialSurvey = (guildId: string, title: string) =>
-  useClient(async (client) => {
+  useClient(`${__filename}#getPartialSurvey`, async (client) => {
     const query = `
       select
         id,
@@ -26,7 +26,7 @@ export const getPartialSurvey = (guildId: string, title: string) =>
   });
 
 export const deleteSurvey = (guildId: string, title: string) =>
-  useClient(async (client) => {
+  useClient(`${__filename}#deleteSurvey`, async (client) => {
     const query = `
       delete from survey
       where guild_id = $1

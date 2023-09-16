@@ -9,7 +9,7 @@ type AnswerRow = {
 // endregion
 
 export const getAnswers = (surveyId: string, createdBy: string) =>
-  useClient(async (client) => {
+  useClient(`${__filename}#getAnswers`, async (client) => {
     const query = `
       select sa.answer
       from survey_answer as sa
@@ -31,7 +31,7 @@ export const createAnswers = (
   createdBy: string,
   answers: Answer[],
 ) =>
-  useClient(async (client) => {
+  useClient(`${__filename}#createAnswers`, async (client) => {
     const query = `
       insert into survey_answer(survey_question_id, created_by, answer)
       select

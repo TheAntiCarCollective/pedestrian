@@ -44,7 +44,7 @@ type CreateCreatorPost = {
 // endregion
 
 export const getCreatorPost = (postId: string) =>
-  useClient(async (client) => {
+  useClient(`${__filename}#getCreatorPost`, async (client) => {
     const query = `
       select
         cp.content_id as "contentId",
@@ -66,7 +66,7 @@ export const getCreatorPost = (postId: string) =>
   });
 
 export const getCreatorSubscriptions = (guildId: string) =>
-  useClient(async (client) => {
+  useClient(`${__filename}#getCreatorSubscriptions`, async (client) => {
     const query = `
       select
         cs.created_at as "createdAt",
@@ -99,7 +99,7 @@ export const doesCreatorPostExist = ({
   creatorDomainId,
   creatorType,
 }: DoesCreatorPostExist) =>
-  useClient(async (client) => {
+  useClient(`${__filename}#doesCreatorPostExist`, async (client) => {
     const query = `
       select exists(
         select cp.id
@@ -130,7 +130,7 @@ export const createCreatorPost = ({
   creatorType,
   contentId,
 }: CreateCreatorPost) =>
-  useClient((client) => {
+  useClient(`${__filename}#createCreatorPost`, (client) => {
     const query = `
       insert into creator_post(id, creator_subscription_id, content_id)
       select

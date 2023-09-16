@@ -7,7 +7,7 @@ import type { PartialSurvey, Question, Survey } from "../types";
 import { isMultipleChoice } from "../functions";
 
 export const getSurvey = (guildId: string, title: string) =>
-  useClient(async (client) => {
+  useClient(`${__filename}#getSurvey`, async (client) => {
     const query = `
       select
         id,
@@ -124,7 +124,7 @@ export const createSurvey = ({
   createdBy,
   questions,
 }: Survey) =>
-  useTransaction(async (client) => {
+  useTransaction(`${__filename}#createSurvey`, async (client) => {
     const query = `
       insert into survey(id, guild_id, title, description, channel_id, created_by)
       values($1, $2, $3, $4, $5, $6)

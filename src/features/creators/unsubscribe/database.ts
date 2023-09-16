@@ -3,7 +3,7 @@ import { useClient } from "../../../services/postgresql";
 import type { CreatorSubscription } from "./types";
 
 export const getCreatorSubscriptions = (guildId: string) =>
-  useClient(async (client) => {
+  useClient(`${__filename}#getCreatorSubscriptions`, async (client) => {
     const query = `
       select
         cs.id as "id",
@@ -25,7 +25,7 @@ export const getCreatorSubscriptions = (guildId: string) =>
   });
 
 export const deleteCreatorSubscriptions = (creatorSubscriptionIds: number[]) =>
-  useClient((client) => {
+  useClient(`${__filename}#deleteCreatorSubscriptions`, (client) => {
     const query = `
       delete from creator_subscription
       where id = any($1)
