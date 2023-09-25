@@ -93,7 +93,6 @@ type OnModal = (interaction: ModalSubmitInteraction, id: string) => OnInteractio
 
 type Command = {
   json: CommandJson;
-  guildId?: string;
   onCommand: OnCommand;
   onAutocomplete?: OnAutocomplete;
 };
@@ -102,13 +101,11 @@ type Command = {
 const commands = new Map<string, Command>();
 export const registerCommand = (
   json: CommandJson,
-  guildId: string | undefined,
   onCommand: OnCommand,
   onAutocomplete?: OnAutocomplete,
 ) =>
   void commands.set(json.name, {
     json,
-    guildId,
     onCommand,
     onAutocomplete,
   });
@@ -125,42 +122,14 @@ export const registerModal = (modalId: string, onModal: OnModal) =>
 
 export const refreshCommands = async () => {
   if (commands.size === 0) return;
-  const allCommands = [...commands.values()];
-
-  const globalCommands = allCommands
-    .filter(({ guildId }) => guildId === undefined)
-    .map(({ json }) => json);
-
-  const guildCommands = allCommands
-    .filter(({ guildId }) => guildId !== undefined)
-    .reduce((map, { guildId, json }) => {
-      assert(guildId !== undefined);
-      const body = map.get(guildId) ?? [];
-      body.push(json);
-      return map.set(guildId, body);
-    }, new Map<string, CommandJson[]>());
 
   const { application, rest } = discord;
   assert(application !== null);
   const { id: applicationId } = application;
 
-  const promises: Promise<unknown>[] = [];
-  for (const [guildId, body] of guildCommands) {
-    const applicationGuildCommandsRequest = rest.put(
-      Routes.applicationGuildCommands(applicationId, guildId),
-      { body },
-    );
-
-    promises.push(applicationGuildCommandsRequest);
-  }
-
-  const applicationCommandsRequest = rest.put(
-    Routes.applicationCommands(applicationId),
-    { body: globalCommands },
-  );
-
-  promises.push(applicationCommandsRequest);
-  await Promise.all(promises);
+  const allCommands = [...commands.values()];
+  const body = allCommands.map(({ json }) => json);
+  await rest.put(Routes.applicationCommands(applicationId), { body });
 };
 
 discord.once(Events.ClientReady, refreshCommands);
@@ -182,20 +151,21 @@ discord.on(Events.InteractionCreate, async (interaction) => {
       });
 
       switch (status) {
-        case "success":
+        case "success": {
           childLogger.info(result, "ON_INTERACTION_SUCCESS");
           break;
-        case "error":
+        }
+        case "error": {
           childLogger.error(result, "ON_INTERACTION_ERROR");
           break;
+        }
       }
     };
 
   if (interaction.isCommand()) {
     for (const [name, { onCommand }] of commands) {
       if (name === interaction.commandName) {
-        let handler: string;
-
+        let handler;
         if (interaction.isChatInputCommand()) {
           const { options } = interaction;
           const subcommandGroup = options.getSubcommandGroup(false);

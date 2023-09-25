@@ -9,7 +9,7 @@ const logger = loggerFactory({
 
 const node = {
   host: Environment.RedisHost,
-  port: parseInt(Environment.RedisPort),
+  port: Number.parseInt(Environment.RedisPort),
 };
 
 const user = {

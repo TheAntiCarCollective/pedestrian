@@ -25,7 +25,7 @@ const databaseRequestDuration = new Histogram({
 
 const postgresql = new Pool({
   host: Environment.PostgresqlHost,
-  port: parseInt(Environment.PostgresqlPort),
+  port: Number.parseInt(Environment.PostgresqlPort),
   database: Environment.PostgresqlDatabase,
   user: Environment.PostgresqlUser,
   password: Environment.PostgresqlPassword,
@@ -50,11 +50,13 @@ export const useClient = async <T>(caller: string, callback: Callback<T>) => {
       });
 
       switch (status) {
-        case "success":
+        case "success": {
           childLogger.debug(result, "ON_DATABASE_SUCCESS");
           return result as T;
-        case "error":
+        }
+        case "error": {
           throw result;
+        }
       }
     };
 

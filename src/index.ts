@@ -1,4 +1,4 @@
-import path from "path";
+import path from "node:path";
 import { glob } from "glob";
 import loggerFactory from "pino";
 import { collectDefaultMetrics } from "prom-client";
@@ -16,24 +16,25 @@ collectDefaultMetrics();
 // endregion
 
 const main = async () => {
-  // Import all modules automatically to trigger side effects
-  const importPaths = await glob(`${__dirname}/**/*.js`);
-  const imports = importPaths
-    .map((importPath) => path.relative(__dirname, importPath))
-    .map((importPath) => import(`./${importPath}`));
-  await Promise.all(imports);
+  try {
+    // Import all modules automatically to trigger side effects
+    const importPaths = await glob(`${__dirname}/**/*.js`);
+    const imports = importPaths
+      .map((importPath) => path.relative(__dirname, importPath))
+      .map((importPath) => import(`./${importPath}`));
+    await Promise.all(imports);
 
-  const serverPort = parseInt(Environment.ServerPort);
-  server.listen(serverPort, () => {
-    logger.info(serverPort, "SERVER_LISTEN");
-  });
+    const serverPort = Number.parseInt(Environment.ServerPort);
+    server.listen(serverPort, () => {
+      logger.info(serverPort, "SERVER_LISTEN");
+    });
 
-  await discord.login();
-  logger.info("DISCORD_LOGIN");
+    await discord.login();
+    logger.info("DISCORD_LOGIN");
+  } catch (error) {
+    logger.fatal(error, "MAIN_ERROR");
+    process.exitCode = 1;
+  }
 };
 
-const mainPromise = main();
-mainPromise.catch((error) => {
-  logger.fatal(error, "MAIN_ERROR");
-  process.exitCode = 1;
-});
+void main();

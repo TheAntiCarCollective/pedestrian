@@ -5,19 +5,21 @@ import redis from "./services/redis";
 import Environment from "./environment";
 import type { Lock } from "./lock";
 import lock from "./lock";
+import { isNullable } from "./helpers";
 
 const logger = loggerFactory({
   name: __filename,
 });
 
 // region CacheKey
-const normalize = (value: string) => value.replace(/\s+/g, "").toLowerCase();
+const normalize = (value: string) => value.replaceAll(/\s+/g, "").toLowerCase();
 
 const cacheKey = (key: string) => `${Environment.ProjectName}:${key}`;
 
-const CacheKey = {
+export default {
   channel: (channelId: string) => cacheKey(`channel:${channelId}`),
   channels: (query: string) => cacheKey(`channels:${normalize(query)}`),
+  rssFeed: (url: string) => cacheKey(`rssFeed:${url}`),
   video: (videoId: string) => cacheKey(`video:${videoId}`),
   videos: (playlistId: string) => cacheKey(`videos:${playlistId}`),
 } as const;
@@ -69,7 +71,7 @@ const atomicSet = async (
 };
 
 const get = async <T>(key: string) => {
-  let json: string | null = null;
+  let json;
 
   try {
     json = await redis.get(key);
@@ -77,8 +79,7 @@ const get = async <T>(key: string) => {
     logger.error(error, "GET_ERROR");
   }
 
-  if (json === null) return undefined;
-  return JSON.parse(json) as T;
+  return isNullable(json) ? undefined : (JSON.parse(json) as T);
 };
 // endregion
 
@@ -105,5 +106,3 @@ export const computeIfAbsent = async <T>(
 
   return value;
 };
-
-export default CacheKey;

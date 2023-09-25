@@ -1,5 +1,5 @@
 import type { Callback, Result } from "ioredis";
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
 import loggerFactory from "pino";
 
 import redis from "./services/redis";
@@ -58,9 +58,9 @@ declare module "ioredis" {
 // endregion
 
 const tryLock = async (lockKey: string, expireInMilliseconds: number) => {
-  let previousLockToken: string | null = null;
   const lockTokenBytes = randomBytes(16);
   const lockToken = lockTokenBytes.toString("hex");
+  let previousLockToken;
 
   try {
     previousLockToken = await redis.set(

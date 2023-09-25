@@ -3,13 +3,13 @@ import Thumbnail = youtube_v3.Schema$Thumbnail;
 import ThumbnailDetails = youtube_v3.Schema$ThumbnailDetails;
 
 import Environment from "../environment";
-import { isNonNullable } from "../helpers/array";
+import { isNonNullable } from "../helpers";
 
 export const getChannelUrl = (channelId: string) =>
   `https://www.youtube.com/channel/${channelId}`;
 
-export const getThumbnailUrl = (thumbnailDetails: ThumbnailDetails = {}) => {
-  const urls = Object.values(thumbnailDetails)
+export const getThumbnailUrl = (thumbnailDetails: ThumbnailDetails = {}) =>
+  Object.values(thumbnailDetails)
     .filter((value) => typeof value === "object")
     .map((value) => value as Thumbnail)
     .sort((a, b) => {
@@ -18,10 +18,7 @@ export const getThumbnailUrl = (thumbnailDetails: ThumbnailDetails = {}) => {
       return bResolution - aResolution;
     })
     .map(({ url }) => url)
-    .filter(isNonNullable);
-
-  return urls[0];
-};
+    .find(isNonNullable);
 
 export const getVideoUrl = (videoId: string) =>
   `https://www.youtube.com/watch?v=${videoId}`;
