@@ -3,7 +3,7 @@ import { GuildMember, PermissionFlagsBits } from "discord.js";
 import assert from "node:assert";
 
 import * as database from "./database";
-import * as ui from "./ui";
+import UI from "./ui";
 
 export enum Option {
   Title = "title",
@@ -15,7 +15,7 @@ const checkPermissionsResponse = (interaction: ChatInputCommandInteraction) => {
   const { permissions } = member;
 
   if (permissions.has(PermissionFlagsBits.ManageMessages)) return;
-  return interaction.reply(ui.permissionsDenied());
+  return interaction.reply(UI.permissionsDenied());
 };
 
 export default async (interaction: ChatInputCommandInteraction) => {
@@ -32,7 +32,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
   }
 
   await database.deleteSurvey(guildId, title);
-  const response = await interaction.reply(ui.deletedSurvey(title));
+  const response = await interaction.reply(UI.deletedSurvey(title));
 
   if (partialSurvey !== undefined) {
     const { id: messageId, channelId } = partialSurvey;

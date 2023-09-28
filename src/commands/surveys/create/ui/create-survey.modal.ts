@@ -3,11 +3,11 @@ import assert from "node:assert";
 
 import { registerModal } from "../../../../services/discord";
 
-import { UIID } from "./constants";
+import { UIID } from "../ui";
 import session from "../context";
 import * as database from "../database";
 import type { Survey } from "../../types";
-import * as ui from "../../ui";
+import UI from "../../ui";
 
 registerModal(UIID.CreateSurveyModal, async (interaction, sessionId) => {
   const { fields, member } = interaction;
@@ -21,7 +21,7 @@ registerModal(UIID.CreateSurveyModal, async (interaction, sessionId) => {
     UIID.CreateSurveyDescriptionInput,
   );
 
-  const message = await interaction.followUp(ui.survey(partialSurvey, member));
+  const message = await interaction.followUp(UI.survey(partialSurvey, member));
 
   const survey: Survey = {
     id: message.id,
@@ -30,7 +30,7 @@ registerModal(UIID.CreateSurveyModal, async (interaction, sessionId) => {
 
   try {
     await database.createSurvey(survey);
-    return await message.edit(ui.survey(survey, member));
+    return await message.edit(UI.survey(survey, member));
   } catch (error) {
     await message.delete();
     throw error;

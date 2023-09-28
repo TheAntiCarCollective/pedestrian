@@ -1,7 +1,6 @@
 import { registerComponent } from "../../../../services/discord";
 
-import * as ui from "./index";
-import { UIID } from "./constants";
+import UI, { UIID } from "../ui";
 import session from "../context";
 
 registerComponent(UIID.PreviousButton, async (interaction, sessionId) => {
@@ -9,5 +8,5 @@ registerComponent(UIID.PreviousButton, async (interaction, sessionId) => {
   oldContext.page -= 1;
 
   const context = await session.update(oldContext, interaction);
-  return interaction.update(ui.youtubeChannel(context));
+  return interaction.update(UI.youtubeChannel(context));
 });

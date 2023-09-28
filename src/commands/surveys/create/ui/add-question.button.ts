@@ -1,7 +1,6 @@
 import { registerComponent } from "../../../../services/discord";
 
-import * as ui from "./index";
-import { UIID } from "./constants";
+import UI, { UIID } from "../ui";
 import session, * as withContext from "../context";
 import { InitialQuestion } from "../../constants";
 
@@ -13,6 +12,6 @@ registerComponent(UIID.AddQuestionButton, async (interaction, sessionId) => {
   questions[oldContext.selectedQuestionIndex] = InitialQuestion;
 
   const context = await session.update(oldContext, interaction);
-  await interaction.showModal(ui.questionModal(context));
+  await interaction.showModal(UI.questionModal(context));
   return undefined;
 });

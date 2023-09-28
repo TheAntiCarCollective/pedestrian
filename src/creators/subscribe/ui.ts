@@ -24,10 +24,7 @@ const maxCreatorSubscriptionsEmbeds = (
   return [embed];
 };
 
-export const maxCreatorSubscriptions = (
-  creatorType: CreatorType,
-  name: string,
-) => ({
+const maxCreatorSubscriptions = (creatorType: CreatorType, name: string) => ({
   embeds: maxCreatorSubscriptionsEmbeds(creatorType, name),
   ephemeral: true,
 });
@@ -48,9 +45,14 @@ const subscribedEmbeds = (name: string, channelId: string) => {
   return [embed];
 };
 
-export const subscribed = (name: string, channelId: string) => ({
+const subscribed = (name: string, channelId: string) => ({
   components: [],
   embeds: subscribedEmbeds(name, channelId),
   ephemeral: true,
 });
 // endregion
+
+export default {
+  maxCreatorSubscriptions,
+  subscribed,
+};

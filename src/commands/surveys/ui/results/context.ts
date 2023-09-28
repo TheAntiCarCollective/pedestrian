@@ -11,7 +11,7 @@ import assert from "node:assert";
 
 import Session from "../../../../session";
 
-import * as ui from "./ui";
+import UI from "./ui";
 import initialSpec from "./spec.json";
 import type { Answer, Survey } from "../../types";
 import { isMultipleChoice, isSelected, surveyCreator } from "../../functions";
@@ -114,8 +114,8 @@ export const resultsUi = async (
 
   const creator = await surveyCreator(survey, interaction);
   return survey.id === message.id
-    ? interaction.reply(ui.results(context, creator, files))
-    : interaction.update(ui.results(context, creator, files));
+    ? interaction.reply(UI.results(context, creator, files))
+    : interaction.update(UI.results(context, creator, files));
 };
 
 export default new Session<Context>();

@@ -15,7 +15,7 @@ const permissionsDeniedEmbeds = () => {
   return [embed];
 };
 
-export const permissionsDenied = () => ({
+const permissionsDenied = () => ({
   embeds: permissionsDeniedEmbeds(),
   ephemeral: true,
 });
@@ -36,8 +36,13 @@ const deletedSurveyEmbeds = (title: string) => {
   return [embed];
 };
 
-export const deletedSurvey = (title: string) => ({
+const deletedSurvey = (title: string) => ({
   embeds: deletedSurveyEmbeds(title),
   ephemeral: true,
 });
 // endregion
+
+export default {
+  permissionsDenied,
+  deletedSurvey,
+};

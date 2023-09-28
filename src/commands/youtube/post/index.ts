@@ -4,7 +4,7 @@ import { getThumbnailUrl, getVideoUrl } from "../../../services/youtube";
 import { CreatorType, registerPoster } from "../../../creators";
 import { isNonNullable } from "../../../helpers";
 
-import * as ui from "./ui";
+import UI from "./ui";
 import * as youtube from "../youtube";
 
 registerPoster(
@@ -38,7 +38,7 @@ registerPoster(
 
       options.push({
         avatarURL: getThumbnailUrl(thumbnails),
-        components: ui.viewDescription(videoId),
+        components: UI.viewDescription(videoId),
         contentId: videoId,
         title,
         url: getVideoUrl(videoId),

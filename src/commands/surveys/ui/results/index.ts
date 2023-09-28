@@ -4,8 +4,8 @@ import { registerComponent } from "../../../../services/discord";
 
 import session, * as withContext from "./context";
 import * as resultsDatabase from "./database";
-import * as ui from "./ui";
-import { UIID } from "../constants";
+import UI from "./ui";
+import { UIID } from "../../ui";
 import * as surveysDatabase from "../../database";
 
 registerComponent(UIID.SurveyResultsButton, async (interaction, surveyId) => {
@@ -14,7 +14,7 @@ registerComponent(UIID.SurveyResultsButton, async (interaction, surveyId) => {
 
   const results = await resultsDatabase.getResults(surveyId);
   const { length: numberOfAnswers } = results[0] ?? [];
-  if (numberOfAnswers === 0) return interaction.reply(ui.noResults(survey));
+  if (numberOfAnswers === 0) return interaction.reply(UI.noResults(survey));
 
   const partialContext = {
     survey,

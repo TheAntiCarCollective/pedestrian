@@ -8,7 +8,9 @@ import { compress } from "compress-tag";
 
 import { Color } from "../../../../../services/discord";
 
-import { UIID } from "./constants";
+export enum UIID {
+  RoleSelect = "cb428095-e152-4519-9b65-42ac7afc6cec",
+}
 
 // region Setting
 // region Components
@@ -62,9 +64,13 @@ const settingEmbeds = (defaultMentionRoleId: string | null) => {
   return [embed];
 };
 
-export const setting = (defaultMentionRoleId: string | null) => ({
+const setting = (defaultMentionRoleId: string | null) => ({
   components: settingComponents(defaultMentionRoleId),
   embeds: settingEmbeds(defaultMentionRoleId),
   ephemeral: true,
 });
 // endregion
+
+export default {
+  setting,
+};

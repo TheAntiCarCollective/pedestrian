@@ -1,7 +1,6 @@
 import { registerComponent } from "../../../../../services/discord";
 
-import * as ui from "./index";
-import { UIID } from "./constants";
+import UI, { UIID } from "../ui";
 import session from "../context";
 import * as database from "../database";
 
@@ -12,7 +11,7 @@ registerComponent(UIID.CompleteButton, async (interaction, sessionId) => {
   const { user: answerer } = interaction;
   await database.createAnswers(survey.id, answerer.id, answers);
 
-  const response = await interaction.update(ui.completed(context));
+  const response = await interaction.update(UI.completed(context));
   await session.destroy(sessionId);
   return response;
 });

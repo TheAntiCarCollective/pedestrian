@@ -17,16 +17,31 @@ import assert, { fail as error } from "node:assert";
 
 import { Color } from "../../../../../services/discord";
 
-import { UIID } from "./constants";
 import type { Context } from "../context";
 import * as withContext from "../context";
-import * as ui from "../../../ui";
+import UI from "../../../ui";
 import {
   isMultipleChoice,
   isOpen,
   isSelected,
   isSkipped,
 } from "../../../functions";
+
+export enum UIID {
+  ChoiceSelect = "b3cd5c02-7eba-44c4-bdb8-4186e3da90c2",
+
+  PreviousQuestionButton = "fe50e3f5-dfb5-47ad-a178-b588f658ea4d",
+  NextQuestionButton = "3ef54087-2cf4-4eff-9942-bfc5d13a8b5e",
+
+  AnswerButton = "06078da1-873d-40dc-9067-0da2b32ff341",
+  SkipAnswerButton = "5203b807-181c-4302-9a5f-374a8db2ed11",
+
+  CancelButton = "ac5e48cc-4665-436e-ba68-a77440911d2b",
+  CompleteButton = "36524edd-d7d7-496a-8937-8f3b54905233",
+
+  AnswerModal = "a1421a6d-dd82-4052-8121-646fe7cb1ee2",
+  AnswerInput = "ANSWER_INPUT",
+}
 
 // region Answer
 // region Choice Select
@@ -145,7 +160,7 @@ const cancelButton = ({ sessionId }: Context) =>
 
 const surveyButtonsActionRow = (context: Context) =>
   new ActionRowBuilder<ButtonBuilder>().setComponents(
-    ui.surveyLinkButton(context.survey),
+    UI.surveyLinkButton(context.survey),
     cancelButton(context),
     completeButton(context),
   );
@@ -215,14 +230,11 @@ const answerEmbeds = (
   context: Context,
   surveyCreator: GuildMember | undefined,
 ) => [
-  ui.questionEmbed(context.survey, surveyCreator, context.selectedIndex),
+  UI.questionEmbed(context.survey, surveyCreator, context.selectedIndex),
   answerEmbed(context),
 ];
 
-export const answer = (
-  context: Context,
-  surveyCreator: GuildMember | undefined,
-) => ({
+const answer = (context: Context, surveyCreator: GuildMember | undefined) => ({
   components: answerComponents(context),
   embeds: answerEmbeds(context, surveyCreator),
   ephemeral: true,
@@ -245,7 +257,7 @@ const answerInput = (context: Context) => {
 const answerActionRow = (context: Context) =>
   new ActionRowBuilder<TextInputBuilder>().setComponents(answerInput(context));
 
-export const answerModal = (context: Context) =>
+const answerModal = (context: Context) =>
   new ModalBuilder()
     .setComponents(answerActionRow(context))
     .setCustomId(`${UIID.AnswerModal}${context.sessionId}`)
@@ -254,7 +266,7 @@ export const answerModal = (context: Context) =>
 
 // region Cancelled
 const cancelledComponents = ({ survey }: Context) => [
-  ui.surveyLinkActionRow(survey),
+  UI.surveyLinkActionRow(survey),
 ];
 
 const cancelledEmbeds = ({ survey }: Context) => {
@@ -274,7 +286,7 @@ const cancelledEmbeds = ({ survey }: Context) => {
   return [embed];
 };
 
-export const cancelled = (context: Context) => ({
+const cancelled = (context: Context) => ({
   components: cancelledComponents(context),
   embeds: cancelledEmbeds(context),
 });
@@ -282,7 +294,7 @@ export const cancelled = (context: Context) => ({
 
 // region Completed
 const completedComponents = ({ survey }: Context) => [
-  ui.surveyLinkActionRow(survey),
+  UI.surveyLinkActionRow(survey),
 ];
 
 const completedEmbeds = ({ survey }: Context) => {
@@ -301,8 +313,15 @@ const completedEmbeds = ({ survey }: Context) => {
   return [embed];
 };
 
-export const completed = (context: Context) => ({
+const completed = (context: Context) => ({
   components: completedComponents(context),
   embeds: completedEmbeds(context),
 });
 // endregion
+
+export default {
+  answer,
+  answerModal,
+  cancelled,
+  completed,
+};

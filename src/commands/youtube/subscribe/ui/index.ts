@@ -12,9 +12,15 @@ import { Color } from "../../../../services/discord";
 import { getChannelUrl, getThumbnailUrl } from "../../../../services/youtube";
 import { isNullable } from "../../../../helpers";
 
-import { UIID } from "./constants";
 import type { Context } from "../context";
 import * as withContext from "../context";
+
+export enum UIID {
+  PreviousButton = "41073005-a293-406e-bc50-e16b83e9c02f",
+  NextButton = "2bf4d685-e1f7-4bd5-ac45-029755f65506",
+  SubscribeButton = "388d3371-8c32-4ea7-8a98-f6f0d10deeee",
+  CancelButton = "b6c8e70c-9da2-4010-ad59-7f80a140bb93",
+}
 
 // region No Results Exist
 const noResultsExistEmbeds = (name: string) => {
@@ -30,7 +36,7 @@ const noResultsExistEmbeds = (name: string) => {
   return [embed];
 };
 
-export const noResultsExist = (name: string) => ({
+const noResultsExist = (name: string) => ({
   embeds: noResultsExistEmbeds(name),
   ephemeral: true,
 });
@@ -139,7 +145,7 @@ const youtubeChannelEmbeds = (context: Context) => {
   return [embed];
 };
 
-export const youtubeChannel = (context: Context) => ({
+const youtubeChannel = (context: Context) => ({
   components: youtubeChannelComponents(context),
   content: youtubeChannelContent(context),
   embeds: youtubeChannelEmbeds(context),
@@ -158,9 +164,15 @@ const cancelledEmbeds = ({ name }: Context) => {
   return [embed];
 };
 
-export const cancelled = (context: Context) => ({
+const cancelled = (context: Context) => ({
   components: [],
   content: "",
   embeds: cancelledEmbeds(context),
 });
 // endregion
+
+export default {
+  noResultsExist,
+  youtubeChannel,
+  cancelled,
+};

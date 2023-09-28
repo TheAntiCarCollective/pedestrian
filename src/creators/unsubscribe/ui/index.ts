@@ -13,9 +13,14 @@ import assert from "node:assert";
 
 import { Color } from "../../../services/discord";
 
-import { UIID } from "./constants";
 import type { Context } from "../context";
 import { CreatorType } from "../../constants";
+
+export enum UIID {
+  SubscriptionSelect = "81553290-cfc9-4ddc-9d35-b0c4d463f44c",
+  UnsubscribeButton = "81bbe978-6c98-43b6-adf6-eddea274864e",
+  CancelButton = "6abeeb82-31e1-4258-a2db-3471c0922e1a",
+}
 
 // region No Creator Subscriptions
 const noCreatorSubscriptionsEmbeds = (creatorType: CreatorType) => {
@@ -32,7 +37,7 @@ const noCreatorSubscriptionsEmbeds = (creatorType: CreatorType) => {
   return [embed];
 };
 
-export const noCreatorSubscriptions = (creatorType: CreatorType) => ({
+const noCreatorSubscriptions = (creatorType: CreatorType) => ({
   embeds: noCreatorSubscriptionsEmbeds(creatorType),
   ephemeral: true,
 });
@@ -118,10 +123,7 @@ const unsubscribeMenuEmbeds = () => {
   return [embed];
 };
 
-export const unsubscribeMenu = (
-  context: Context,
-  channels: GuildChannelManager,
-) => ({
+const unsubscribeMenu = (context: Context, channels: GuildChannelManager) => ({
   components: unsubscribeMenuComponents(context, channels),
   embeds: unsubscribeMenuEmbeds(),
   ephemeral: true,
@@ -139,7 +141,7 @@ const cancelledEmbeds = () => {
   return [embed];
 };
 
-export const cancelled = () => ({
+const cancelled = () => ({
   components: [],
   embeds: cancelledEmbeds(),
 });
@@ -164,8 +166,15 @@ const unsubscribedEmbeds = ({ selectedIndexes }: Context) => {
   return [embed];
 };
 
-export const unsubscribed = (context: Context) => ({
+const unsubscribed = (context: Context) => ({
   components: [],
   embeds: unsubscribedEmbeds(context),
 });
 // endregion
+
+export default {
+  noCreatorSubscriptions,
+  unsubscribeMenu,
+  cancelled,
+  unsubscribed,
+};

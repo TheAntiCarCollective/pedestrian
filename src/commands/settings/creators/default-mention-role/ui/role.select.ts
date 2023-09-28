@@ -2,8 +2,7 @@ import assert from "node:assert";
 
 import { registerComponent } from "../../../../../services/discord";
 
-import * as ui from "./index";
-import { UIID } from "./constants";
+import UI, { UIID } from "../ui";
 import * as database from "../database";
 
 registerComponent(UIID.RoleSelect, async (interaction) => {
@@ -14,5 +13,5 @@ registerComponent(UIID.RoleSelect, async (interaction) => {
   const defaultMentionRoleId = values[0] ?? null;
   await database.setDefaultMentionRoleId(guildId, defaultMentionRoleId);
 
-  return interaction.update(ui.setting(defaultMentionRoleId));
+  return interaction.update(UI.setting(defaultMentionRoleId));
 });

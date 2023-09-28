@@ -2,8 +2,7 @@ import assert from "node:assert";
 
 import { registerComponent } from "../../../services/discord";
 
-import * as ui from "./index";
-import { UIID } from "./constants";
+import UI, { UIID } from "../ui";
 import session from "../context";
 
 registerComponent(UIID.SubscriptionSelect, async (interaction, sessionId) => {
@@ -17,5 +16,5 @@ registerComponent(UIID.SubscriptionSelect, async (interaction, sessionId) => {
   oldContext.selectedIndexes = values.map((value) => Number.parseInt(value));
 
   const context = await session.update(oldContext, interaction);
-  return interaction.update(ui.unsubscribeMenu(context, channels));
+  return interaction.update(UI.unsubscribeMenu(context, channels));
 });

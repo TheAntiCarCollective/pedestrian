@@ -8,7 +8,7 @@ import assert from "node:assert";
 import Environment from "../../environment";
 import { isUnique } from "../../helpers";
 
-import * as ui from "./ui";
+import UI from "./ui";
 import * as subscribeDatabase from "./database";
 import * as creatorsDatabase from "../database";
 import { CreatorType } from "../constants";
@@ -54,7 +54,7 @@ export const checkSubscribeRequirements = async (
   numberOfCreatorSubscriptions -= numberOfObsoleteCreatorSubscriptions;
   return numberOfCreatorSubscriptions < 25
     ? undefined
-    : interaction.reply(ui.maxCreatorSubscriptions(creatorType, name));
+    : interaction.reply(UI.maxCreatorSubscriptions(creatorType, name));
 };
 
 export const subscribe = async ({
@@ -127,11 +127,11 @@ export const subscribe = async ({
 
   return interaction.isCommand()
     ? interaction.reply({
-        ...ui.subscribed(name, channelId),
+        ...UI.subscribed(name, channelId),
         content: undefined,
       })
     : interaction.update({
-        ...ui.subscribed(name, channelId),
+        ...UI.subscribed(name, channelId),
         content: "",
       });
 };

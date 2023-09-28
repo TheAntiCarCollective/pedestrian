@@ -8,7 +8,7 @@ import Session from "../../../../session";
 
 import type { Answer, Question, Survey } from "../../types";
 import { surveyCreator } from "../../functions";
-import * as ui from "./ui";
+import UI from "./ui";
 
 // region Types
 export type Context = {
@@ -52,8 +52,8 @@ export const answerUi = async (context: Context, interaction: Interaction) => {
 
   const creator = await surveyCreator(survey, interaction);
   return survey.id === message.id
-    ? interaction.reply(ui.answer(context, creator))
-    : interaction.update(ui.answer(context, creator));
+    ? interaction.reply(UI.answer(context, creator))
+    : interaction.update(UI.answer(context, creator));
 };
 
 export default new Session<Context>();

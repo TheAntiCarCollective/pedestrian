@@ -10,7 +10,7 @@ import Session from "../../../session";
 import type { Question, Survey } from "../types";
 import { QuestionType } from "../constants";
 import { isMultipleChoice } from "../functions";
-import * as ui from "./ui";
+import UI from "./ui";
 
 // region Types
 export type Context = {
@@ -76,8 +76,8 @@ export const questionUi = (context: Context, interaction: Interaction) => {
   assert(member instanceof GuildMember);
 
   return !interaction.isModalSubmit() || interaction.isFromMessage()
-    ? interaction.update(ui.question(context, member))
-    : interaction.reply(ui.question(context, member));
+    ? interaction.update(UI.question(context, member))
+    : interaction.reply(UI.question(context, member));
 };
 
 export default new Session<Context>();

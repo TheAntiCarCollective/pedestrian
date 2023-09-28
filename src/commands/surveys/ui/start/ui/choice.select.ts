@@ -2,7 +2,7 @@ import assert from "node:assert";
 
 import { registerComponent } from "../../../../../services/discord";
 
-import { UIID } from "./constants";
+import { UIID } from "../ui";
 import session, * as withContext from "../context";
 
 registerComponent(UIID.ChoiceSelect, async (interaction, sessionId) => {

@@ -4,7 +4,7 @@ import { registerComponent } from "../../../../services/discord";
 import { CreatorType, subscribe } from "../../../../creators";
 import { isNonNullable } from "../../../../helpers";
 
-import { UIID } from "./constants";
+import { UIID } from "../ui";
 import session, * as withContext from "../context";
 
 registerComponent(UIID.SubscribeButton, async (interaction, sessionId) => {

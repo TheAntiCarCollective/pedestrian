@@ -4,7 +4,7 @@ import { registerComponent } from "../../../../services/discord";
 
 import session, * as withContext from "./context";
 import * as startDatabase from "./database";
-import { UIID } from "../constants";
+import { UIID } from "../../ui";
 import * as surveysDatabase from "../../database";
 
 registerComponent(UIID.StartSurveyButton, async (interaction, surveyId) => {

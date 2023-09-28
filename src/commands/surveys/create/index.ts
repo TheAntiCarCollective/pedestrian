@@ -3,7 +3,7 @@ import { GuildMember, PermissionFlagsBits } from "discord.js";
 import assert from "node:assert";
 
 import session from "./context";
-import * as ui from "./ui";
+import UI from "./ui";
 import * as database from "./database";
 import { InitialQuestion } from "../constants";
 
@@ -26,7 +26,7 @@ const checkPermissionsResponse = async (
   const surveyCreatorRoleId = await database.getSurveyCreatorRoleId(guildId);
   if (surveyCreatorRoleId !== null && roles.has(surveyCreatorRoleId)) return;
 
-  return interaction.reply(ui.permissionsDenied(surveyCreatorRoleId));
+  return interaction.reply(UI.permissionsDenied(surveyCreatorRoleId));
 };
 
 export default async (interaction: ChatInputCommandInteraction) => {
@@ -38,7 +38,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
   const title = options.getString(Option.Title, true);
   const survey = await database.getSurvey(guildId, title);
-  if (survey !== undefined) return interaction.reply(ui.surveyExists(survey));
+  if (survey !== undefined) return interaction.reply(UI.surveyExists(survey));
 
   const partialContext = {
     selectedQuestionIndex: 0,
@@ -54,6 +54,6 @@ export default async (interaction: ChatInputCommandInteraction) => {
   };
 
   const context = await session.create(partialContext, interaction);
-  await interaction.showModal(ui.questionModal(context));
+  await interaction.showModal(UI.questionModal(context));
   return;
 };

@@ -1,6 +1,6 @@
 import { registerModal } from "../../../../services/discord";
 
-import { UIID } from "./constants";
+import { UIID } from "../ui";
 import session, * as withContext from "../context";
 
 registerModal(UIID.QuestionModal, async (interaction, sessionId) => {

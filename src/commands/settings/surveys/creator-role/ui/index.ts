@@ -5,8 +5,11 @@ import {
   RoleSelectMenuBuilder,
 } from "discord.js";
 
-import { UIID } from "./constants";
 import { Color } from "../../../../../services/discord";
+
+export enum UIID {
+  RoleSelect = "a032dce9-865c-4f42-86c8-78b353cb78ad",
+}
 
 // region Setting
 // region Components
@@ -54,9 +57,13 @@ const settingEmbeds = (surveyCreatorRoleId: string | null) => {
   return [embed];
 };
 
-export const setting = (surveyCreatorRoleId: string | null) => ({
+const setting = (surveyCreatorRoleId: string | null) => ({
   components: settingComponents(surveyCreatorRoleId),
   embeds: settingEmbeds(surveyCreatorRoleId),
   ephemeral: true,
 });
 // endregion
+
+export default {
+  setting,
+};

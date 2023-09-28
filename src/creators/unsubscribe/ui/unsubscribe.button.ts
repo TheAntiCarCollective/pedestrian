@@ -1,7 +1,6 @@
 import { registerComponent } from "../../../services/discord";
 
-import * as ui from "./index";
-import { UIID } from "./constants";
+import UI, { UIID } from "../ui";
 import session from "../context";
 import * as database from "../database";
 
@@ -18,7 +17,7 @@ registerComponent(UIID.UnsubscribeButton, async (interaction, sessionId) => {
     obsoleteCreatorSubscriptions,
   );
 
-  const response = await interaction.update(ui.unsubscribed(context));
+  const response = await interaction.update(UI.unsubscribed(context));
   await session.destroy(sessionId);
   return response;
 });

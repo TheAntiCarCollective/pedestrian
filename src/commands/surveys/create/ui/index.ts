@@ -16,13 +16,47 @@ import { compress } from "compress-tag";
 
 import { Color } from "../../../../services/discord";
 
-import { UIID } from "./constants";
 import type { Context } from "../context";
 import * as withContext from "../context";
 import type { PartialSurvey } from "../../types";
-import * as ui from "../../ui";
+import UI from "../../ui";
 import { isMultipleChoice, surveyLink } from "../../functions";
 import { QuestionType, QuestionTypes } from "../../constants";
+
+export enum UIID {
+  QuestionModal = "d629d1f3-9446-4e09-b998-656bd43548bd",
+  QuestionAskInput = "QUESTION_ASK_INPUT",
+  QuestionDescriptionInput = "QUESTION_DESCRIPTION_INPUT",
+
+  QuestionTypeSelect = "9aa38b21-5c50-4069-89f4-635e379b4e7b",
+
+  ChoiceSelect = "7630eb7c-93d2-4dba-b8e4-272d354c09ce",
+
+  AddChoiceButton = "0d546ea3-9706-404e-92b3-9cd89c1253d4",
+  EditChoiceButton = "7bb30714-2fc7-4fbb-a694-76f8fb68ffc7",
+  EditChoiceSettingsButton = "80a24a63-e06c-46bb-938d-e536685ee807",
+  RemoveChoiceButton = "ef8e3db3-a392-485f-a999-77fb74a06700",
+
+  ChoiceModal = "7b71c134-6afa-4938-8569-e26a759d7d93",
+  ChoiceLabelInput = "CHOICE_LABEL_INPUT",
+  ChoiceDescriptionInput = "CHOICE_DESCRIPTION_INPUT",
+
+  ChoiceSettingsModal = "47f03430-02e1-4a08-b568-30a51b8687e3",
+  ChoiceMinValuesInput = "CHOICE_MIN_VALUES_INPUT",
+  ChoiceMaxValuesInput = "CHOICE_MAX_VALUES_INPUT",
+
+  AddQuestionButton = "e4546aa3-ccb4-438a-8a88-4957f5ed6c91",
+  EditQuestionButton = "b39d3502-6ea1-4ee7-a7d2-a1fcb029015e",
+  RemoveQuestionButton = "4775a6fc-1dba-4cd2-8a79-f6930f9b037e",
+
+  PreviousQuestionButton = "ad4d5923-5c42-4f08-a2ac-99a28430dd4c",
+  NextQuestionButton = "32fce1fb-dea3-4478-a4d6-00d6b330c6d2",
+  CreateButton = "d655ff28-265e-4bd5-8df1-5f3936099902",
+  CancelButton = "d23e3ba0-b898-46af-bb9b-e152c8bcec88",
+
+  CreateSurveyModal = "6dd12403-af62-49b1-937e-6f26421ac407",
+  CreateSurveyDescriptionInput = "SURVEY_DESCRIPTION_INPUT",
+}
 
 // region Permissions Denied
 const permissionsDeniedEmbeds = (surveyCreatorRoleId: string | null) => {
@@ -37,7 +71,7 @@ const permissionsDeniedEmbeds = (surveyCreatorRoleId: string | null) => {
   return [embed];
 };
 
-export const permissionsDenied = (surveyCreatorRoleId: string | null) => ({
+const permissionsDenied = (surveyCreatorRoleId: string | null) => ({
   embeds: permissionsDeniedEmbeds(surveyCreatorRoleId),
   ephemeral: true,
 });
@@ -45,7 +79,7 @@ export const permissionsDenied = (surveyCreatorRoleId: string | null) => ({
 
 // region Survey Exists
 const surveyExistsComponents = (survey: PartialSurvey) => [
-  ui.surveyLinkActionRow(survey),
+  UI.surveyLinkActionRow(survey),
 ];
 
 const surveyExistsEmbeds = (survey: PartialSurvey) => {
@@ -65,7 +99,7 @@ const surveyExistsEmbeds = (survey: PartialSurvey) => {
   return [embed];
 };
 
-export const surveyExists = (survey: PartialSurvey) => ({
+const surveyExists = (survey: PartialSurvey) => ({
   components: surveyExistsComponents(survey),
   embeds: surveyExistsEmbeds(survey),
   ephemeral: true,
@@ -110,7 +144,7 @@ const questionDescriptionActionRow = (context: Context) =>
     questionDescriptionInput(context),
   );
 
-export const questionModal = (context: Context) => {
+const questionModal = (context: Context) => {
   return new ModalBuilder()
     .setComponents(
       questionAskActionRow(context),
@@ -377,7 +411,7 @@ const questionEmbeds = (context: Context, member: GuildMember) => {
   return [description === "" ? embed : embed.setDescription(description)];
 };
 
-export const question = (context: Context, member: GuildMember) => ({
+const question = (context: Context, member: GuildMember) => ({
   components: questionComponents(context),
   embeds: questionEmbeds(context, member),
   ephemeral: true,
@@ -421,7 +455,7 @@ const choiceDescriptionActionRow = (context: Context) =>
     choiceDescription(context),
   );
 
-export const choiceModal = (context: Context) =>
+const choiceModal = (context: Context) =>
   new ModalBuilder()
     .setComponents(
       choiceLabelActionRow(context),
@@ -470,7 +504,7 @@ const choiceMaxValuesActionRow = (context: Context) =>
     choiceMaxValuesInput(context),
   );
 
-export const choiceSettingsModal = (context: Context) =>
+const choiceSettingsModal = (context: Context) =>
   new ModalBuilder()
     .setComponents(
       choiceMinValuesActionRow(context),
@@ -491,7 +525,7 @@ const cancelledEmbeds = ({ survey }: Context) => {
   return [embed];
 };
 
-export const cancelled = (context: Context) => ({
+const cancelled = (context: Context) => ({
   components: [],
   content: "",
   embeds: cancelledEmbeds(context),
@@ -517,9 +551,20 @@ const createSurveyDescriptionActionRow = () =>
     createSurveyDescriptionInput(),
   );
 
-export const createSurveyModal = ({ sessionId }: Context) =>
+const createSurveyModal = ({ sessionId }: Context) =>
   new ModalBuilder()
     .setComponents(createSurveyDescriptionActionRow())
     .setCustomId(`${UIID.CreateSurveyModal}${sessionId}`)
     .setTitle("Create Survey");
 // endregion
+
+export default {
+  permissionsDenied,
+  surveyExists,
+  questionModal,
+  question,
+  choiceModal,
+  choiceSettingsModal,
+  cancelled,
+  createSurveyModal,
+};

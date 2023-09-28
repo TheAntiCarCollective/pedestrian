@@ -3,7 +3,7 @@ import type { ChatInputCommandInteraction } from "discord.js";
 import { checkSubscribeRequirements, CreatorType } from "../../../creators";
 
 import session from "./context";
-import * as ui from "./ui";
+import UI from "./ui";
 import * as youtube from "../youtube";
 
 export enum Option {
@@ -22,7 +22,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
   const youtubeChannels = await youtube.getChannels(name);
   if (youtubeChannels.length === 0)
-    return interaction.reply(ui.noResultsExist(name));
+    return interaction.reply(UI.noResultsExist(name));
 
   let { id: channelId } = options.getChannel(Option.Channel) ?? {};
   channelId ??= defaultChannelId;
@@ -35,5 +35,5 @@ export default async (interaction: ChatInputCommandInteraction) => {
   };
 
   const context = await session.create(partialContext, interaction);
-  return interaction.reply(ui.youtubeChannel(context));
+  return interaction.reply(UI.youtubeChannel(context));
 };

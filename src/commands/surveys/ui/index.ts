@@ -10,19 +10,23 @@ import assert from "node:assert";
 
 import { Color } from "../../../services/discord";
 
-import { UIID } from "./constants";
 import type { PartialSurvey, Survey } from "../types";
 import { surveyLink } from "../functions";
 
+export enum UIID {
+  StartSurveyButton = "d9e2478e-6ae5-4756-baee-e48240fd5a42",
+  SurveyResultsButton = "47056fde-668f-4234-99ce-9fb3380a30e5",
+}
+
 // region Survey Link Button
-export const surveyLinkButton = (survey: PartialSurvey) =>
+const surveyLinkButton = (survey: PartialSurvey) =>
   new ButtonBuilder()
     .setEmoji("🔗")
     .setLabel("| Survey")
     .setStyle(ButtonStyle.Link)
     .setURL(surveyLink(survey));
 
-export const surveyLinkActionRow = (survey: PartialSurvey) =>
+const surveyLinkActionRow = (survey: PartialSurvey) =>
   new ActionRowBuilder<ButtonBuilder>().setComponents(
     // prettier-ignore
     surveyLinkButton(survey),
@@ -30,7 +34,7 @@ export const surveyLinkActionRow = (survey: PartialSurvey) =>
 // endregion
 
 // region Question Embed
-export const questionEmbed = (
+const questionEmbed = (
   { id: surveyId, questions }: Survey,
   surveyCreator: GuildMember | undefined,
   selectedIndex: number,
@@ -132,7 +136,7 @@ const surveyEmbeds = (
   return [description === "" ? embed : embed.setDescription(description)];
 };
 
-export const survey = (
+const survey = (
   survey: Survey | Omit<Survey, "id">,
   member: GuildMember | undefined,
 ) => ({
@@ -140,3 +144,10 @@ export const survey = (
   embeds: surveyEmbeds(survey, member),
 });
 // endregion
+
+export default {
+  surveyLinkButton,
+  surveyLinkActionRow,
+  questionEmbed,
+  survey,
+};

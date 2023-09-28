@@ -5,7 +5,7 @@ import { isUnique } from "../../helpers";
 
 import session from "./context";
 import * as database from "./database";
-import * as ui from "./ui";
+import UI from "./ui";
 import { CreatorType } from "../constants";
 
 export const unsubscribe = async (
@@ -22,7 +22,7 @@ export const unsubscribe = async (
     await database.getCreatorSubscriptions(guildId, creatorType);
 
   if (creatorSubscriptions.length === 0)
-    return interaction.reply(ui.noCreatorSubscriptions(creatorType));
+    return interaction.reply(UI.noCreatorSubscriptions(creatorType));
 
   const namePromises = creatorSubscriptions
     .map(({ creatorDomainId }) => creatorDomainId)
@@ -46,5 +46,5 @@ export const unsubscribe = async (
   };
 
   const context = await session.create(partialContext, interaction);
-  return interaction.reply(ui.unsubscribeMenu(context, channels));
+  return interaction.reply(UI.unsubscribeMenu(context, channels));
 };

@@ -18,7 +18,9 @@ import {
 import { Color } from "../../../../services/discord";
 import { isNonNullable, isNullable } from "../../../../helpers";
 
-import { UIID } from "./constants";
+export enum UIID {
+  DescriptionButton = "8f75c929-77a9-469c-8662-fec4a8c26a95",
+}
 
 // region View Description
 const viewDescriptionButton = (videoId: string) =>
@@ -33,7 +35,7 @@ const viewDescriptionActionRow = (videoId: string) =>
     viewDescriptionButton(videoId),
   );
 
-export const viewDescription = (videoId: string) => [
+const viewDescription = (videoId: string) => [
   viewDescriptionActionRow(videoId),
 ];
 // endregion
@@ -117,7 +119,7 @@ const descriptionEmbeds = (
   return [embed];
 };
 
-export const description = (
+const description = (
   videoId: string,
   video: YoutubeVideo,
   channel: YoutubeChannel,
@@ -126,3 +128,8 @@ export const description = (
   ephemeral: true,
 });
 // endregion
+
+export default {
+  viewDescription,
+  description,
+};

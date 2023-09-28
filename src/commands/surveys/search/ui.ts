@@ -18,8 +18,12 @@ const noSurveyEmbeds = (title: string) => {
   return [embed];
 };
 
-export const noSurvey = (title: string) => ({
+const noSurvey = (title: string) => ({
   embeds: noSurveyEmbeds(title),
   ephemeral: true,
 });
 // endregion
+
+export default {
+  noSurvey,
+};

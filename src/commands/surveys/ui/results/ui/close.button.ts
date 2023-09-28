@@ -1,6 +1,6 @@
 import { registerComponent } from "../../../../../services/discord";
 
-import { UIID } from "./constants";
+import { UIID } from "../ui";
 import session from "../context";
 
 registerComponent(UIID.CloseButton, async (interaction, sessionId) => {

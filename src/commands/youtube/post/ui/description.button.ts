@@ -3,8 +3,7 @@ import assert from "node:assert";
 import { registerComponent } from "../../../../services/discord";
 import { isNonNullable } from "../../../../helpers";
 
-import * as ui from "./index";
-import { UIID } from "./constants";
+import UI, { UIID } from "../ui";
 import * as database from "../database";
 import * as youtube from "../../youtube";
 
@@ -22,5 +21,5 @@ registerComponent(UIID.DescriptionButton, async (interaction, videoId) => {
   assert(isNonNullable(channelId));
   const channel = await youtube.getChannel(channelId);
 
-  return interaction.reply(ui.description(videoId, video, channel));
+  return interaction.reply(UI.description(videoId, video, channel));
 });
