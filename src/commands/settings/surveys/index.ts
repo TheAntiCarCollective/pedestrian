@@ -9,6 +9,7 @@ export enum Subcommand {
 
 export default (interaction: ChatInputCommandInteraction) => {
   const { options } = interaction;
+  // eslint-disable-next-line sonarjs/no-small-switch
   switch (options.getSubcommand()) {
     case Subcommand.CreatorRole: {
       return onCreatorRole(interaction);

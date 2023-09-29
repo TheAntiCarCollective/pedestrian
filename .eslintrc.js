@@ -6,6 +6,7 @@ module.exports = {
     "eslint:recommended",
     "plugin:@typescript-eslint/strict-type-checked",
     "plugin:@typescript-eslint/stylistic-type-checked",
+    "plugin:sonarjs/recommended",
     "plugin:unicorn/recommended",
   ],
   ignorePatterns: ["/build/*"],
@@ -15,7 +16,7 @@ module.exports = {
     project: true,
     tsConfigRootDir: __dirname,
   },
-  plugins: ["@typescript-eslint", "unicorn"],
+  plugins: ["@typescript-eslint", "sonarjs", "unicorn"],
   rules: {
     "@typescript-eslint/consistent-type-definitions": ["error", "type"],
     "@typescript-eslint/no-unsafe-enum-comparison": "off",

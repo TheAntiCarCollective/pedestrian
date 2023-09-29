@@ -78,10 +78,6 @@ const permissionsDenied = (surveyCreatorRoleId: string | null) => ({
 // endregion
 
 // region Survey Exists
-const surveyExistsComponents = (survey: PartialSurvey) => [
-  UI.surveyLinkActionRow(survey),
-];
-
 const surveyExistsEmbeds = (survey: PartialSurvey) => {
   const description = compress`
     Your request for creating a survey has been denied because this server
@@ -100,7 +96,7 @@ const surveyExistsEmbeds = (survey: PartialSurvey) => {
 };
 
 const surveyExists = (survey: PartialSurvey) => ({
-  components: surveyExistsComponents(survey),
+  components: UI.surveyLinkComponents(survey),
   embeds: surveyExistsEmbeds(survey),
   ephemeral: true,
 });

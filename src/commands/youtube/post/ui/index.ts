@@ -1,6 +1,7 @@
 import { youtube_v3 } from "@googleapis/youtube";
-import YoutubeChannel = youtube_v3.Schema$Channel;
-import YoutubeVideo = youtube_v3.Schema$Video;
+import Channel = youtube_v3.Schema$Channel;
+import Video = youtube_v3.Schema$Video;
+import VideoStatistics = youtube_v3.Schema$VideoStatistics;
 
 import {
   ActionRowBuilder,
@@ -41,10 +42,43 @@ const viewDescription = (videoId: string) => [
 // endregion
 
 // region Description
+const addFields = (embed: EmbedBuilder, statistics: VideoStatistics = {}) => {
+  const addField = (name: string, property: keyof typeof statistics) => {
+    const rawValue = statistics[property];
+    if (isNullable(rawValue)) return embed;
+
+    const value = Number.parseInt(rawValue);
+    return embed.addFields({
+      name,
+      value: value.toLocaleString(),
+      inline: true,
+    });
+  };
+
+  embed = addField("Views", "viewCount");
+  embed = addField("Likes", "likeCount");
+  embed = addField("Dislikes", "dislikeCount");
+  embed = addField("Comments", "commentCount");
+  embed = addField("Favorites", "favoriteCount");
+  return embed;
+};
+
+const addTags = (embed: EmbedBuilder, tags: string[]) => {
+  let tagsValue = "";
+
+  for (const tag of tags) {
+    const newTagsValue = tagsValue === "" ? `#${tag}` : `${tagsValue} #${tag}`;
+    tagsValue = newTagsValue.length > 1024 ? tagsValue : newTagsValue;
+  }
+
+  if (tagsValue === "") return embed;
+  return embed.addFields({ name: "Tags", value: tagsValue });
+};
+
 const descriptionEmbeds = (
   videoId: string,
-  { snippet: videoSnippet, statistics }: YoutubeVideo,
-  { snippet: channelSnippet }: YoutubeChannel,
+  { snippet: videoSnippet, statistics }: Video,
+  { snippet: channelSnippet }: Channel,
 ) => {
   const { channelId, publishedAt, tags } = videoSnippet ?? {};
   assert(isNonNullable(channelId));
@@ -81,32 +115,8 @@ const descriptionEmbeds = (
     .setTitle(title)
     .setURL(videoUrl);
 
-  const source = statistics ?? {};
-  const addField = (name: string, property: keyof typeof source) => {
-    const rawValue = source[property];
-    if (isNullable(rawValue)) return embed;
-
-    const value = Number.parseInt(rawValue);
-    return embed.addFields({
-      name,
-      value: value.toLocaleString(),
-      inline: true,
-    });
-  };
-
-  embed = addField("Views", "viewCount");
-  embed = addField("Likes", "likeCount");
-  embed = addField("Dislikes", "dislikeCount");
-  embed = addField("Comments", "commentCount");
-  embed = addField("Favorites", "favoriteCount");
-
-  const tagsValue = tags?.reduce((string, tag) => {
-    const newTagsValue = string === "" ? `#${tag}` : `${string} #${tag}`;
-    return newTagsValue.length > 1024 ? string : newTagsValue;
-  }, "");
-
-  if (tagsValue !== undefined && tagsValue !== "")
-    embed = embed.addFields({ name: "Tags", value: tagsValue });
+  embed = addFields(embed, statistics);
+  embed = addTags(embed, tags ?? []);
 
   let { description } = videoSnippet ?? {};
   description ??= "";
@@ -119,11 +129,7 @@ const descriptionEmbeds = (
   return [embed];
 };
 
-const description = (
-  videoId: string,
-  video: YoutubeVideo,
-  channel: YoutubeChannel,
-) => ({
+const description = (videoId: string, video: Video, channel: Channel) => ({
   embeds: descriptionEmbeds(videoId, video, channel),
   ephemeral: true,
 });

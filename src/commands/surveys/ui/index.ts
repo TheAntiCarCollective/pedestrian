@@ -31,6 +31,10 @@ const surveyLinkActionRow = (survey: PartialSurvey) =>
     // prettier-ignore
     surveyLinkButton(survey),
   );
+
+const surveyLinkComponents = (survey: PartialSurvey) => [
+  surveyLinkActionRow(survey),
+];
 // endregion
 
 // region Question Embed
@@ -147,7 +151,7 @@ const survey = (
 
 export default {
   surveyLinkButton,
-  surveyLinkActionRow,
+  surveyLinkComponents,
   questionEmbed,
   survey,
 };

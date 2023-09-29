@@ -19,6 +19,7 @@ import { Color } from "../../../../../services/discord";
 
 import type { Context } from "../context";
 import * as withContext from "../context";
+import type { MultipleChoiceQuestion, SelectedAnswers } from "../../../types";
 import UI from "../../../ui";
 import {
   isMultipleChoice,
@@ -182,6 +183,26 @@ const answerComponents = (context: Context) => {
   ];
 };
 
+const formatSelectAnswers = (
+  { choices }: MultipleChoiceQuestion,
+  answer: SelectedAnswers,
+) => {
+  let description = "";
+
+  for (const [index, choice] of choices.entries()) {
+    if (!answer.includes(index)) continue;
+    if (description !== "") description += "\n";
+
+    const { label: l, description: d } = choice;
+    description += `* ${l}`;
+    if (d !== "") description += `\n${italic(d)}`;
+  }
+
+  return description === ""
+    ? italic("You have not selected any choices for this question...")
+    : description.slice(0, 4096);
+};
+
 const answerEmbed = (context: Context) => {
   const question = withContext.getQuestion(context);
   const answer = context.answers[context.selectedIndex];
@@ -200,22 +221,7 @@ const answerEmbed = (context: Context) => {
     description = answer;
   } else if (isMultipleChoice(question)) {
     color = Color.Success;
-    description = "";
-
-    const { choices } = question;
-    for (const [index, choice] of choices.entries()) {
-      if (!answer.includes(index)) continue;
-      if (description !== "") description += "\n";
-
-      const { label: l, description: d } = choice;
-      description += `* ${l}`;
-      if (d !== "") description += `\n${italic(d)}`;
-    }
-
-    description =
-      description === ""
-        ? italic("You have not selected any choices for this question...")
-        : description.slice(0, 4096);
+    description = formatSelectAnswers(question, answer);
   } else {
     error();
   }
@@ -265,10 +271,6 @@ const answerModal = (context: Context) =>
 // endregion
 
 // region Cancelled
-const cancelledComponents = ({ survey }: Context) => [
-  UI.surveyLinkActionRow(survey),
-];
-
 const cancelledEmbeds = ({ survey }: Context) => {
   const { title } = survey;
   const description = compress`
@@ -287,16 +289,12 @@ const cancelledEmbeds = ({ survey }: Context) => {
 };
 
 const cancelled = (context: Context) => ({
-  components: cancelledComponents(context),
+  components: UI.surveyLinkComponents(context.survey),
   embeds: cancelledEmbeds(context),
 });
 // endregion
 
 // region Completed
-const completedComponents = ({ survey }: Context) => [
-  UI.surveyLinkActionRow(survey),
-];
-
 const completedEmbeds = ({ survey }: Context) => {
   const { title } = survey;
   const description = compress`
@@ -314,7 +312,7 @@ const completedEmbeds = ({ survey }: Context) => {
 };
 
 const completed = (context: Context) => ({
-  components: completedComponents(context),
+  components: UI.surveyLinkComponents(context.survey),
   embeds: completedEmbeds(context),
 });
 // endregion

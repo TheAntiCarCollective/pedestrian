@@ -55,5 +55,4 @@ export default async (interaction: ChatInputCommandInteraction) => {
 
   const context = await session.create(partialContext, interaction);
   await interaction.showModal(UI.questionModal(context));
-  return;
 };

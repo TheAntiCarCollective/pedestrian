@@ -6,18 +6,21 @@ import * as rss from "./rss";
 
 registerPoster(
   CreatorType.RSS,
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async ({ createdAt, lastContentId, creatorDomainId }) => {
-    const {
-      image,
-      items,
-      title: feedName,
-    } = await rss.getFeed(creatorDomainId);
+    const feed = await rss.getFeed(creatorDomainId);
+    const { image, items, title: feedName } = feed;
+
+    // All other properties are optional and cannot be asserted
+    // https://www.rssboard.org/rss-specification
     assert(feedName !== undefined);
     const { url: avatarURL } = image ?? {};
 
     const options = [];
     for (const [index, { link, pubDate, title }] of items.entries()) {
       if (title === undefined) break;
+      // Do not post items created before the last posted item
+      if (link === undefined || link === lastContentId) break;
 
       if (pubDate === undefined) {
         // If no item has been posted yet then only post the 1st one
@@ -27,9 +30,6 @@ registerPoster(
         const itemDate = new Date(pubDate);
         if (itemDate < createdAt) break;
       }
-
-      // Do not post items created before the last posted item
-      if (link === undefined || link === lastContentId) break;
 
       options.push({
         avatarURL,

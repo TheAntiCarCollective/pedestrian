@@ -1,5 +1,6 @@
 import type {
   AutocompleteInteraction,
+  BaseInteraction,
   CommandInteraction,
   ContextMenuCommandBuilder,
   InteractionResponse,
@@ -72,8 +73,8 @@ export const isUserOwner = (userId: string) => {
 
   const { members } = owner;
   const member = members.get(userId);
-  if (member === undefined) return false;
-  return true; // TODO Check role type
+  // TODO Check role type
+  return member !== undefined;
 };
 // endregion
 
@@ -98,6 +99,7 @@ type Command = {
 };
 // endregion
 
+// region Registered Handlers
 const commands = new Map<string, Command>();
 export const registerCommand = (
   json: CommandJson,
@@ -111,15 +113,15 @@ export const registerCommand = (
   });
 
 const components = new Map<string, OnComponent>();
-export const registerComponent = (
-  componentId: string,
-  onComponent: OnComponent,
-) => void components.set(componentId, onComponent);
+export const registerComponent = (uiid: string, onComponent: OnComponent) =>
+  void components.set(uiid, onComponent);
 
 const modals = new Map<string, OnModal>();
-export const registerModal = (modalId: string, onModal: OnModal) =>
-  void modals.set(modalId, onModal);
+export const registerModal = (uiid: string, onModal: OnModal) =>
+  void modals.set(uiid, onModal);
+// endregion
 
+// region refreshCommands
 export const refreshCommands = async () => {
   if (commands.size === 0) return;
 
@@ -133,98 +135,145 @@ export const refreshCommands = async () => {
 };
 
 discord.once(Events.ClientReady, refreshCommands);
+// endregion
+
+// region Handlers
+const getHandler = (interaction: BaseInteraction, uiid?: string) => {
+  if (interaction.isCommand()) {
+    let { commandName } = interaction;
+
+    if (interaction.isChatInputCommand()) {
+      const { options } = interaction;
+      const subcommandGroup = options.getSubcommandGroup(false);
+      const subcommand = options.getSubcommand(false);
+
+      commandName = `/${commandName}`;
+      commandName += subcommandGroup === null ? "" : ` ${subcommandGroup}`;
+      commandName += subcommand === null ? "" : ` ${subcommand}`;
+    }
+
+    return commandName;
+  } else if (interaction.isAutocomplete()) {
+    const { commandName, options } = interaction;
+    const { name: option } = options.getFocused(true);
+    return `${commandName}#${option}`;
+  } else if (uiid !== undefined) {
+    return uiid;
+  }
+
+  error();
+};
+
+const onInteraction =
+  (
+    status: "success" | "error",
+    interaction: BaseInteraction,
+    startRequestTime: number,
+    uiid?: string,
+  ) =>
+  (result: unknown) => {
+    const endRequestTime = performance.now();
+    const requestDuration = endRequestTime - startRequestTime;
+
+    const handler = getHandler(interaction, uiid);
+    const labels = { handler, status };
+    interactionRequestDuration.observe(labels, requestDuration);
+
+    const childLogger = logger.child({
+      labels,
+      interaction,
+      requestDuration,
+    });
+
+    switch (status) {
+      case "success": {
+        childLogger.info(result, "ON_INTERACTION_SUCCESS");
+        break;
+      }
+      case "error": {
+        childLogger.error(result, "ON_INTERACTION_ERROR");
+        break;
+      }
+    }
+  };
+
+const onCommand = (
+  interaction: CommandInteraction,
+  startRequestTime: number,
+) => {
+  for (const [name, { onCommand }] of commands) {
+    if (name === interaction.commandName) {
+      return onCommand(interaction)
+        .then(onInteraction("success", interaction, startRequestTime))
+        .catch(onInteraction("error", interaction, startRequestTime));
+    }
+  }
+};
+
+const onAutocomplete = (
+  interaction: AutocompleteInteraction,
+  startRequestTime: number,
+) => {
+  for (const [name, { onAutocomplete }] of commands) {
+    if (name === interaction.commandName) {
+      assert(onAutocomplete !== undefined);
+      return onAutocomplete(interaction)
+        .then(onInteraction("success", interaction, startRequestTime))
+        .catch(onInteraction("error", interaction, startRequestTime));
+    }
+  }
+};
+
+const onMessageComponent = (
+  interaction: MessageComponentInteraction,
+  startRequestTime: number,
+) => {
+  let { customId } = interaction;
+  for (const [uiid, onComponent] of components) {
+    const legacyPrefix = `GLOBAL_${uiid}_`;
+    if (customId.startsWith(legacyPrefix)) {
+      const id = customId.slice(legacyPrefix.length);
+      customId = `${uiid}${id}`;
+    }
+
+    if (customId.startsWith(uiid)) {
+      const id = customId.slice(uiid.length);
+      return onComponent(interaction, id)
+        .then(onInteraction("success", interaction, startRequestTime, uiid))
+        .catch(onInteraction("error", interaction, startRequestTime, uiid));
+    }
+  }
+};
+
+const onModalSubmit = (
+  interaction: ModalSubmitInteraction,
+  startRequestTime: number,
+) => {
+  const { customId } = interaction;
+  for (const [uiid, onModal] of modals) {
+    if (customId.startsWith(uiid)) {
+      const id = customId.slice(uiid.length);
+      return onModal(interaction, id)
+        .then(onInteraction("success", interaction, startRequestTime, uiid))
+        .catch(onInteraction("error", interaction, startRequestTime, uiid));
+    }
+  }
+};
 
 discord.on(Events.InteractionCreate, async (interaction) => {
   const startRequestTime = performance.now();
-  const onInteraction =
-    (status: "success" | "error", handler: string) => (result: unknown) => {
-      const endRequestTime = performance.now();
-      const requestDuration = endRequestTime - startRequestTime;
-
-      const labels = { status, handler };
-      interactionRequestDuration.observe(labels, requestDuration);
-
-      const childLogger = logger.child({
-        labels,
-        interaction,
-        requestDuration,
-      });
-
-      switch (status) {
-        case "success": {
-          childLogger.info(result, "ON_INTERACTION_SUCCESS");
-          break;
-        }
-        case "error": {
-          childLogger.error(result, "ON_INTERACTION_ERROR");
-          break;
-        }
-      }
-    };
 
   if (interaction.isCommand()) {
-    for (const [name, { onCommand }] of commands) {
-      if (name === interaction.commandName) {
-        let handler;
-        if (interaction.isChatInputCommand()) {
-          const { options } = interaction;
-          const subcommandGroup = options.getSubcommandGroup(false);
-          const subcommand = options.getSubcommand(false);
-
-          handler = `/${name}`;
-          handler += subcommandGroup === null ? "" : ` ${subcommandGroup}`;
-          handler += subcommand === null ? "" : ` ${subcommand}`;
-        } else {
-          handler = name;
-        }
-
-        return onCommand(interaction)
-          .then(onInteraction("success", handler))
-          .catch(onInteraction("error", handler));
-      }
-    }
+    await onCommand(interaction, startRequestTime);
   } else if (interaction.isAutocomplete()) {
-    const { commandName, options } = interaction;
-    for (const [name, { onAutocomplete }] of commands) {
-      if (name === commandName) {
-        assert(onAutocomplete !== undefined);
-
-        const { name: option } = options.getFocused(true);
-        const handler = `${name}#${option}`;
-
-        return onAutocomplete(interaction)
-          .then(onInteraction("success", handler))
-          .catch(onInteraction("error", handler));
-      }
-    }
+    await onAutocomplete(interaction, startRequestTime);
   } else if (interaction.isMessageComponent()) {
-    let { customId } = interaction;
-    for (const [componentId, onComponent] of components) {
-      const legacyPrefix = `GLOBAL_${componentId}_`;
-      if (customId.startsWith(legacyPrefix)) {
-        const id = customId.slice(legacyPrefix.length);
-        customId = `${componentId}${id}`;
-      }
-
-      if (customId.startsWith(componentId)) {
-        const id = customId.slice(componentId.length);
-        return onComponent(interaction, id)
-          .then(onInteraction("success", componentId))
-          .catch(onInteraction("error", componentId));
-      }
-    }
+    await onMessageComponent(interaction, startRequestTime);
   } else if (interaction.isModalSubmit()) {
-    const { customId } = interaction;
-    for (const [modalId, onModal] of modals) {
-      if (customId.startsWith(modalId)) {
-        const id = customId.slice(modalId.length);
-        return onModal(interaction, id)
-          .then(onInteraction("success", modalId))
-          .catch(onInteraction("error", modalId));
-      }
-    }
+    await onModalSubmit(interaction, startRequestTime);
   }
 
   error();
 });
+// endregion
 // endregion
