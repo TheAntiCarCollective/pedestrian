@@ -1,25 +1,26 @@
 import type { GuildChannelManager } from "discord.js";
+
+import { compress } from "compress-tag";
 import {
   ActionRowBuilder,
-  bold,
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
+  bold,
 } from "discord.js";
-import { compress } from "compress-tag";
 import assert from "node:assert";
 
-import { Color } from "../../../services/discord";
-
 import type { Context } from "../context";
+
+import { Color } from "../../../services/discord";
 import { CreatorType } from "../../constants";
 
 export enum UIID {
+  CancelButton = "6abeeb82-31e1-4258-a2db-3471c0922e1a",
   SubscriptionSelect = "81553290-cfc9-4ddc-9d35-b0c4d463f44c",
   UnsubscribeButton = "81bbe978-6c98-43b6-adf6-eddea274864e",
-  CancelButton = "6abeeb82-31e1-4258-a2db-3471c0922e1a",
 }
 
 // region No Creator Subscriptions
@@ -47,11 +48,11 @@ const noCreatorSubscriptions = (creatorType: CreatorType) => ({
 // region Components
 // region Subscription Select
 const subscriptionSelect = (
-  { sessionId, selectedIndexes, creatorSubscriptions, names }: Context,
+  { creatorSubscriptions, names, selectedIndexes, sessionId }: Context,
   { cache: channels }: GuildChannelManager,
 ) => {
   const options = creatorSubscriptions.map(
-    ({ creatorDomainId, creatorChannelId }, index) => {
+    ({ creatorChannelId, creatorDomainId }, index) => {
       const channel = channels.get(creatorChannelId);
       const name = names[creatorDomainId];
       assert(name !== undefined);
@@ -81,7 +82,7 @@ const subscriptionSelectActionRow = (
 // endregion
 
 // region Confirm
-const unsubscribeButton = ({ sessionId, selectedIndexes }: Context) =>
+const unsubscribeButton = ({ selectedIndexes, sessionId }: Context) =>
   new ButtonBuilder()
     .setCustomId(`${UIID.UnsubscribeButton}${sessionId}`)
     .setDisabled(selectedIndexes.length === 0)
@@ -173,8 +174,8 @@ const unsubscribed = (context: Context) => ({
 // endregion
 
 export default {
+  cancelled,
   noCreatorSubscriptions,
   unsubscribeMenu,
-  cancelled,
   unsubscribed,
 };

@@ -2,22 +2,23 @@ import type {
   MessageComponentInteraction,
   ModalSubmitInteraction,
 } from "discord.js";
+
 import { GuildMember } from "discord.js";
 import assert from "node:assert";
 
-import Session from "../../../session";
-
 import type { Question, Survey } from "../types";
+
+import Session from "../../../session";
 import { QuestionType } from "../constants";
 import { isMultipleChoice } from "../functions";
 import UI from "./ui";
 
 // region Types
 export type Context = {
+  selectedChoiceIndex: number;
+  selectedQuestionIndex: number;
   sessionId: string;
   survey: Omit<Survey, "id">;
-  selectedQuestionIndex: number;
-  selectedChoiceIndex: number;
 };
 
 type GetQuestion = {

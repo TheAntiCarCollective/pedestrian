@@ -1,41 +1,39 @@
 import type { BaseMessageOptions, GuildMember } from "discord.js";
+
+import { compress } from "compress-tag";
 import {
   ActionRowBuilder,
-  bold,
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
-  italic,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
+  bold,
+  italic,
 } from "discord.js";
-import { compress } from "compress-tag";
 import { fail as error } from "node:assert";
 
-import { Color } from "../../../../../services/discord";
-
-import type { Context } from "../context";
-import * as withContext from "../context";
 import type { Survey } from "../../../types";
-import UI from "../../../ui";
-import { isOpen, isOpenAnswer, isSkipped } from "../../../functions";
+import type { Context } from "../context";
+
+import { Color } from "../../../../../services/discord";
 import { QuestionType } from "../../../constants";
+import { isOpen, isOpenAnswer, isSkipped } from "../../../functions";
+import UI from "../../../ui";
+import * as withContext from "../context";
 
 export enum UIID {
-  PreviousQuestionButton = "6bc8e916-a8d3-45a1-95f8-64555716c4bf",
-  NextQuestionButton = "b2907ede-b74c-4fab-adf7-345e6fed9351",
-
-  PreviousAnswerButton = "9a90f23d-867c-4ecb-a38f-119573cfd99b",
   AnswerNumberButton = "62449cfb-bb73-40f0-8e5d-83159e4ff47d",
-  NextAnswerButton = "27d015cf-e476-4979-bb5b-5775e021a636",
-
-  SurveyCsvButton = "735f1efd-7cc4-4a8a-a3f5-94e85cd1c1b6",
+  AnswerNumberInput = "ANSWER_NUMBER_INPUT",
+  AnswerNumberModal = "c74d03c8-1826-4980-863d-8a62c1a0af2b",
   AnswersCsvButton = "611e462c-44ab-40f1-8796-19bffe0d4af7",
   CloseButton = "30001502-fb22-4f11-bffa-c105fbbb6b02",
-
-  AnswerNumberModal = "c74d03c8-1826-4980-863d-8a62c1a0af2b",
-  AnswerNumberInput = "ANSWER_NUMBER_INPUT",
+  NextAnswerButton = "27d015cf-e476-4979-bb5b-5775e021a636",
+  NextQuestionButton = "b2907ede-b74c-4fab-adf7-345e6fed9351",
+  PreviousAnswerButton = "9a90f23d-867c-4ecb-a38f-119573cfd99b",
+  PreviousQuestionButton = "6bc8e916-a8d3-45a1-95f8-64555716c4bf",
+  SurveyCsvButton = "735f1efd-7cc4-4a8a-a3f5-94e85cd1c1b6",
 }
 
 // region No Results
@@ -62,8 +60,8 @@ const noResults = (survey: Survey) => ({
 // region Components
 // region Question Buttons
 const previousQuestionButton = ({
-  sessionId,
   selectedQuestionIndex,
+  sessionId,
 }: Context) =>
   new ButtonBuilder()
     .setCustomId(`${UIID.PreviousQuestionButton}${sessionId}`)
@@ -91,7 +89,7 @@ const questionButtonsActionRow = (context: Context) =>
 // endregion
 
 // region Answer Buttons
-const previousAnswerButton = ({ sessionId, selectedAnswerIndex }: Context) =>
+const previousAnswerButton = ({ selectedAnswerIndex, sessionId }: Context) =>
   new ButtonBuilder()
     .setCustomId(`${UIID.PreviousAnswerButton}${sessionId}`)
     .setDisabled(selectedAnswerIndex <= 0)
@@ -184,14 +182,14 @@ const resultsEmbed = (context: Context) => {
   const fields = [];
   fields.push(
     {
+      inline: true,
       name: "# of Answers",
       value: `${answers.length}`,
-      inline: true,
     },
     {
+      inline: true,
       name: "# of Skipped Answers",
       value: `${skippedAnswers.length}`,
-      inline: true,
     },
   );
 
@@ -274,7 +272,7 @@ const answerNumberModal = (context: Context) =>
 // endregion
 
 export default {
+  answerNumberModal,
   noResults,
   results,
-  answerNumberModal,
 };

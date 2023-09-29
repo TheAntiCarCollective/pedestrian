@@ -6,15 +6,15 @@ import type {
 } from "./types";
 
 export enum QuestionType {
-  OpenAnswer = "Open Answer",
   MultipleChoice = "Multiple Choice",
+  OpenAnswer = "Open Answer",
 }
 
 export const QuestionTypes = Object.values(QuestionType);
 
 export const InitialChoice: Choice = {
-  label: "",
   description: "",
+  label: "",
 };
 
 export const InitialBaseQuestion: BaseQuestion = {
@@ -24,10 +24,10 @@ export const InitialBaseQuestion: BaseQuestion = {
 
 export const InitialMultipleChoiceQuestion: MultipleChoiceQuestion = {
   ...InitialBaseQuestion,
-  type: QuestionType.MultipleChoice,
-  minValues: 1,
-  maxValues: 1,
   choices: [],
+  maxValues: 1,
+  minValues: 1,
+  type: QuestionType.MultipleChoice,
 };
 
 export const InitialOpenAnswerQuestion: OpenAnswerQuestion = {

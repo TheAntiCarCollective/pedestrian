@@ -1,15 +1,16 @@
 import type { PoolClient } from "pg";
+
 import assert from "node:assert";
 
-import { useClient, useTransaction } from "../../../services/postgresql";
-import { isNonNullable } from "../../../helpers";
-
 import type { PartialSurvey, Question, Survey } from "../types";
+
+import { isNonNullable } from "../../../helpers";
+import { useClient, useTransaction } from "../../../services/postgresql";
 import { isMultipleChoice } from "../functions";
 
 // region Types
 type SurveyCreatorRoleId = {
-  surveyCreatorRoleId: string | null;
+  surveyCreatorRoleId: null | string;
 };
 // endregion
 
@@ -71,7 +72,7 @@ const createQuestions = (
   `;
 
   const questions = rawQuestions.map((rawQuestion) => {
-    const { type, ask, description } = rawQuestion;
+    const { ask, description, type } = rawQuestion;
     const minValues = isMultipleChoice(rawQuestion)
       ? rawQuestion.minValues
       : undefined;
@@ -80,11 +81,11 @@ const createQuestions = (
       : undefined;
 
     return {
-      type,
       ask,
       description,
-      minValues,
       maxValues,
+      minValues,
+      type,
     };
   });
 
@@ -137,13 +138,13 @@ const createChoices = (
 };
 
 export const createSurvey = ({
-  id: surveyId,
-  guildId,
-  title,
-  description,
   channelId,
   createdBy,
+  description,
+  guildId,
+  id: surveyId,
   questions,
+  title,
 }: Survey) =>
   useTransaction(`${__filename}#createSurvey`, async (client) => {
     const query = `

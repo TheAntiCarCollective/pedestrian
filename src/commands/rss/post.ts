@@ -1,13 +1,12 @@
 import assert from "node:assert";
 
 import { CreatorType, registerPoster } from "../../creators";
-
 import * as rss from "./rss";
 
 registerPoster(
   CreatorType.RSS,
   // eslint-disable-next-line sonarjs/cognitive-complexity
-  async ({ createdAt, lastContentId, creatorDomainId }) => {
+  async ({ createdAt, creatorDomainId, lastContentId }) => {
     const feed = await rss.getFeed(creatorDomainId);
     const { image, items, title: feedName } = feed;
 

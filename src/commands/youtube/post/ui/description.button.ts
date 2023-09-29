@@ -1,11 +1,10 @@
 import assert from "node:assert";
 
-import { registerComponent } from "../../../../services/discord";
 import { isNonNullable } from "../../../../helpers";
-
-import UI, { UIID } from "../ui";
-import * as database from "../database";
+import { registerComponent } from "../../../../services/discord";
 import * as youtube from "../../youtube";
+import * as database from "../database";
+import UI, { UIID } from "../ui";
 
 registerComponent(UIID.DescriptionButton, async (interaction, videoId) => {
   // Support legacy buttons

@@ -1,4 +1,5 @@
 import type { ChatInputCommandInteraction } from "discord.js";
+
 import assert from "node:assert";
 
 import * as database from "./database";

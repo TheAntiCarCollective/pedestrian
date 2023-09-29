@@ -1,10 +1,9 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 
-import { checkSubscribeRequirements, CreatorType } from "../../../creators";
-
+import { CreatorType, checkSubscribeRequirements } from "../../../creators";
+import * as youtube from "../youtube";
 import session from "./context";
 import UI from "./ui";
-import * as youtube from "../youtube";
 
 export enum Option {
   Channel = "channel",
@@ -28,10 +27,10 @@ export default async (interaction: ChatInputCommandInteraction) => {
   channelId ??= defaultChannelId;
 
   const partialContext = {
-    name,
     channelId,
-    youtubeChannels,
+    name,
     page: 1,
+    youtubeChannels,
   };
 
   const context = await session.create(partialContext, interaction);

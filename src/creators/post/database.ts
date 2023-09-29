@@ -1,27 +1,26 @@
 import { useClient } from "../../services/postgresql";
-
 import { CreatorType } from "../constants";
 
 // region Types
 export type CreatorSubscription = {
-  guildId: string;
   createdAt: Date;
-  creatorMentionRoleId: string | null;
-  lastContentId: string | null;
-  creatorDomainId: string;
-  creatorType: CreatorType;
   creatorChannelId: string;
-  creatorChannelParentId: string | null;
+  creatorChannelParentId: null | string;
+  creatorDomainId: string;
+  creatorMentionRoleId: null | string;
+  creatorType: CreatorType;
+  guildId: string;
+  lastContentId: null | string;
   webhookId: string;
   webhookToken: string;
 };
 
 export type CreatorPost = {
-  id: string;
-  creatorChannelId: string;
-  creatorType: CreatorType;
-  creatorDomainId: string;
   contentId: string;
+  creatorChannelId: string;
+  creatorDomainId: string;
+  creatorType: CreatorType;
+  id: string;
 };
 // endregion
 

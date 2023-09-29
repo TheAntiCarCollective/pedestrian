@@ -1,13 +1,13 @@
 import { GuildMember } from "discord.js";
 import assert from "node:assert";
 
-import { registerModal } from "../../../../services/discord";
+import type { Survey } from "../../types";
 
-import { UIID } from "../ui";
+import { registerModal } from "../../../../services/discord";
+import UI from "../../ui";
 import session from "../context";
 import * as database from "../database";
-import type { Survey } from "../../types";
-import UI from "../../ui";
+import { UIID } from "../ui";
 
 registerModal(UIID.CreateSurveyModal, async (interaction, sessionId) => {
   const { fields, member } = interaction;

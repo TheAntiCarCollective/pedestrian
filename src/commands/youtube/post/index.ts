@@ -1,15 +1,14 @@
 import assert from "node:assert";
 
-import { getThumbnailUrl, getVideoUrl } from "../../../services/youtube";
 import { CreatorType, registerPoster } from "../../../creators";
 import { isNonNullable } from "../../../helpers";
-
-import UI from "./ui";
+import { getThumbnailUrl, getVideoUrl } from "../../../services/youtube";
 import * as youtube from "../youtube";
+import UI from "./ui";
 
 registerPoster(
   CreatorType.YouTube,
-  async ({ createdAt, lastContentId, creatorDomainId }) => {
+  async ({ createdAt, creatorDomainId, lastContentId }) => {
     const { contentDetails, snippet } =
       await youtube.getChannel(creatorDomainId);
 
@@ -17,7 +16,7 @@ registerPoster(
     const { uploads } = relatedPlaylists ?? {};
     assert(uploads !== undefined);
 
-    const { title: channelName, thumbnails } = snippet ?? {};
+    const { thumbnails, title: channelName } = snippet ?? {};
     assert(isNonNullable(channelName));
 
     const videos = await youtube.getVideos(uploads);

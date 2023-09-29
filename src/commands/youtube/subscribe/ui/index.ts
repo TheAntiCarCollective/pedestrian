@@ -1,25 +1,25 @@
+import { compress } from "compress-tag";
 import {
   ActionRowBuilder,
-  bold,
   ButtonBuilder,
   ButtonStyle,
-  channelMention,
   EmbedBuilder,
+  bold,
+  channelMention,
 } from "discord.js";
-import { compress } from "compress-tag";
-
-import { Color } from "../../../../services/discord";
-import { getChannelUrl, getThumbnailUrl } from "../../../../services/youtube";
-import { isNullable } from "../../../../helpers";
 
 import type { Context } from "../context";
+
+import { isNullable } from "../../../../helpers";
+import { Color } from "../../../../services/discord";
+import { getChannelUrl, getThumbnailUrl } from "../../../../services/youtube";
 import * as withContext from "../context";
 
 export enum UIID {
-  PreviousButton = "41073005-a293-406e-bc50-e16b83e9c02f",
-  NextButton = "2bf4d685-e1f7-4bd5-ac45-029755f65506",
-  SubscribeButton = "388d3371-8c32-4ea7-8a98-f6f0d10deeee",
   CancelButton = "b6c8e70c-9da2-4010-ad59-7f80a140bb93",
+  NextButton = "2bf4d685-e1f7-4bd5-ac45-029755f65506",
+  PreviousButton = "41073005-a293-406e-bc50-e16b83e9c02f",
+  SubscribeButton = "388d3371-8c32-4ea7-8a98-f6f0d10deeee",
 }
 
 // region No Results Exist
@@ -45,7 +45,7 @@ const noResultsExist = (name: string) => ({
 // region Youtube Channel
 // region Components
 // region Page
-const previousButton = ({ sessionId, page }: Context) =>
+const previousButton = ({ page, sessionId }: Context) =>
   new ButtonBuilder()
     .setCustomId(`${UIID.PreviousButton}${sessionId}`)
     .setDisabled(page === 1)
@@ -53,7 +53,7 @@ const previousButton = ({ sessionId, page }: Context) =>
     .setLabel("| Previous YouTuber")
     .setStyle(ButtonStyle.Primary);
 
-const nextButton = ({ sessionId, youtubeChannels, page }: Context) =>
+const nextButton = ({ page, sessionId, youtubeChannels }: Context) =>
   new ButtonBuilder()
     .setCustomId(`${UIID.NextButton}${sessionId}`)
     .setDisabled(page === youtubeChannels.length)
@@ -172,7 +172,7 @@ const cancelled = (context: Context) => ({
 // endregion
 
 export default {
+  cancelled,
   noResultsExist,
   youtubeChannel,
-  cancelled,
 };

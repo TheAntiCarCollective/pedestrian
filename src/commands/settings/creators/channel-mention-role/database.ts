@@ -2,7 +2,7 @@ import { useClient } from "../../../../services/postgresql";
 
 // region Types
 type ChannelMentionRoleId = {
-  channelMentionRoleId: string | null;
+  channelMentionRoleId: null | string;
 };
 // endregion
 
@@ -23,7 +23,7 @@ export const getChannelMentionRoleId = (channelId: string) =>
 
 export const setChannelMentionRoleId = (
   channelId: string,
-  channelMentionRoleId: string | null,
+  channelMentionRoleId: null | string,
 ) =>
   useClient(`${__filename}#setChannelMentionRoleId`, (client) => {
     const query = `

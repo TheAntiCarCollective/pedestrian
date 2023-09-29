@@ -2,24 +2,24 @@ import type {
   CommandInteraction,
   MessageComponentInteraction,
 } from "discord.js";
+
 import { CategoryChannel, ThreadChannel } from "discord.js";
 import assert from "node:assert";
 
 import Environment from "../../environment";
 import { isUnique } from "../../helpers";
-
-import UI from "./ui";
-import * as subscribeDatabase from "./database";
-import * as creatorsDatabase from "../database";
 import { CreatorType } from "../constants";
+import * as creatorsDatabase from "../database";
+import * as subscribeDatabase from "./database";
+import UI from "./ui";
 
 // region Types
 type Subscribe = {
+  channelId: string;
+  creatorDomainId: string;
+  creatorType: CreatorType;
   interaction: CommandInteraction | MessageComponentInteraction;
   name: string;
-  creatorType: CreatorType;
-  creatorDomainId: string;
-  channelId: string;
 };
 // endregion
 
@@ -58,11 +58,11 @@ export const checkSubscribeRequirements = async (
 };
 
 export const subscribe = async ({
+  channelId,
+  creatorDomainId,
+  creatorType,
   interaction,
   name,
-  creatorType,
-  creatorDomainId,
-  channelId,
 }: Subscribe) => {
   const { guild } = interaction;
   assert(guild !== null);
@@ -77,7 +77,7 @@ export const subscribe = async ({
     assert(channel !== undefined);
     assert(!(channel instanceof CategoryChannel));
 
-    let parentId: string | null = null;
+    let parentId: null | string = null;
     let webhookId;
     let webhookToken;
 
@@ -119,9 +119,9 @@ export const subscribe = async ({
   }
 
   await subscribeDatabase.createCreatorSubscription({
-    type: creatorType,
     domainId: creatorDomainId,
     guildId,
+    type: creatorType,
     ...creatorChannel,
   });
 

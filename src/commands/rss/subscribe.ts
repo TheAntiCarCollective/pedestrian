@@ -1,12 +1,12 @@
 import type { ChatInputCommandInteraction } from "discord.js";
+
 import assert from "node:assert";
 
 import {
-  checkSubscribeRequirements,
   CreatorType,
+  checkSubscribeRequirements,
   subscribe,
 } from "../../creators";
-
 import * as rss from "./rss";
 
 export enum Option {
@@ -30,10 +30,10 @@ export default async (interaction: ChatInputCommandInteraction) => {
   channelId ??= defaultChannelId;
 
   return subscribe({
+    channelId,
+    creatorDomainId: url,
+    creatorType: CreatorType.RSS,
     interaction,
     name: title,
-    creatorType: CreatorType.RSS,
-    creatorDomainId: url,
-    channelId,
   });
 };

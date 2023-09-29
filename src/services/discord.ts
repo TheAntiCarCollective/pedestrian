@@ -9,10 +9,11 @@ import type {
   ModalSubmitInteraction,
   SlashCommandBuilder,
 } from "discord.js";
-import { Events, Client, User, Routes } from "discord.js";
+
+import { Client, Events, Routes, User } from "discord.js";
+import assert, { fail as error } from "node:assert";
 import loggerFactory from "pino";
 import { Histogram, exponentialBuckets } from "prom-client";
-import assert, { fail as error } from "node:assert";
 
 // region Logger and Metrics
 const logger = loggerFactory({
@@ -20,20 +21,20 @@ const logger = loggerFactory({
 });
 
 const interactionRequestDuration = new Histogram({
-  name: "interaction_request_duration_milliseconds",
-  help: "Interaction request duration in milliseconds",
-  labelNames: ["status", "handler"],
   // Create 9 buckets, starting on 10 and with a factor of 2
   buckets: exponentialBuckets(10, 2, 9),
+  help: "Interaction request duration in milliseconds",
+  labelNames: ["status", "handler"],
+  name: "interaction_request_duration_milliseconds",
 });
 // endregion
 
 // region Constants
 export enum Color {
   Error = 0xed4245, // Red
-  Warning = 0xfee75c, // Yellow
   Informational = 0x5865f2, // Blurple
   Success = 0x57f287, // Green
+  Warning = 0xfee75c, // Yellow
 }
 // endregion
 
@@ -94,8 +95,8 @@ type OnModal = (interaction: ModalSubmitInteraction, id: string) => OnInteractio
 
 type Command = {
   json: CommandJson;
-  onCommand: OnCommand;
   onAutocomplete?: OnAutocomplete;
+  onCommand: OnCommand;
 };
 // endregion
 
@@ -108,8 +109,8 @@ export const registerCommand = (
 ) =>
   void commands.set(json.name, {
     json,
-    onCommand,
     onAutocomplete,
+    onCommand,
   });
 
 const components = new Map<string, OnComponent>();
@@ -166,7 +167,7 @@ const getHandler = (interaction: BaseInteraction, uiid?: string) => {
 
 const onInteraction =
   (
-    status: "success" | "error",
+    status: "error" | "success",
     interaction: BaseInteraction,
     startRequestTime: number,
     uiid?: string,
@@ -180,8 +181,8 @@ const onInteraction =
     interactionRequestDuration.observe(labels, requestDuration);
 
     const childLogger = logger.child({
-      labels,
       interaction,
+      labels,
       requestDuration,
     });
 

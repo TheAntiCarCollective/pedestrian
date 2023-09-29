@@ -1,7 +1,6 @@
 import { registerComponent } from "../../../../../services/discord";
-
-import { UIID } from "../ui";
 import session from "../context";
+import { UIID } from "../ui";
 
 registerComponent(UIID.CloseButton, async (interaction, sessionId) => {
   const response = await interaction.deferUpdate();

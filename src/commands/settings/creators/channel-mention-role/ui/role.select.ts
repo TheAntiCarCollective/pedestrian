@@ -1,9 +1,8 @@
 import assert from "node:assert";
 
 import { registerComponent } from "../../../../../services/discord";
-
-import UI, { UIID } from "../ui";
 import * as database from "../database";
+import UI, { UIID } from "../ui";
 
 registerComponent(UIID.RoleSelect, async (interaction, channelId) => {
   assert(interaction.isRoleSelectMenu());

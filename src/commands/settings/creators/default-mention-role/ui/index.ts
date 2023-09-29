@@ -1,10 +1,10 @@
+import { compress } from "compress-tag";
 import {
   ActionRowBuilder,
   EmbedBuilder,
-  roleMention,
   RoleSelectMenuBuilder,
+  roleMention,
 } from "discord.js";
-import { compress } from "compress-tag";
 
 import { Color } from "../../../../../services/discord";
 
@@ -14,7 +14,7 @@ export enum UIID {
 
 // region Setting
 // region Components
-const roleSelect = (defaultMentionRoleId: string | null) => {
+const roleSelect = (defaultMentionRoleId: null | string) => {
   const roleSelectMenu = new RoleSelectMenuBuilder()
     .setCustomId(UIID.RoleSelect)
     .setMinValues(0)
@@ -36,17 +36,17 @@ const roleSelect = (defaultMentionRoleId: string | null) => {
   return roleSelectMenu;
 };
 
-const roleSelectActionRow = (defaultMentionRoleId: string | null) =>
+const roleSelectActionRow = (defaultMentionRoleId: null | string) =>
   new ActionRowBuilder<RoleSelectMenuBuilder>().setComponents(
     roleSelect(defaultMentionRoleId),
   );
 
-const settingComponents = (defaultMentionRoleId: string | null) => [
+const settingComponents = (defaultMentionRoleId: null | string) => [
   roleSelectActionRow(defaultMentionRoleId),
 ];
 // endregion
 
-const settingEmbeds = (defaultMentionRoleId: string | null) => {
+const settingEmbeds = (defaultMentionRoleId: null | string) => {
   const mentionRole =
     defaultMentionRoleId === null
       ? defaultMentionRoleId
@@ -64,7 +64,7 @@ const settingEmbeds = (defaultMentionRoleId: string | null) => {
   return [embed];
 };
 
-const setting = (defaultMentionRoleId: string | null) => ({
+const setting = (defaultMentionRoleId: null | string) => ({
   components: settingComponents(defaultMentionRoleId),
   embeds: settingEmbeds(defaultMentionRoleId),
   ephemeral: true,

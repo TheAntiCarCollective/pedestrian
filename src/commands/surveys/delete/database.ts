@@ -2,9 +2,9 @@ import { useClient } from "../../../services/postgresql";
 
 // region Types
 type PartialSurvey = {
-  id: string;
   channelId: string;
   createdBy: string;
+  id: string;
 };
 // endregion
 

@@ -1,10 +1,11 @@
 import type { ChatInputCommandInteraction } from "discord.js";
+
 import assert from "node:assert";
 
-import SearchUI from "./ui";
 import * as database from "../database";
-import SurveysUI from "../ui";
 import { surveyCreator } from "../functions";
+import SurveysUI from "../ui";
+import SearchUI from "./ui";
 
 export enum Option {
   Title = "title",

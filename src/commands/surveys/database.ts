@@ -1,9 +1,10 @@
 import type { PoolClient } from "pg";
+
 import assert from "node:assert";
 
-import { useTransaction } from "../../services/postgresql";
-
 import type { Choice, Question, Survey } from "./types";
+
+import { useTransaction } from "../../services/postgresql";
 import { QuestionType } from "./constants";
 
 // region Types
@@ -15,18 +16,18 @@ type SurveyCompositeKey = {
 type PartialSurvey = Omit<Survey, "questions">;
 
 type PartialQuestion = {
-  id: number;
-  type: QuestionType;
   ask: string;
   description: string;
-  minValues: number | null;
-  maxValues: number | null;
+  id: number;
+  maxValues: null | number;
+  minValues: null | number;
+  type: QuestionType;
 };
 
 type ChoiceRow = {
-  questionId: number;
-  label: string;
   description: string;
+  label: string;
+  questionId: number;
 };
 // endregion
 
@@ -121,12 +122,12 @@ const getQuestions = async (client: PoolClient, surveyId: string) => {
   const questions: Question[] = [];
   for (const row of rows) {
     const {
-      id: questionId,
-      type,
       ask,
       description,
-      minValues,
+      id: questionId,
       maxValues,
+      minValues,
+      type,
     } = row;
 
     switch (type) {
@@ -137,21 +138,21 @@ const getQuestions = async (client: PoolClient, surveyId: string) => {
         assert(maxValues !== null);
 
         questions.push({
-          type,
           ask,
-          description,
-          minValues,
-          maxValues,
           choices,
+          description,
+          maxValues,
+          minValues,
+          type,
         });
 
         break;
       }
       case QuestionType.OpenAnswer: {
         questions.push({
-          type,
           ask,
           description,
+          type,
         });
 
         break;

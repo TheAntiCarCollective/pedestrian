@@ -1,11 +1,10 @@
 import assert from "node:assert";
 
 import { registerComponent } from "../../../../services/discord";
-
+import * as surveysDatabase from "../../database";
+import { UIID } from "../../ui";
 import session, * as withContext from "./context";
 import * as startDatabase from "./database";
-import { UIID } from "../../ui";
-import * as surveysDatabase from "../../database";
 
 registerComponent(UIID.StartSurveyButton, async (interaction, surveyId) => {
   const survey = await surveysDatabase.getSurvey(surveyId);
@@ -15,9 +14,9 @@ registerComponent(UIID.StartSurveyButton, async (interaction, surveyId) => {
   const answers = await startDatabase.getAnswers(surveyId, answerer.id);
 
   const partialContext = {
-    survey,
     answers,
     selectedIndex: 0,
+    survey,
   };
 
   const context = await session.create(partialContext, interaction);

@@ -1,32 +1,31 @@
-import { AttachmentBuilder } from "discord.js";
 import { stringify } from "csv-stringify";
+import { AttachmentBuilder } from "discord.js";
 import { fail as error } from "node:assert";
 
 import { registerComponent } from "../../../../../services/discord";
-
-import { UIID } from "../ui";
-import session, * as withContext from "../context";
-import { isSelected, isSkipped } from "../../../functions";
 import { QuestionType } from "../../../constants";
+import { isSelected, isSkipped } from "../../../functions";
+import session, * as withContext from "../context";
+import { UIID } from "../ui";
 
 registerComponent(UIID.AnswersCsvButton, async (interaction, sessionId) => {
   const context = await session.read(sessionId);
   const question = withContext.getQuestion(context);
   const answers = withContext.getAnswers(context);
 
-  const { type, ask } = question;
+  const { ask, type } = question;
   let stream;
 
   switch (type) {
     case QuestionType.MultipleChoice: {
       const { choices } = question;
       const columns = choices.map(({ label: header }, index) => ({
-        key: `${index}`,
         header,
+        key: `${index}`,
       }));
 
       const rows = answers.map((answer) => {
-        const row: Record<number, string | null> = {};
+        const row: Record<number, null | string> = {};
         for (const [index] of choices.entries()) {
           if (isSkipped(answer)) {
             row[index] = answer;

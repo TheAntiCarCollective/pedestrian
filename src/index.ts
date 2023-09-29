@@ -1,11 +1,11 @@
-import path from "node:path";
 import { glob } from "glob";
+import path from "node:path";
 import loggerFactory from "pino";
 import { collectDefaultMetrics } from "prom-client";
 
-import discord from "./services/discord";
 import Environment from "./environment";
 import server from "./server";
+import discord from "./services/discord";
 
 // region Logger and Metrics
 const logger = loggerFactory({

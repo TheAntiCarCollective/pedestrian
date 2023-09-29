@@ -1,14 +1,13 @@
 import assert, { fail as error } from "node:assert";
 
 import { registerComponent } from "../../../../services/discord";
-
-import { UIID } from "../ui";
-import session, * as withContext from "../context";
 import {
   InitialMultipleChoiceQuestion,
   InitialOpenAnswerQuestion,
   QuestionType,
 } from "../../constants";
+import session, * as withContext from "../context";
+import { UIID } from "../ui";
 
 registerComponent(UIID.QuestionTypeSelect, async (interaction, sessionId) => {
   assert(interaction.isStringSelectMenu());
@@ -16,7 +15,7 @@ registerComponent(UIID.QuestionTypeSelect, async (interaction, sessionId) => {
 
   const oldContext = await session.read(sessionId);
   const questions = withContext.getQuestions(oldContext);
-  const { type, ask, description } = withContext.getQuestion(oldContext);
+  const { ask, description, type } = withContext.getQuestion(oldContext);
   const { selectedQuestionIndex } = oldContext;
 
   let newQuestion;

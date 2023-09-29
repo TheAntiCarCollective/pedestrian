@@ -1,15 +1,15 @@
 import type { CommandInteraction } from "discord.js";
+
 import { Events, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import assert, { fail as error } from "node:assert";
 
-import discord, { registerCommand } from "../../services/discord";
-import Environment from "../../environment";
 import { SupportedChannelTypes } from "../../creators";
-
+import Environment from "../../environment";
+import discord, { registerCommand } from "../../services/discord";
 import onCreators, { Subcommand as CreatorsSubcommand } from "./creators";
 import { Option as ChannelMentionRoleOption } from "./creators/channel-mention-role";
-import onSurveys, { Subcommand as SurveysSubcommand } from "./surveys";
 import * as database from "./database";
+import onSurveys, { Subcommand as SurveysSubcommand } from "./surveys";
 
 // region registerCommand
 enum SubcommandGroup {

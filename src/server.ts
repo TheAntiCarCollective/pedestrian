@@ -1,7 +1,7 @@
 import express from "express";
-import pinoBundle from "pino-http";
 import promBundle from "express-prom-bundle";
 import loggerFactory from "pino";
+import pinoBundle from "pino-http";
 
 const server = express();
 

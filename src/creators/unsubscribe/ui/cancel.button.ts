@@ -1,7 +1,6 @@
 import { registerComponent } from "../../../services/discord";
-
-import UI, { UIID } from "../ui";
 import session from "../context";
+import UI, { UIID } from "../ui";
 
 registerComponent(UIID.CancelButton, async (interaction, sessionId) => {
   const response = await interaction.update(UI.cancelled());

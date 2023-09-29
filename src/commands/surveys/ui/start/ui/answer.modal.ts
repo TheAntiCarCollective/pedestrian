@@ -1,9 +1,8 @@
 import assert from "node:assert";
 
 import { registerModal } from "../../../../../services/discord";
-
-import { UIID } from "../ui";
 import session, * as withContext from "../context";
+import { UIID } from "../ui";
 
 registerModal(UIID.AnswerModal, async (interaction, sessionId) => {
   assert(interaction.isFromMessage());

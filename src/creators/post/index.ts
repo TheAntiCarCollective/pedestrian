@@ -1,22 +1,23 @@
 import type { APIMessage, BaseMessageOptions } from "discord.js";
+
+import { CronJob } from "cron";
 import {
   ChannelType,
   DiscordAPIError,
   Events,
-  roleMention,
   WebhookClient,
+  roleMention,
 } from "discord.js";
-import { CronJob } from "cron";
-import loggerFactory from "pino";
 import assert from "node:assert";
-
-import discord from "../../services/discord";
+import loggerFactory from "pino";
 
 import type { CreatorPost, CreatorSubscription } from "./database";
-import * as postDatabase from "./database";
-import * as creatorsDatabase from "../database";
-import { CreatorType } from "../constants";
+
 import { isUnique } from "../../helpers";
+import discord from "../../services/discord";
+import { CreatorType } from "../constants";
+import * as creatorsDatabase from "../database";
+import * as postDatabase from "./database";
 
 // region Types
 type Option = {
@@ -42,8 +43,8 @@ export const registerPoster = (creatorType: CreatorType, poster: Poster) => {
 };
 
 const getChannel = async ({
-  guildId,
   creatorChannelId,
+  guildId,
 }: CreatorSubscription) => {
   const { guilds } = discord;
   const { channels } = await guilds.fetch(guildId);
@@ -70,18 +71,18 @@ const sendMessage = async (
   option: Option,
 ) => {
   const {
-    creatorMentionRoleId,
-    creatorDomainId,
-    creatorType,
     creatorChannelId,
     creatorChannelParentId,
+    creatorDomainId,
+    creatorMentionRoleId,
+    creatorType,
     webhookId,
     webhookToken,
   } = creatorSubscription;
   const { avatarURL, components, contentId, url, username } = option;
 
   let message: APIMessage | undefined;
-  const bindings = () => ({ creatorSubscription, option, message });
+  const bindings = () => ({ creatorSubscription, message, option });
 
   const content =
     // prettier-ignore
@@ -108,9 +109,9 @@ const sendMessage = async (
       avatarURL,
       components,
       content,
-      username,
       threadId,
       threadName,
+      username,
     });
 
     const { id: messageId } = message;
@@ -140,11 +141,11 @@ const sendMessage = async (
   childLogger.info(message, "SEND_MESSAGE_SUCCESS");
 
   return {
-    id: message.id,
-    creatorChannelId,
-    creatorType,
-    creatorDomainId,
     contentId,
+    creatorChannelId,
+    creatorDomainId,
+    creatorType,
+    id: message.id,
   };
 };
 

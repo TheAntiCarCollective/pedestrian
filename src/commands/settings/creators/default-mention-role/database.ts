@@ -2,7 +2,7 @@ import { useClient } from "../../../../services/postgresql";
 
 // region Types
 type DefaultMentionRoleId = {
-  defaultMentionRoleId: string | null;
+  defaultMentionRoleId: null | string;
 };
 // endregion
 
@@ -23,7 +23,7 @@ export const getDefaultMentionRoleId = (guildId: string) =>
 
 export const setDefaultMentionRoleId = (
   guildId: string,
-  defaultMentionRoleId: string | null,
+  defaultMentionRoleId: null | string,
 ) =>
   useClient(`${__filename}#setDefaultMentionRoleId`, (client) => {
     const query = `

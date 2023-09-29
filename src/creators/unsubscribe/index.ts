@@ -1,12 +1,12 @@
 import type { CommandInteraction } from "discord.js";
+
 import assert from "node:assert";
 
 import { isUnique } from "../../helpers";
-
+import { CreatorType } from "../constants";
 import session from "./context";
 import * as database from "./database";
 import UI from "./ui";
-import { CreatorType } from "../constants";
 
 export const unsubscribe = async (
   interaction: CommandInteraction,
@@ -39,10 +39,10 @@ export const unsubscribe = async (
   }
 
   const partialContext = {
-    selectedIndexes: [],
-    creatorType,
     creatorSubscriptions,
+    creatorType,
     names,
+    selectedIndexes: [],
   };
 
   const context = await session.create(partialContext, interaction);

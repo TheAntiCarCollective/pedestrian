@@ -1,19 +1,20 @@
 import { youtube_v3 } from "@googleapis/youtube";
-import YoutubeChannel = youtube_v3.Schema$SearchResultSnippet;
 
 import Session from "../../../session";
 
+import YoutubeChannel = youtube_v3.Schema$SearchResultSnippet;
+
 // region Types
 export type Context = {
-  sessionId: string;
-  name: string;
   channelId: string;
-  youtubeChannels: YoutubeChannel[];
+  name: string;
   page: number;
+  sessionId: string;
+  youtubeChannels: YoutubeChannel[];
 };
 // endregion
 
-export const getYoutubeChannel = ({ youtubeChannels, page }: Context) =>
+export const getYoutubeChannel = ({ page, youtubeChannels }: Context) =>
   youtubeChannels[page - 1] ?? {};
 
 export const getName = (context: Context) => {

@@ -1,12 +1,13 @@
 import type { ChatInputCommandInteraction } from "discord.js";
+
 import { fail as error } from "node:assert";
 
-import onDefaultMentionRole from "./default-mention-role";
 import onChannelMentionRole from "./channel-mention-role";
+import onDefaultMentionRole from "./default-mention-role";
 
 export enum Subcommand {
-  DefaultMentionRole = "default-mention-role",
   ChannelMentionRole = "channel-mention-role",
+  DefaultMentionRole = "default-mention-role",
 }
 
 export default (interaction: ChatInputCommandInteraction) => {

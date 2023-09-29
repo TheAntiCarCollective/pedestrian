@@ -1,8 +1,8 @@
 import type { QuestionType } from "./constants";
 
 export type Choice = {
-  label: string;
   description: string;
+  label: string;
 };
 
 export type BaseQuestion = {
@@ -11,10 +11,10 @@ export type BaseQuestion = {
 };
 
 export type MultipleChoiceQuestion = BaseQuestion & {
-  type: QuestionType.MultipleChoice;
   choices: Choice[];
-  minValues: number;
   maxValues: number;
+  minValues: number;
+  type: QuestionType.MultipleChoice;
 };
 
 export type OpenAnswerQuestion = BaseQuestion & {
@@ -24,19 +24,19 @@ export type OpenAnswerQuestion = BaseQuestion & {
 export type Question = MultipleChoiceQuestion | OpenAnswerQuestion;
 
 export type PartialSurvey = {
-  id: string;
-  guildId: string;
-  title: string;
   channelId: string;
+  guildId: string;
+  id: string;
+  title: string;
 };
 
 export type Survey = PartialSurvey & {
-  description: string;
   createdBy: string;
+  description: string;
   questions: Question[];
 };
 
 export type SkippedAnswer = null;
 export type OpenAnswer = string;
 export type SelectedAnswers = number[];
-export type Answer = SkippedAnswer | OpenAnswer | SelectedAnswers;
+export type Answer = OpenAnswer | SelectedAnswers | SkippedAnswer;

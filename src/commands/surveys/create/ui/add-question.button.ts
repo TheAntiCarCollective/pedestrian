@@ -1,8 +1,7 @@
 import { registerComponent } from "../../../../services/discord";
-
-import UI, { UIID } from "../ui";
-import session, * as withContext from "../context";
 import { InitialQuestion } from "../../constants";
+import session, * as withContext from "../context";
+import UI, { UIID } from "../ui";
 
 registerComponent(UIID.AddQuestionButton, async (interaction, sessionId) => {
   const oldContext = await session.read(sessionId);

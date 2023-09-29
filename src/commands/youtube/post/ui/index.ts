@@ -1,8 +1,4 @@
 import { youtube_v3 } from "@googleapis/youtube";
-import Channel = youtube_v3.Schema$Channel;
-import Video = youtube_v3.Schema$Video;
-import VideoStatistics = youtube_v3.Schema$VideoStatistics;
-
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -11,13 +7,17 @@ import {
 } from "discord.js";
 import assert from "node:assert";
 
+import { isNonNullable, isNullable } from "../../../../helpers";
+import { Color } from "../../../../services/discord";
 import {
   getChannelUrl,
   getThumbnailUrl,
   getVideoUrl,
 } from "../../../../services/youtube";
-import { Color } from "../../../../services/discord";
-import { isNonNullable, isNullable } from "../../../../helpers";
+
+import Channel = youtube_v3.Schema$Channel;
+import Video = youtube_v3.Schema$Video;
+import VideoStatistics = youtube_v3.Schema$VideoStatistics;
 
 export enum UIID {
   DescriptionButton = "8f75c929-77a9-469c-8662-fec4a8c26a95",
@@ -49,9 +49,9 @@ const addFields = (embed: EmbedBuilder, statistics: VideoStatistics = {}) => {
 
     const value = Number.parseInt(rawValue);
     return embed.addFields({
+      inline: true,
       name,
       value: value.toLocaleString(),
-      inline: true,
     });
   };
 
@@ -82,7 +82,7 @@ const descriptionEmbeds = (
 ) => {
   const { channelId, publishedAt, tags } = videoSnippet ?? {};
   assert(isNonNullable(channelId));
-  const { title: channelName, thumbnails } = channelSnippet ?? {};
+  const { thumbnails, title: channelName } = channelSnippet ?? {};
 
   const channelUrl = getChannelUrl(channelId);
   const channelThumbnailUrl = getThumbnailUrl(thumbnails);
@@ -136,6 +136,6 @@ const description = (videoId: string, video: Video, channel: Channel) => ({
 // endregion
 
 export default {
-  viewDescription,
   description,
+  viewDescription,
 };

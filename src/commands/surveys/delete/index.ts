@@ -1,4 +1,5 @@
 import type { ChatInputCommandInteraction } from "discord.js";
+
 import { GuildMember, PermissionFlagsBits } from "discord.js";
 import assert from "node:assert";
 
@@ -21,7 +22,7 @@ const checkPermissionsResponse = (interaction: ChatInputCommandInteraction) => {
 export default async (interaction: ChatInputCommandInteraction) => {
   const { guild, options, user } = interaction;
   assert(guild !== null);
-  const { id: guildId, channels: guildChannelManager } = guild;
+  const { channels: guildChannelManager, id: guildId } = guild;
 
   const title = options.getString(Option.Title, true);
   const partialSurvey = await database.getPartialSurvey(guildId, title);
@@ -35,7 +36,7 @@ export default async (interaction: ChatInputCommandInteraction) => {
   const response = await interaction.reply(UI.deletedSurvey(title));
 
   if (partialSurvey !== undefined) {
-    const { id: messageId, channelId } = partialSurvey;
+    const { channelId, id: messageId } = partialSurvey;
     const channels = guildChannelManager.valueOf();
     const channel = channels.get(channelId);
 

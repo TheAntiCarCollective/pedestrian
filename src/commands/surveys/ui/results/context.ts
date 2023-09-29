@@ -1,28 +1,29 @@
+import type { Canvas } from "canvas";
 import type {
   BaseMessageOptions,
   MessageComponentInteraction,
   ModalMessageModalSubmitInteraction,
 } from "discord.js";
-import { AttachmentBuilder } from "discord.js";
-import type { Canvas } from "canvas";
 import type { Spec } from "vega";
-import { View, parse } from "vega";
+
+import { AttachmentBuilder } from "discord.js";
 import assert from "node:assert";
+import { View, parse } from "vega";
+
+import type { Answer, Survey } from "../../types";
 
 import Session from "../../../../session";
-
-import UI from "./ui";
-import initialSpec from "./spec.json";
-import type { Answer, Survey } from "../../types";
 import { isMultipleChoice, isSelected, surveyCreator } from "../../functions";
+import initialSpec from "./spec.json";
+import UI from "./ui";
 
 // region Types
 export type Context = {
+  results: Answer[][];
+  selectedAnswerIndex: number;
+  selectedQuestionIndex: number;
   sessionId: string;
   survey: Survey;
-  results: Answer[][];
-  selectedQuestionIndex: number;
-  selectedAnswerIndex: number;
 };
 
 type Interaction =
@@ -75,7 +76,7 @@ export const getAnswersPng = async (context: Context) => {
 
   const initialSpecJson = JSON.stringify(initialSpec);
   const spec = JSON.parse(initialSpecJson) as typeof initialSpec;
-  const { title, data } = spec;
+  const { data, title } = spec;
 
   // region Configure spec
   spec.height = choices.length * 32;

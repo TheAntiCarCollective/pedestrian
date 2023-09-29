@@ -2,7 +2,7 @@ import { useClient } from "../../../../services/postgresql";
 
 // region Types
 type SurveyCreatorRoleId = {
-  surveyCreatorRoleId: string | null;
+  surveyCreatorRoleId: null | string;
 };
 // endregion
 
@@ -23,7 +23,7 @@ export const getSurveyCreatorRoleId = (guildId: string) =>
 
 export const setSurveyCreatorRoleId = (
   guildId: string,
-  surveyCreatorRoleId: string | null,
+  surveyCreatorRoleId: null | string,
 ) =>
   useClient(`${__filename}#setSurveyCreatorRoleId`, (client) => {
     const query = `

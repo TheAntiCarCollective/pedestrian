@@ -1,11 +1,10 @@
 import assert from "node:assert";
 
-import { registerComponent } from "../../../../services/discord";
 import { CreatorType, subscribe } from "../../../../creators";
 import { isNonNullable } from "../../../../helpers";
-
-import { UIID } from "../ui";
+import { registerComponent } from "../../../../services/discord";
 import session, * as withContext from "../context";
+import { UIID } from "../ui";
 
 registerComponent(UIID.SubscribeButton, async (interaction, sessionId) => {
   const context = await session.read(sessionId);
@@ -15,11 +14,11 @@ registerComponent(UIID.SubscribeButton, async (interaction, sessionId) => {
   const name = withContext.getName(context);
 
   const response = await subscribe({
+    channelId: context.channelId,
+    creatorDomainId: channelId,
+    creatorType: CreatorType.YouTube,
     interaction,
     name,
-    creatorType: CreatorType.YouTube,
-    creatorDomainId: channelId,
-    channelId: context.channelId,
   });
 
   await session.destroy(sessionId);

@@ -1,4 +1,5 @@
 import type { GuildMember } from "discord.js";
+
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -8,9 +9,9 @@ import {
 } from "discord.js";
 import assert from "node:assert";
 
-import { Color } from "../../../services/discord";
-
 import type { PartialSurvey, Survey } from "../types";
+
+import { Color } from "../../../services/discord";
 import { surveyLink } from "../functions";
 
 export enum UIID {
@@ -94,7 +95,7 @@ const surveyResultsActionRow = (survey: Survey) =>
     surveyResultsButton(survey),
   );
 
-const surveyComponents = (survey: Survey | Omit<Survey, "id">) => {
+const surveyComponents = (survey: Omit<Survey, "id"> | Survey) => {
   const components = [];
 
   if ("id" in survey) {
@@ -108,10 +109,10 @@ const surveyComponents = (survey: Survey | Omit<Survey, "id">) => {
 };
 
 const surveyEmbeds = (
-  survey: Survey | Omit<Survey, "id">,
+  survey: Omit<Survey, "id"> | Survey,
   member: GuildMember | undefined,
 ) => {
-  const { title, description, questions } = survey;
+  const { description, questions, title } = survey;
   const iconURL = member?.displayAvatarURL();
   const name = member?.displayName;
 
@@ -119,9 +120,9 @@ const surveyEmbeds = (
   const footer = { iconURL, text: title };
 
   const numberOfQuestionsField = {
+    inline: true,
     name: "# of Questions",
     value: `${questions.length}`,
-    inline: true,
   };
 
   const id = "id" in survey ? survey.id : undefined;
@@ -141,7 +142,7 @@ const surveyEmbeds = (
 };
 
 const survey = (
-  survey: Survey | Omit<Survey, "id">,
+  survey: Omit<Survey, "id"> | Survey,
   member: GuildMember | undefined,
 ) => ({
   components: surveyComponents(survey),
@@ -150,8 +151,8 @@ const survey = (
 // endregion
 
 export default {
-  surveyLinkButton,
-  surveyLinkComponents,
   questionEmbed,
   survey,
+  surveyLinkButton,
+  surveyLinkComponents,
 };

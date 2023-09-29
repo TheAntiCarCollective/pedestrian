@@ -1,11 +1,13 @@
 import type { Callback, Result } from "ioredis";
+
 import loggerFactory from "pino";
 
-import redis from "./services/redis";
-import Environment from "./environment";
 import type { Lock } from "./lock";
-import lock from "./lock";
+
+import Environment from "./environment";
 import { isNullable } from "./helpers";
+import lock from "./lock";
+import redis from "./services/redis";
 
 const logger = loggerFactory({
   name: __filename,
@@ -27,7 +29,6 @@ export default {
 
 // region Redis
 redis.defineCommand("atomicSet", {
-  numberOfKeys: 2,
   lua: `
     if redis.call("get", KEYS[1]) == ARGV[1] then
       return redis.call("set", KEYS[2], ARGV[2], "px", ARGV[3])
@@ -35,6 +36,7 @@ redis.defineCommand("atomicSet", {
       return nil
     end
   `,
+  numberOfKeys: 2,
 });
 
 declare module "ioredis" {
@@ -47,7 +49,7 @@ declare module "ioredis" {
       value: string, // ARGV[2]
       expireInMilliseconds: number, // ARGV[3]
       callback?: Callback<string>,
-    ): Result<string | null, Context>;
+    ): Result<null | string, Context>;
   }
 }
 

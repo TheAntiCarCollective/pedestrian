@@ -1,9 +1,8 @@
 import assert from "node:assert";
 
 import { registerComponent } from "../../../services/discord";
-
-import UI, { UIID } from "../ui";
 import session from "../context";
+import UI, { UIID } from "../ui";
 
 registerComponent(UIID.SubscriptionSelect, async (interaction, sessionId) => {
   assert(interaction.isStringSelectMenu());

@@ -1,7 +1,7 @@
-import { useClient, useTransaction } from "../../services/postgresql";
-
-import { CreatorType } from "../constants";
 import { PoolClient } from "pg";
+
+import { useClient, useTransaction } from "../../services/postgresql";
+import { CreatorType } from "../constants";
 
 // region Types
 type CreatorSubscription = {
@@ -10,14 +10,14 @@ type CreatorSubscription = {
 
 type CreatorChannel = {
   id: string;
-  parentId: string | null;
+  parentId: null | string;
   webhookId: string;
   webhookToken: string;
 };
 
 type CreateCreator = {
-  type: CreatorType;
   domainId: string;
+  type: CreatorType;
 };
 
 type CreateCreatorChannel = CreatorChannel & {
@@ -81,7 +81,7 @@ const createCreator = (
 
 const createCreatorChannel = (
   client: PoolClient,
-  { id, guildId, webhookId, webhookToken, parentId }: CreateCreatorChannel,
+  { guildId, id, parentId, webhookId, webhookToken }: CreateCreatorChannel,
 ) => {
   const query = `
     insert into creator_channel(id, guild_id, webhook_id, webhook_token, parent_id)
@@ -99,7 +99,7 @@ export const createCreatorSubscription = (
   useTransaction(`${__filename}#createCreatorSubscription`, async (client) => {
     await createCreator(client, creatorSubscription);
     await createCreatorChannel(client, creatorSubscription);
-    const { id, type, domainId } = creatorSubscription;
+    const { domainId, id, type } = creatorSubscription;
 
     const query = `
       insert into creator_subscription(creator_channel_id, creator_id)

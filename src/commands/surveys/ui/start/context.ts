@@ -2,20 +2,21 @@ import type {
   MessageComponentInteraction,
   ModalMessageModalSubmitInteraction,
 } from "discord.js";
+
 import assert from "node:assert";
 
-import Session from "../../../../session";
-
 import type { Answer, Question, Survey } from "../../types";
+
+import Session from "../../../../session";
 import { surveyCreator } from "../../functions";
 import UI from "./ui";
 
 // region Types
 export type Context = {
-  sessionId: string;
-  survey: Survey;
   answers: Answer[];
   selectedIndex: number;
+  sessionId: string;
+  survey: Survey;
 };
 
 type GetQuestion = {

@@ -1,8 +1,8 @@
 import assert from "node:assert";
 
-import youtube from "../../services/youtube";
 import CacheKey, * as cache from "../../cache";
 import { isNonNullable } from "../../helpers";
+import youtube from "../../services/youtube";
 
 const { channels, playlistItems, search, videos } = youtube;
 const ExpireIn30Days = 2_592_000_000;

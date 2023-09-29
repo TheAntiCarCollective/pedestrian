@@ -1,9 +1,10 @@
 import { youtube, youtube_v3 } from "@googleapis/youtube";
-import Thumbnail = youtube_v3.Schema$Thumbnail;
-import ThumbnailDetails = youtube_v3.Schema$ThumbnailDetails;
 
 import Environment from "../environment";
 import { isNonNullable } from "../helpers";
+
+import Thumbnail = youtube_v3.Schema$Thumbnail;
+import ThumbnailDetails = youtube_v3.Schema$ThumbnailDetails;
 
 export const getChannelUrl = (channelId: string) =>
   `https://www.youtube.com/channel/${channelId}`;

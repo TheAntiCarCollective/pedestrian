@@ -1,4 +1,5 @@
 import type { BaseInteraction } from "discord.js";
+
 import { messageLink } from "discord.js";
 import assert from "node:assert";
 import loggerFactory from "pino";
@@ -14,6 +15,7 @@ import type {
   SkippedAnswer,
   Survey,
 } from "./types";
+
 import { QuestionType } from "./constants";
 
 const logger = loggerFactory({
@@ -21,7 +23,7 @@ const logger = loggerFactory({
 });
 
 // region Survey
-export const surveyLink = ({ channelId, id, guildId }: PartialSurvey) =>
+export const surveyLink = ({ channelId, guildId, id }: PartialSurvey) =>
   messageLink(channelId, id, guildId);
 
 export const surveyCreator = async (

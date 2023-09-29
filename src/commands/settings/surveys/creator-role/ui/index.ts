@@ -1,8 +1,8 @@
 import {
   ActionRowBuilder,
   EmbedBuilder,
-  roleMention,
   RoleSelectMenuBuilder,
+  roleMention,
 } from "discord.js";
 
 import { Color } from "../../../../../services/discord";
@@ -13,7 +13,7 @@ export enum UIID {
 
 // region Setting
 // region Components
-const roleSelect = (surveyCreatorRoleId: string | null) => {
+const roleSelect = (surveyCreatorRoleId: null | string) => {
   const roleSelectMenu = new RoleSelectMenuBuilder()
     .setCustomId(UIID.RoleSelect)
     .setMinValues(0)
@@ -35,17 +35,17 @@ const roleSelect = (surveyCreatorRoleId: string | null) => {
   return roleSelectMenu;
 };
 
-const roleSelectActionRow = (surveyCreatorRoleId: string | null) =>
+const roleSelectActionRow = (surveyCreatorRoleId: null | string) =>
   new ActionRowBuilder<RoleSelectMenuBuilder>().setComponents(
     roleSelect(surveyCreatorRoleId),
   );
 
-const settingComponents = (surveyCreatorRoleId: string | null) => [
+const settingComponents = (surveyCreatorRoleId: null | string) => [
   roleSelectActionRow(surveyCreatorRoleId),
 ];
 // endregion
 
-const settingEmbeds = (surveyCreatorRoleId: string | null) => {
+const settingEmbeds = (surveyCreatorRoleId: null | string) => {
   // prettier-ignore
   const orRole = surveyCreatorRoleId === null ? " " : ` or ${roleMention(surveyCreatorRoleId)} `;
   const description = `Only members that have Manage Messages permissions${orRole}can create surveys.`;
@@ -57,7 +57,7 @@ const settingEmbeds = (surveyCreatorRoleId: string | null) => {
   return [embed];
 };
 
-const setting = (surveyCreatorRoleId: string | null) => ({
+const setting = (surveyCreatorRoleId: null | string) => ({
   components: settingComponents(surveyCreatorRoleId),
   embeds: settingEmbeds(surveyCreatorRoleId),
   ephemeral: true,

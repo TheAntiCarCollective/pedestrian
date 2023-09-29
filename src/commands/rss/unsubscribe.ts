@@ -1,7 +1,6 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 
 import { CreatorType, unsubscribe } from "../../creators";
-
 import * as rss from "./rss";
 
 export default (interaction: ChatInputCommandInteraction) =>

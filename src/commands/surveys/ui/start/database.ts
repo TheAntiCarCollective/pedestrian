@@ -1,6 +1,6 @@
-import { useClient } from "../../../../services/postgresql";
-
 import type { Answer } from "../../types";
+
+import { useClient } from "../../../../services/postgresql";
 
 // region Types
 type AnswerRow = {

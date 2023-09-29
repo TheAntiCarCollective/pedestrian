@@ -1,4 +1,5 @@
 import type { Callback, Result } from "ioredis";
+
 import { randomBytes } from "node:crypto";
 import loggerFactory from "pino";
 
@@ -18,7 +19,6 @@ const logger = loggerFactory({
 
 // region Redis
 redis.defineCommand("extendLock", {
-  numberOfKeys: 1,
   lua: `
     if redis.call("get", KEYS[1]) == ARGV[1] then
       return redis.call("pexpire", KEYS[1], ARGV[2])
@@ -26,10 +26,10 @@ redis.defineCommand("extendLock", {
       return 0
     end
   `,
+  numberOfKeys: 1,
 });
 
 redis.defineCommand("unlock", {
-  numberOfKeys: 1,
   lua: `
     if redis.call("get", KEYS[1]) == ARGV[1] then
       return redis.call("del", KEYS[1])
@@ -37,6 +37,7 @@ redis.defineCommand("unlock", {
       return 0
     end
   `,
+  numberOfKeys: 1,
 });
 
 declare module "ioredis" {

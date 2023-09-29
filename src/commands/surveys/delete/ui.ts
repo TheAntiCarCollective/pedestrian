@@ -1,5 +1,5 @@
-import { bold, EmbedBuilder } from "discord.js";
 import { compress } from "compress-tag";
+import { EmbedBuilder, bold } from "discord.js";
 
 import { Color } from "../../../services/discord";
 
@@ -43,6 +43,6 @@ const deletedSurvey = (title: string) => ({
 // endregion
 
 export default {
-  permissionsDenied,
   deletedSurvey,
+  permissionsDenied,
 };

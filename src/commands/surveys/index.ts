@@ -1,13 +1,13 @@
 import type { CommandInteraction } from "discord.js";
+
 import { SlashCommandBuilder } from "discord.js";
 import assert, { fail as error } from "node:assert";
 
 import { registerCommand } from "../../services/discord";
-
+import onAutocomplete from "./autocomplete";
 import onCreate, { Option as CreateOption } from "./create";
 import onDelete, { Option as DeleteOption } from "./delete";
 import onSearch, { Option as SearchOption } from "./search";
-import onAutocomplete from "./autocomplete";
 
 enum Subcommand {
   Create = "create",

@@ -1,4 +1,5 @@
 import type { PoolClient } from "pg";
+
 import { Pool } from "pg";
 import loggerFactory from "pino";
 import { Histogram, exponentialBuckets } from "prom-client";
@@ -15,33 +16,33 @@ const logger = loggerFactory({
 });
 
 const databaseRequestDuration = new Histogram({
-  name: "database_request_duration_milliseconds",
-  help: "Database request duration in milliseconds",
-  labelNames: ["caller", "status", "connected"],
   // Create 11 buckets, starting on 1 and with a factor of 2
   buckets: exponentialBuckets(1, 2, 11),
+  help: "Database request duration in milliseconds",
+  labelNames: ["caller", "status", "connected"],
+  name: "database_request_duration_milliseconds",
 });
 // endregion
 
 const postgresql = new Pool({
-  host: Environment.PostgresqlHost,
-  port: Number.parseInt(Environment.PostgresqlPort),
   database: Environment.PostgresqlDatabase,
-  user: Environment.PostgresqlUser,
+  host: Environment.PostgresqlHost,
   password: Environment.PostgresqlPassword,
+  port: Number.parseInt(Environment.PostgresqlPort),
+  user: Environment.PostgresqlUser,
 });
 
 export const useClient = async <T>(caller: string, callback: Callback<T>) => {
   const startRequestTime = performance.now();
   const onDatabase =
-    (status: "success" | "error", client?: PoolClient) => (result: unknown) => {
+    (status: "error" | "success", client?: PoolClient) => (result: unknown) => {
       client?.release(status === "error");
 
       const endRequestTime = performance.now();
       const requestDuration = endRequestTime - startRequestTime;
 
       const connected = (client !== undefined).toString();
-      const labels = { caller, status, connected };
+      const labels = { caller, connected, status };
       databaseRequestDuration.observe(labels, requestDuration);
 
       const childLogger = logger.child({

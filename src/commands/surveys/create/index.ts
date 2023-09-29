@@ -1,11 +1,12 @@
 import type { ChatInputCommandInteraction } from "discord.js";
+
 import { GuildMember, PermissionFlagsBits } from "discord.js";
 import assert from "node:assert";
 
-import session from "./context";
-import UI from "./ui";
-import * as database from "./database";
 import { InitialQuestion } from "../constants";
+import session from "./context";
+import * as database from "./database";
+import UI from "./ui";
 
 export enum Option {
   Title = "title",
@@ -41,15 +42,15 @@ export default async (interaction: ChatInputCommandInteraction) => {
   if (survey !== undefined) return interaction.reply(UI.surveyExists(survey));
 
   const partialContext = {
-    selectedQuestionIndex: 0,
     selectedChoiceIndex: 0,
+    selectedQuestionIndex: 0,
     survey: {
-      guildId,
-      title,
-      description: "",
       channelId,
       createdBy: user.id,
+      description: "",
+      guildId,
       questions: [InitialQuestion],
+      title,
     },
   };
 

@@ -1,10 +1,10 @@
 import type { CommandInteraction } from "discord.js";
+
 import { PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import assert, { fail as error } from "node:assert";
 
-import { registerCommand } from "../../services/discord";
 import { SupportedChannelTypes } from "../../creators";
-
+import { registerCommand } from "../../services/discord";
 import onSubscribe, { Option as SubscribeOption } from "./subscribe";
 import onUnsubscribe from "./unsubscribe";
 

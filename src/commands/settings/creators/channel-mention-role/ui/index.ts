@@ -1,11 +1,11 @@
+import { compress } from "compress-tag";
 import {
   ActionRowBuilder,
-  channelMention,
   EmbedBuilder,
-  roleMention,
   RoleSelectMenuBuilder,
+  channelMention,
+  roleMention,
 } from "discord.js";
-import { compress } from "compress-tag";
 
 import { Color } from "../../../../../services/discord";
 
@@ -15,7 +15,7 @@ export enum UIID {
 
 // region Setting
 // region Components
-const roleSelect = (channelId: string, channelMentionRoleId: string | null) => {
+const roleSelect = (channelId: string, channelMentionRoleId: null | string) => {
   const roleSelectMenu = new RoleSelectMenuBuilder()
     .setCustomId(`${UIID.RoleSelect}${channelId}`)
     .setMinValues(0)
@@ -39,7 +39,7 @@ const roleSelect = (channelId: string, channelMentionRoleId: string | null) => {
 
 const roleSelectActionRow = (
   channelId: string,
-  channelMentionRoleId: string | null,
+  channelMentionRoleId: null | string,
 ) =>
   new ActionRowBuilder<RoleSelectMenuBuilder>().setComponents(
     roleSelect(channelId, channelMentionRoleId),
@@ -47,13 +47,13 @@ const roleSelectActionRow = (
 
 const settingComponents = (
   channelId: string,
-  channelMentionRoleId: string | null,
+  channelMentionRoleId: null | string,
 ) => [roleSelectActionRow(channelId, channelMentionRoleId)];
 // endregion
 
 const settingEmbeds = (
   channelId: string,
-  channelMentionRoleId: string | null,
+  channelMentionRoleId: null | string,
 ) => {
   const mentionRole =
     channelMentionRoleId === null
@@ -72,7 +72,7 @@ const settingEmbeds = (
   return [embed];
 };
 
-const setting = (channelId: string, channelMentionRoleId: string | null) => ({
+const setting = (channelId: string, channelMentionRoleId: null | string) => ({
   components: settingComponents(channelId, channelMentionRoleId),
   embeds: settingEmbeds(channelId, channelMentionRoleId),
   ephemeral: true,

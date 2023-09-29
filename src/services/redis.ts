@@ -13,8 +13,8 @@ const node = {
 };
 
 const user = {
-  username: Environment.RedisUsername,
   password: Environment.RedisPassword,
+  username: Environment.RedisUsername,
 };
 
 const createRedisByCluster = () =>

@@ -1,15 +1,15 @@
-import Session from "../../session";
-
-import type { CreatorSubscription } from "./database";
 import type { CreatorType } from "../constants";
+import type { CreatorSubscription } from "./database";
+
+import Session from "../../session";
 
 // region Types
 export type Context = {
-  sessionId: string;
-  selectedIndexes: number[];
-  creatorType: CreatorType;
   creatorSubscriptions: CreatorSubscription[];
+  creatorType: CreatorType;
   names: Record<string, string>;
+  selectedIndexes: number[];
+  sessionId: string;
 };
 // endregion
 
