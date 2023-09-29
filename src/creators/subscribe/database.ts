@@ -1,7 +1,8 @@
-import { PoolClient } from "pg";
+import type { PoolClient } from "pg";
+
+import type { CreatorType } from "../constants";
 
 import { useClient, useTransaction } from "../../services/postgresql";
-import { CreatorType } from "../constants";
 
 // region Types
 type CreatorSubscription = {

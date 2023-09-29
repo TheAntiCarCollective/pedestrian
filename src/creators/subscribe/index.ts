@@ -6,9 +6,10 @@ import type {
 import { CategoryChannel, ThreadChannel } from "discord.js";
 import assert from "node:assert";
 
+import type { CreatorType } from "../constants";
+
 import Environment from "../../environment";
 import { isUnique } from "../../helpers";
-import { CreatorType } from "../constants";
 import * as creatorsDatabase from "../database";
 import * as subscribeDatabase from "./database";
 import UI from "./ui";

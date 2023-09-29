@@ -21,6 +21,7 @@ module.exports = {
   root: true,
   rules: {
     "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+    "@typescript-eslint/consistent-type-imports": "error",
     "@typescript-eslint/no-unsafe-enum-comparison": "off",
     "no-console": "error",
     "unicorn/no-array-callback-reference": "off",

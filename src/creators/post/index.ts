@@ -11,11 +11,11 @@ import {
 import assert from "node:assert";
 import loggerFactory from "pino";
 
+import type { CreatorType } from "../constants";
 import type { CreatorPost, CreatorSubscription } from "./database";
 
 import { isUnique } from "../../helpers";
 import discord from "../../services/discord";
-import { CreatorType } from "../constants";
 import * as creatorsDatabase from "../database";
 import * as postDatabase from "./database";
 

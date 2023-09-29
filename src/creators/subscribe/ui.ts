@@ -1,8 +1,9 @@
 import { compress } from "compress-tag";
 import { EmbedBuilder, bold, channelMention } from "discord.js";
 
+import type { CreatorType } from "../constants";
+
 import { Color } from "../../services/discord";
-import { CreatorType } from "../constants";
 
 // region Max Creator Subscriptions
 const maxCreatorSubscriptionsEmbeds = (

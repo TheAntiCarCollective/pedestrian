@@ -1,5 +1,6 @@
+import type { CreatorType } from "../constants";
+
 import { useClient } from "../../services/postgresql";
-import { CreatorType } from "../constants";
 
 // region Types
 export type CreatorSubscription = {
