@@ -22,13 +22,10 @@ module.exports = {
   rules: {
     "@typescript-eslint/consistent-type-definitions": ["error", "type"],
     "@typescript-eslint/consistent-type-imports": "error",
-    "@typescript-eslint/no-unsafe-enum-comparison": "off",
     "no-console": "error",
     "unicorn/no-array-callback-reference": "off",
     "unicorn/no-null": "off",
-    "unicorn/no-useless-undefined": "off",
     "unicorn/number-literal-case": "off",
-    "unicorn/numeric-separators-style": "off",
     "unicorn/prefer-module": "off",
   },
 };

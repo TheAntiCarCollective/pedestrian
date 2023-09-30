@@ -126,7 +126,7 @@ const unlock = async ({ key, token }: Lock) => {
 export default async <T>(
   key: string,
   callback: (lock: Lock) => NonNullable<T> | Promise<NonNullable<T>>,
-  expireInMilliseconds = 1_000,
+  expireInMilliseconds = 1000,
 ) => {
   const lockObject = await lock(key, expireInMilliseconds);
 

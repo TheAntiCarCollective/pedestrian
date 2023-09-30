@@ -13,5 +13,4 @@ registerComponent(UIID.AddChoiceButton, async (interaction, sessionId) => {
 
   const context = await session.update(oldContext, interaction);
   await interaction.showModal(UI.choiceModal(context));
-  return undefined;
 });

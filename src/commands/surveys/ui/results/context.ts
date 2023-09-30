@@ -55,7 +55,7 @@ export const getAnswer = (context: Context) => {
 
 export const getAnswersPng = async (context: Context) => {
   const question = getQuestion(context);
-  if (!isMultipleChoice(question)) return undefined;
+  if (!isMultipleChoice(question)) return;
 
   const { ask, choices } = question;
   const values = choices.map(({ label }) => ({

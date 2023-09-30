@@ -7,6 +7,5 @@ registerComponent(
   async (interaction, sessionId) => {
     const context = await session.read(sessionId);
     await interaction.showModal(UI.choiceSettingsModal(context));
-    return undefined;
   },
 );

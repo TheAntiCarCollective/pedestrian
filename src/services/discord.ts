@@ -31,10 +31,10 @@ const interactionRequestDuration = new Histogram({
 
 // region Constants
 export enum Color {
-  Error = 0xed4245, // Red
-  Informational = 0x5865f2, // Blurple
-  Success = 0x57f287, // Green
-  Warning = 0xfee75c, // Yellow
+  Error = 0xed_42_45, // Red
+  Informational = 0x58_65_f2, // Blurple
+  Success = 0x57_f2_87, // Green
+  Warning = 0xfe_e7_5c, // Yellow
 }
 // endregion
 
@@ -85,7 +85,9 @@ type ContextMenuCommandJson = ReturnType<ContextMenuCommandBuilder["toJSON"]>;
 type SlashCommandJson = ReturnType<SlashCommandBuilder["toJSON"]>;
 type CommandJson = ContextMenuCommandJson | SlashCommandJson;
 
-type OnInteractionResult = Promise<InteractionResponse | Message | undefined>;
+// FIXME: Handlers that show modals typically have void return types
+// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+type OnInteractionResult = Promise<InteractionResponse | Message | void>;
 type OnCommand = (interaction: CommandInteraction) => OnInteractionResult;
 type OnAutocomplete = (interaction: AutocompleteInteraction) => Promise<void>;
 // prettier-ignore

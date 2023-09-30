@@ -12,5 +12,4 @@ registerComponent(UIID.AddQuestionButton, async (interaction, sessionId) => {
 
   const context = await session.update(oldContext, interaction);
   await interaction.showModal(UI.questionModal(context));
-  return undefined;
 });
