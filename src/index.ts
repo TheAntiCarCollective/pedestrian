@@ -4,8 +4,8 @@ import loggerFactory from "pino";
 import { collectDefaultMetrics } from "prom-client";
 
 import Environment from "./environment";
-import server from "./server";
 import discord from "./services/discord";
+import express from "./services/express";
 
 // region Logger and Metrics
 const logger = loggerFactory({
@@ -24,13 +24,13 @@ const main = async () => {
       .map((importPath) => import(`./${importPath}`));
     await Promise.all(imports);
 
-    const serverPort = Number.parseInt(Environment.ServerPort);
-    server.listen(serverPort, () => {
-      logger.info(serverPort, "SERVER_LISTEN");
+    const expressPort = Number.parseInt(Environment.ExpressPort);
+    express.listen(expressPort, () => {
+      logger.info(`Express is listening on port ${expressPort}`);
     });
 
     await discord.login();
-    logger.info("DISCORD_LOGIN");
+    logger.info("Discord finished login");
   } catch (error) {
     logger.fatal(error, "MAIN_ERROR");
     process.exitCode = 1;

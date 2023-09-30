@@ -167,19 +167,18 @@ const getHandler = (interaction: BaseInteraction, uiid?: string) => {
   error();
 };
 
-const onInteraction =
-  (
-    status: "error" | "success",
-    interaction: BaseInteraction,
-    startRequestTime: number,
-    uiid?: string,
-  ) =>
-  (result: unknown) => {
+const onInteraction = (
+  status: "error" | "success",
+  interaction: BaseInteraction,
+  startRequestTime: number,
+  uiid?: string,
+) => {
+  const handler = getHandler(interaction, uiid);
+  const labels = { handler, status };
+
+  return (result: unknown) => {
     const endRequestTime = performance.now();
     const requestDuration = endRequestTime - startRequestTime;
-
-    const handler = getHandler(interaction, uiid);
-    const labels = { handler, status };
     interactionRequestDuration.observe(labels, requestDuration);
 
     const childLogger = logger.child({
@@ -188,17 +187,15 @@ const onInteraction =
       requestDuration,
     });
 
-    switch (status) {
-      case "success": {
-        childLogger.info(result, "ON_INTERACTION_SUCCESS");
-        break;
-      }
-      case "error": {
-        childLogger.error(result, "ON_INTERACTION_ERROR");
-        break;
-      }
+    if (status === "error") {
+      childLogger.error(result, "ON_INTERACTION_ERROR");
+    } else if (requestDuration >= 1500) {
+      childLogger.warn(result, "ON_INTERACTION_SLOW");
+    } else {
+      childLogger.info(result, "ON_INTERACTION_SUCCESS");
     }
   };
+};
 
 const onCommand = (
   interaction: CommandInteraction,
@@ -274,8 +271,6 @@ discord.on(Events.InteractionCreate, async (interaction) => {
     await onMessageComponent(interaction, startRequestTime);
   } else if (interaction.isModalSubmit()) {
     await onModalSubmit(interaction, startRequestTime);
-  } else {
-    error();
   }
 });
 // endregion

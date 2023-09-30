@@ -22,6 +22,7 @@ Code must pass minimum quality standards checks (`npm run check`) to be merged:
 | -------------------- | -------- | ------------- | ------------------------------------------------------------------------------------------------------ |
 | BOT_GUILD_ID         | ❌       |               | Guild ID to enable `/bot`                                                                              |
 | DISCORD_TOKEN        | ✅       |               | [Create Discord Token](https://discord.com/developers/docs/getting-started#configuring-your-bot)       |
+| EXPRESS_PORT         | ❌       | 8080          |                                                                                                        |
 | POSTGRESQL_HOST      | ❌       | localhost     |                                                                                                        |
 | POSTGRESQL_PORT      | ❌       | 5432          |                                                                                                        |
 | POSTGRESQL_DATABASE  | ❌       | db            |                                                                                                        |
@@ -33,5 +34,4 @@ Code must pass minimum quality standards checks (`npm run check`) to be merged:
 | REDIS_CLUSTER        | ❌       |               | IIF value is "true" then Redis will run in [cluster mode](https://redis.io/docs/management/scaling/)   |
 | REDIS_USERNAME       | ❌       |               |                                                                                                        |
 | REDIS_PASSWORD       | ❌       |               |                                                                                                        |
-| SERVER_PORT          | ❌       | 8080          |                                                                                                        |
 | YOUTUBE_API_KEY      | ✅       |               | [Create YouTube API Key](https://console.cloud.google.com/apis/api/youtube.googleapis.com/credentials) |

@@ -50,15 +50,16 @@ export const useClient = async <T>(caller: string, callback: Callback<T>) => {
         requestDuration,
       });
 
-      switch (status) {
-        case "success": {
-          childLogger.debug(result, "ON_DATABASE_SUCCESS");
-          return result as T;
-        }
-        case "error": {
-          throw result;
-        }
+      if (status === "error") {
+        childLogger.error(result, "ON_DATABASE_ERROR");
+        throw result;
+      } else if (requestDuration > 100) {
+        childLogger.warn(result, "ON_DATABASE_SLOW");
+      } else {
+        childLogger.debug(result, "ON_DATABASE_SUCCESS");
       }
+
+      return result as T;
     };
 
   return postgresql
