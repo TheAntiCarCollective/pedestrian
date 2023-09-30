@@ -272,9 +272,9 @@ discord.on(Events.InteractionCreate, async (interaction) => {
     await onMessageComponent(interaction, startRequestTime);
   } else if (interaction.isModalSubmit()) {
     await onModalSubmit(interaction, startRequestTime);
+  } else {
+    error();
   }
-
-  error();
 });
 // endregion
 // endregion
