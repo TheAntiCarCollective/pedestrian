@@ -1,5 +1,6 @@
 import assert from "node:assert";
 
+import { caller } from "../../../helpers";
 import { useClient } from "../../../services/postgresql";
 
 // region Types
@@ -9,7 +10,7 @@ type ContentId = {
 // endregion
 
 export const getContentId = (postId: string) =>
-  useClient(`${__filename}#getContentId`, async (client) => {
+  useClient(caller(module, getContentId), async (client) => {
     const query = `
       select content_id as "contentId"
       from creator_post

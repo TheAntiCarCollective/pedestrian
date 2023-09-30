@@ -1,5 +1,6 @@
 import type { Answer } from "../../types";
 
+import { caller } from "../../../../helpers";
 import { useClient } from "../../../../services/postgresql";
 
 // region Types
@@ -9,7 +10,7 @@ type Answers = {
 // endregion
 
 export const getResults = (surveyId: string) =>
-  useClient(`${__filename}#getResults`, async (client) => {
+  useClient(caller(module, getResults), async (client) => {
     const query = `
       select
         array_agg(

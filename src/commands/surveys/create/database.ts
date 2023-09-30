@@ -4,7 +4,7 @@ import assert from "node:assert";
 
 import type { PartialSurvey, Question, Survey } from "../types";
 
-import { isNonNullable } from "../../../helpers";
+import { caller, isNonNullable } from "../../../helpers";
 import { useClient, useTransaction } from "../../../services/postgresql";
 import { isMultipleChoice } from "../functions";
 
@@ -15,7 +15,7 @@ type SurveyCreatorRoleId = {
 // endregion
 
 export const getSurveyCreatorRoleId = (guildId: string) =>
-  useClient(`${__filename}#getSurveyCreatorRoleId`, async (client) => {
+  useClient(caller(module, getSurveyCreatorRoleId), async (client) => {
     const query = `
       select survey_creator_role_id as "surveyCreatorRoleId"
       from guild
@@ -31,7 +31,7 @@ export const getSurveyCreatorRoleId = (guildId: string) =>
   });
 
 export const getSurvey = (guildId: string, title: string) =>
-  useClient(`${__filename}#getSurvey`, async (client) => {
+  useClient(caller(module, getSurvey), async (client) => {
     const query = `
       select
         id,
@@ -146,7 +146,7 @@ export const createSurvey = ({
   questions,
   title,
 }: Survey) =>
-  useTransaction(`${__filename}#createSurvey`, async (client) => {
+  useTransaction(caller(module, createSurvey), async (client) => {
     const query = `
       insert into survey(id, guild_id, title, description, channel_id, created_by)
       values($1, $2, $3, $4, $5, $6)

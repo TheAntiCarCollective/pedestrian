@@ -1,5 +1,6 @@
 import type { CreatorType } from "../constants";
 
+import { caller } from "../../helpers";
 import { useClient } from "../../services/postgresql";
 
 // region Types
@@ -26,7 +27,7 @@ export type CreatorPost = {
 // endregion
 
 export const getCreatorSubscriptions = (guildIds: string[]) =>
-  useClient(`${__filename}#getCreatorSubscriptions`, async (client) => {
+  useClient(caller(module, getCreatorSubscriptions), async (client) => {
     const query = `
       select
         g.id as "guildId",
@@ -67,7 +68,7 @@ export const getCreatorSubscriptions = (guildIds: string[]) =>
   });
 
 export const createCreatorPosts = (creatorPosts: CreatorPost[]) =>
-  useClient(`${__filename}#createCreatorPosts`, (client) => {
+  useClient(caller(module, createCreatorPosts), (client) => {
     const query = `
       insert into creator_post(id, creator_subscription_id, content_id)
       select

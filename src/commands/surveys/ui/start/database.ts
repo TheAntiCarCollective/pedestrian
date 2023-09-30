@@ -1,5 +1,6 @@
 import type { Answer } from "../../types";
 
+import { caller } from "../../../../helpers";
 import { useClient } from "../../../../services/postgresql";
 
 // region Types
@@ -9,7 +10,7 @@ type AnswerRow = {
 // endregion
 
 export const getAnswers = (surveyId: string, createdBy: string) =>
-  useClient(`${__filename}#getAnswers`, async (client) => {
+  useClient(caller(module, getAnswers), async (client) => {
     const query = `
       select sa.answer
       from survey_answer as sa
@@ -31,7 +32,7 @@ export const createAnswers = (
   createdBy: string,
   answers: Answer[],
 ) =>
-  useClient(`${__filename}#createAnswers`, async (client) => {
+  useClient(caller(module, createAnswers), async (client) => {
     const query = `
       insert into survey_answer(survey_question_id, created_by, answer)
       select

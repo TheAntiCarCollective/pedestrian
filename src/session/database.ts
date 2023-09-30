@@ -1,5 +1,6 @@
 import assert from "node:assert";
 
+import { caller } from "../helpers";
 import { useClient } from "../services/postgresql";
 
 // region Types
@@ -18,7 +19,7 @@ export const createSession = <T extends Context>(
   sessionId: string,
   context: PartialContext<T>,
 ) =>
-  useClient(`${__filename}#createSession`, async (client) => {
+  useClient(caller(module, createSession), async (client) => {
     const query = `
       insert into session(id, context)
       values($1, $2)
@@ -34,7 +35,7 @@ export const createSession = <T extends Context>(
   });
 
 export const readSession = <T extends Context>(sessionId: string) =>
-  useClient(`${__filename}#readSession`, async (client) => {
+  useClient(caller(module, readSession), async (client) => {
     const query = `
       select context
       from session
@@ -57,7 +58,7 @@ export const updateSession = <T extends Context>(
   newSessionId: string,
   { sessionId: oldSessionId, ...context }: T,
 ) =>
-  useClient(`${__filename}#updateSession`, async (client) => {
+  useClient(caller(module, updateSession), async (client) => {
     const query = `
       insert into session(id, previous_id, context)
       values($1, $2, $3)
@@ -73,7 +74,7 @@ export const updateSession = <T extends Context>(
   });
 
 export const destroySession = (sessionId: string) =>
-  useClient(`${__filename}#destroySession`, (client) => {
+  useClient(caller(module, destroySession), (client) => {
     const query = `
       with recursive initial_session(id, previous_id) as(
         select

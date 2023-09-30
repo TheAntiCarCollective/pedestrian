@@ -1,3 +1,4 @@
+import { caller } from "../../../../helpers";
 import { useClient } from "../../../../services/postgresql";
 
 // region Types
@@ -7,7 +8,7 @@ type SurveyCreatorRoleId = {
 // endregion
 
 export const getSurveyCreatorRoleId = (guildId: string) =>
-  useClient(`${__filename}#getSurveyCreatorRoleId`, async (client) => {
+  useClient(caller(module, getSurveyCreatorRoleId), async (client) => {
     const query = `
       select survey_creator_role_id as "surveyCreatorRoleId"
       from guild
@@ -25,7 +26,7 @@ export const setSurveyCreatorRoleId = (
   guildId: string,
   surveyCreatorRoleId: null | string,
 ) =>
-  useClient(`${__filename}#setSurveyCreatorRoleId`, (client) => {
+  useClient(caller(module, setSurveyCreatorRoleId), (client) => {
     const query = `
       update guild
       set survey_creator_role_id = $2

@@ -2,6 +2,7 @@ import type { PoolClient } from "pg";
 
 import type { CreatorType } from "../constants";
 
+import { caller } from "../../helpers";
 import { useClient, useTransaction } from "../../services/postgresql";
 
 // region Types
@@ -32,7 +33,7 @@ export const getCreatorSubscriptions = (
   creatorType: CreatorType,
   guildId: string,
 ) =>
-  useClient(`${__filename}#getCreatorSubscriptions`, async (client) => {
+  useClient(caller(module, getCreatorSubscriptions), async (client) => {
     const query = `
       select cc.id as "creatorChannelId"
       from creator_subscription as cs
@@ -50,7 +51,7 @@ export const getCreatorSubscriptions = (
   });
 
 export const getCreatorChannels = (guildId: string) =>
-  useClient(`${__filename}#getCreatorChannels`, async (client) => {
+  useClient(caller(module, getCreatorChannels), async (client) => {
     const query = `
       select
         id,
@@ -97,7 +98,7 @@ const createCreatorChannel = (
 export const createCreatorSubscription = (
   creatorSubscription: CreateCreatorSubscription,
 ) =>
-  useTransaction(`${__filename}#createCreatorSubscription`, async (client) => {
+  useTransaction(caller(module, createCreatorSubscription), async (client) => {
     await createCreator(client, creatorSubscription);
     await createCreatorChannel(client, creatorSubscription);
     const { domainId, id, type } = creatorSubscription;

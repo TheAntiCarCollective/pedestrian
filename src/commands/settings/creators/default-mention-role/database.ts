@@ -1,3 +1,4 @@
+import { caller } from "../../../../helpers";
 import { useClient } from "../../../../services/postgresql";
 
 // region Types
@@ -7,7 +8,7 @@ type DefaultMentionRoleId = {
 // endregion
 
 export const getDefaultMentionRoleId = (guildId: string) =>
-  useClient(`${__filename}#getDefaultMentionRoleId`, async (client) => {
+  useClient(caller(module, getDefaultMentionRoleId), async (client) => {
     const query = `
       select creator_mention_role_id as "defaultMentionRoleId"
       from guild
@@ -25,7 +26,7 @@ export const setDefaultMentionRoleId = (
   guildId: string,
   defaultMentionRoleId: null | string,
 ) =>
-  useClient(`${__filename}#setDefaultMentionRoleId`, (client) => {
+  useClient(caller(module, setDefaultMentionRoleId), (client) => {
     const query = `
       update guild
       set creator_mention_role_id = $2

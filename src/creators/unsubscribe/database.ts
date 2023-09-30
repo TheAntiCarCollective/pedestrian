@@ -1,5 +1,6 @@
 import type { CreatorType } from "../constants";
 
+import { caller } from "../../helpers";
 import { useClient } from "../../services/postgresql";
 
 // region Types
@@ -13,7 +14,7 @@ export const getCreatorSubscriptions = (
   guildId: string,
   creatorType: CreatorType,
 ) =>
-  useClient(`${__filename}#getCreatorSubscriptions`, async (client) => {
+  useClient(caller(module, getCreatorSubscriptions), async (client) => {
     const query = `
       select
         c.domain_id as "creatorDomainId",
@@ -36,7 +37,7 @@ export const deleteCreatorSubscriptions = (
   creatorType: CreatorType,
   creatorSubscriptions: CreatorSubscription[],
 ) =>
-  useClient(`${__filename}#deleteCreatorSubscriptions`, (client) => {
+  useClient(caller(module, deleteCreatorSubscriptions), (client) => {
     const query = `
       delete from creator_subscription as target
       using

@@ -1,7 +1,8 @@
+import { caller } from "../../helpers";
 import { useClient } from "../../services/postgresql";
 
 export const initializeGuilds = (guildIds: string[]) =>
-  useClient(`${__filename}#initializeGuild`, (client) => {
+  useClient(caller(module, initializeGuilds), (client) => {
     const query = `
       insert into guild(id)
       select id

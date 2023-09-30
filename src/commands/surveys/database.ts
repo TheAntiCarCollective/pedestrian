@@ -4,6 +4,7 @@ import assert from "node:assert";
 
 import type { Choice, Question, Survey } from "./types";
 
+import { caller } from "../../helpers";
 import { useTransaction } from "../../services/postgresql";
 import { QuestionType } from "./constants";
 
@@ -164,7 +165,7 @@ const getQuestions = async (client: PoolClient, surveyId: string) => {
 };
 
 export const getSurvey = (id: SurveyCompositeKey | string) =>
-  useTransaction(`${__filename}#getSurvey`, async (client) => {
+  useTransaction(caller(module, getSurvey), async (client) => {
     const partialSurvey = await getPartialSurvey(client, id);
     if (partialSurvey === undefined) return;
     const questions = await getQuestions(client, partialSurvey.id);

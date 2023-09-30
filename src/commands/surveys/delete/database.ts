@@ -1,3 +1,4 @@
+import { caller } from "../../../helpers";
 import { useClient } from "../../../services/postgresql";
 
 // region Types
@@ -9,7 +10,7 @@ type PartialSurvey = {
 // endregion
 
 export const getPartialSurvey = (guildId: string, title: string) =>
-  useClient(`${__filename}#getPartialSurvey`, async (client) => {
+  useClient(caller(module, getPartialSurvey), async (client) => {
     const query = `
       select
         id,
@@ -26,7 +27,7 @@ export const getPartialSurvey = (guildId: string, title: string) =>
   });
 
 export const deleteSurvey = (guildId: string, title: string) =>
-  useClient(`${__filename}#deleteSurvey`, async (client) => {
+  useClient(caller(module, deleteSurvey), async (client) => {
     const query = `
       delete from survey
       where guild_id = $1

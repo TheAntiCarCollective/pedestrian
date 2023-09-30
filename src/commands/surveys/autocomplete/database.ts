@@ -1,3 +1,4 @@
+import { caller } from "../../../helpers";
 import { useClient } from "../../../services/postgresql";
 
 // region Types
@@ -7,7 +8,7 @@ type Title = {
 // endregion
 
 export const findTitles = (guildId: string, partialTitle: string) =>
-  useClient(`${__filename}#findTitles`, async (client) => {
+  useClient(caller(module, findTitles), async (client) => {
     const query = `
       select title
       from survey

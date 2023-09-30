@@ -4,6 +4,8 @@ import { Pool } from "pg";
 import loggerFactory from "pino";
 import { Histogram, exponentialBuckets } from "prom-client";
 
+import type { Caller } from "../helpers";
+
 import Environment from "../environment";
 
 // region Types
@@ -32,17 +34,20 @@ const postgresql = new Pool({
   user: Environment.PostgresqlUser,
 });
 
-export const useClient = async <T>(caller: string, callback: Callback<T>) => {
+export const useClient = async <T>(caller: Caller, callback: Callback<T>) => {
   const startRequestTime = performance.now();
   const onDatabase =
     (status: "error" | "success", client?: PoolClient) => (result: unknown) => {
       client?.release(status === "error");
 
+      const labels = {
+        caller: caller.toString(),
+        connected: `${client !== undefined}`,
+        status,
+      };
+
       const endRequestTime = performance.now();
       const requestDuration = endRequestTime - startRequestTime;
-
-      const connected = (client !== undefined).toString();
-      const labels = { caller, connected, status };
       databaseRequestDuration.observe(labels, requestDuration);
 
       const childLogger = logger.child({
@@ -72,7 +77,7 @@ export const useClient = async <T>(caller: string, callback: Callback<T>) => {
     .catch(onDatabase("error"));
 };
 
-export const useTransaction = <T>(caller: string, callback: Callback<T>) =>
+export const useTransaction = <T>(caller: Caller, callback: Callback<T>) =>
   useClient(caller, async (client) => {
     await client.query("begin");
 

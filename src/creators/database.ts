@@ -1,7 +1,8 @@
+import { caller } from "../helpers";
 import { useClient } from "../services/postgresql";
 
 export const deleteCreatorChannels = (creatorChannelIds: string[]) =>
-  useClient(`${__filename}#deleteCreatorChannels`, (client) => {
+  useClient(caller(module, deleteCreatorChannels), (client) => {
     const query = `
       delete from creator_channel
       where id = any($1)
