@@ -59,7 +59,7 @@ export const useClient = async <T>(caller: Caller, callback: Callback<T>) => {
         childLogger.error(result, "ON_DATABASE_ERROR");
         throw result;
       } else if (requestDuration > 100) {
-        childLogger.warn(result, "ON_DATABASE_SLOW");
+        childLogger.warn(result, "ON_DATABASE_SUCCESS_SLOW");
       } else {
         childLogger.debug(result, "ON_DATABASE_SUCCESS");
       }

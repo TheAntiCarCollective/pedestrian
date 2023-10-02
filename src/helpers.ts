@@ -14,11 +14,13 @@ export const isNonNullable = <T>(value: T): value is NonNullable<T> =>
 // endregion
 
 // region Caller
+// Function type is safe since only name is accessed
+/* eslint-disable @typescript-eslint/ban-types */
 export class Caller {
-  private readonly caller: Record<"name", string>;
+  private readonly caller: Function;
   private readonly module: NodeModule;
 
-  constructor(module: NodeModule, caller: Record<"name", string>) {
+  constructor(module: NodeModule, caller: Function) {
     this.module = module;
     this.caller = caller;
   }
@@ -30,6 +32,7 @@ export class Caller {
   }
 }
 
-export const caller = (module: NodeModule, caller: Record<"name", string>) =>
+export const caller = (module: NodeModule, caller: Function) =>
   new Caller(module, caller);
+/* eslint-enable @typescript-eslint/ban-types */
 // endregion

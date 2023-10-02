@@ -160,11 +160,11 @@ const getHandler = (interaction: BaseInteraction, uiid?: string) => {
     const { commandName, options } = interaction;
     const { name: option } = options.getFocused(true);
     return `${commandName}#${option}`;
-  } else if (uiid !== undefined) {
+  } else if (uiid === undefined) {
+    error();
+  } else {
     return uiid;
   }
-
-  error();
 };
 
 const onInteraction = (
@@ -189,11 +189,13 @@ const onInteraction = (
 
     if (status === "error") {
       childLogger.error(result, "ON_INTERACTION_ERROR");
-    } else if (requestDuration >= 1500) {
-      childLogger.warn(result, "ON_INTERACTION_SLOW");
+    } else if (requestDuration >= 2500) {
+      childLogger.warn(result, "ON_INTERACTION_SUCCESS_SLOW");
     } else {
       childLogger.info(result, "ON_INTERACTION_SUCCESS");
     }
+
+    return status;
   };
 };
 
@@ -263,15 +265,18 @@ const onModalSubmit = (
 discord.on(Events.InteractionCreate, async (interaction) => {
   const startRequestTime = performance.now();
 
+  let status: string | undefined;
   if (interaction.isCommand()) {
-    await onCommand(interaction, startRequestTime);
+    status = await onCommand(interaction, startRequestTime);
   } else if (interaction.isAutocomplete()) {
-    await onAutocomplete(interaction, startRequestTime);
+    status = await onAutocomplete(interaction, startRequestTime);
   } else if (interaction.isMessageComponent()) {
-    await onMessageComponent(interaction, startRequestTime);
+    status = await onMessageComponent(interaction, startRequestTime);
   } else if (interaction.isModalSubmit()) {
-    await onModalSubmit(interaction, startRequestTime);
+    status = await onModalSubmit(interaction, startRequestTime);
   }
+
+  assert(status !== undefined);
 });
 // endregion
 // endregion
