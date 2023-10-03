@@ -1,4 +1,4 @@
-import { stringify } from "csv-stringify";
+import csv from "csv";
 import { AttachmentBuilder } from "discord.js";
 import assert from "node:assert";
 
@@ -32,7 +32,7 @@ registerComponent(UIID.SurveyCsvButton, async (interaction, sessionId) => {
     return row;
   });
 
-  const stream = stringify(rows, {
+  const stream = csv.stringify(rows, {
     columns,
     header: true,
   });

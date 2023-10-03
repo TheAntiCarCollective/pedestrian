@@ -1,7 +1,7 @@
 import type { CommandInteraction } from "discord.js";
 
 import { PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
-import assert, { fail as error } from "node:assert";
+import assert from "node:assert";
 
 import { SupportedChannelTypes } from "../../creators";
 import { registerCommand } from "../../services/discord";
@@ -53,9 +53,10 @@ const onCommand = (interaction: CommandInteraction) => {
     case Subcommand.Unsubscribe: {
       return onUnsubscribe(interaction);
     }
+    default: {
+      assert.fail();
+    }
   }
-
-  error();
 };
 
 registerCommand(json, onCommand);

@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { CreatorType, registerPoster } from "../../creators";
-import * as rss from "./rss";
+import * as rss from "./rss.manager";
 
 registerPoster(
   CreatorType.RSS,

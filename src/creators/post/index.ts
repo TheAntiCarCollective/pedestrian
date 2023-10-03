@@ -12,7 +12,7 @@ import assert from "node:assert";
 import loggerFactory from "pino";
 
 import type { CreatorType } from "../constants";
-import type { CreatorPost, CreatorSubscription } from "./database";
+import type { CreatorSubscription } from "./database";
 
 import { isUnique } from "../../helpers";
 import discord from "../../services/discord";
@@ -151,7 +151,7 @@ const sendMessage = async (
 
 const sendMessages = async (creatorSubscription: CreatorSubscription) => {
   const options = await getOptions(creatorSubscription);
-  const creatorPosts: CreatorPost[] = [];
+  const creatorPosts = [];
 
   // Messages must be sent in order to guarantee lastContentId functionality.
   // This makes the loop sequentially dependent which means optimizations such

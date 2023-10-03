@@ -1,7 +1,7 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 
 import { CreatorType, unsubscribe } from "../../../creators";
-import * as youtube from "../youtube";
+import * as youtube from "../youtube.manager";
 
 export default (interaction: ChatInputCommandInteraction) =>
   unsubscribe(interaction, CreatorType.YouTube, async (creatorDomainId) => {

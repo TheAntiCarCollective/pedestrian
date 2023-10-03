@@ -1,7 +1,7 @@
 import type { CommandInteraction } from "discord.js";
 
 import { SlashCommandBuilder } from "discord.js";
-import assert, { fail as error } from "node:assert";
+import assert from "node:assert";
 
 import { registerCommand } from "../../services/discord";
 import onAutocomplete from "./autocomplete";
@@ -76,9 +76,10 @@ const onCommand = (interaction: CommandInteraction) => {
     case Subcommand.Search: {
       return onSearch(interaction);
     }
+    default: {
+      assert.fail();
+    }
   }
-
-  error();
 };
 
 registerCommand(json, onCommand, onAutocomplete);

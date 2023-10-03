@@ -1,6 +1,6 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 
-import { fail as error } from "node:assert";
+import assert from "node:assert";
 
 import onCreatorRole from "./creator-role";
 
@@ -15,7 +15,8 @@ export default (interaction: ChatInputCommandInteraction) => {
     case Subcommand.CreatorRole: {
       return onCreatorRole(interaction);
     }
+    default: {
+      assert.fail();
+    }
   }
-
-  error();
 };

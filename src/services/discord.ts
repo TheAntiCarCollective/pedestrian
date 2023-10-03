@@ -11,7 +11,7 @@ import type {
 } from "discord.js";
 
 import { Client, Events, Routes, User } from "discord.js";
-import assert, { fail as error } from "node:assert";
+import assert from "node:assert";
 import loggerFactory from "pino";
 import { Histogram, exponentialBuckets } from "prom-client";
 
@@ -161,7 +161,7 @@ const getHandler = (interaction: BaseInteraction, uiid?: string) => {
     const { name: option } = options.getFocused(true);
     return `${commandName}#${option}`;
   } else if (uiid === undefined) {
-    error();
+    assert.fail();
   } else {
     return uiid;
   }
@@ -265,7 +265,7 @@ const onModalSubmit = (
 discord.on(Events.InteractionCreate, async (interaction) => {
   const startRequestTime = performance.now();
 
-  let status: string | undefined;
+  let status;
   if (interaction.isCommand()) {
     status = await onCommand(interaction, startRequestTime);
   } else if (interaction.isAutocomplete()) {

@@ -1,11 +1,11 @@
-import { fail as error } from "node:assert";
+import assert from "node:assert";
 
 const { env: environmentVariables } = process;
 const environmentVariable = (key: string, defaultValue?: string) => {
   const value = environmentVariables[key];
   if (value !== undefined) return value;
   if (defaultValue !== undefined) return defaultValue;
-  error();
+  assert.fail();
 };
 
 export default {

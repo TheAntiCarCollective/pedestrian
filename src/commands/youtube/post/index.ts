@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { CreatorType, registerPoster } from "../../../creators";
 import { isNonNullable } from "../../../helpers";
 import { getThumbnailUrl, getVideoUrl } from "../../../services/youtube";
-import * as youtube from "../youtube";
+import * as youtube from "../youtube.manager";
 import UI from "./ui";
 
 registerPoster(

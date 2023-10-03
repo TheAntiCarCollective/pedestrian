@@ -2,7 +2,7 @@ import assert from "node:assert";
 
 import { isNonNullable } from "../../../../helpers";
 import { registerComponent } from "../../../../services/discord";
-import * as youtube from "../../youtube";
+import * as youtube from "../../youtube.manager";
 import * as database from "../database";
 import UI, { UIID } from "../ui";
 

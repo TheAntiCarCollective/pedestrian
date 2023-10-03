@@ -1,4 +1,4 @@
-import assert, { fail as error } from "node:assert";
+import assert from "node:assert";
 
 import { registerComponent } from "../../../../services/discord";
 import {
@@ -42,7 +42,7 @@ registerComponent(UIID.QuestionTypeSelect, async (interaction, sessionId) => {
       break;
     }
     default: {
-      error();
+      assert.fail();
     }
   }
 

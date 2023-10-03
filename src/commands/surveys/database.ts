@@ -2,7 +2,7 @@ import type { PoolClient } from "pg";
 
 import assert from "node:assert";
 
-import type { Choice, Question, Survey } from "./types";
+import type { Choice, Survey } from "./types";
 
 import { caller } from "../../helpers";
 import { useTransaction } from "../../services/postgresql";
@@ -120,7 +120,7 @@ const getQuestions = async (client: PoolClient, surveyId: string) => {
   const { rows } = await client.query<PartialQuestion>(query, values);
   const groupedChoices = await getGroupedChoices(client, surveyId);
 
-  const questions: Question[] = [];
+  const questions = [];
   for (const row of rows) {
     const {
       ask,

@@ -7,7 +7,7 @@ import {
   checkSubscribeRequirements,
   subscribe,
 } from "../../creators";
-import * as rss from "./rss";
+import * as rss from "./rss.manager";
 
 export enum Option {
   Channel = "channel",

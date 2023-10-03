@@ -12,7 +12,7 @@ import {
   bold,
   italic,
 } from "discord.js";
-import { fail as error } from "node:assert";
+import assert from "node:assert";
 
 import type { Survey } from "../../../types";
 import type { Context } from "../context";
@@ -214,7 +214,7 @@ const resultsEmbed = (context: Context) => {
         color = Color.Informational;
         description = answer;
       } else {
-        error();
+        assert.fail();
       }
 
       return new EmbedBuilder()

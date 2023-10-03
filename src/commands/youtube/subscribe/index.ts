@@ -1,7 +1,7 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 
 import { CreatorType, checkSubscribeRequirements } from "../../../creators";
-import * as youtube from "../youtube";
+import * as youtube from "../youtube.manager";
 import session from "./context";
 import UI from "./ui";
 

@@ -1,6 +1,6 @@
-import { stringify } from "csv-stringify";
+import csv from "csv";
 import { AttachmentBuilder } from "discord.js";
-import { fail as error } from "node:assert";
+import assert from "node:assert";
 
 import { registerComponent } from "../../../../../services/discord";
 import { QuestionType } from "../../../constants";
@@ -32,14 +32,14 @@ registerComponent(UIID.AnswersCsvButton, async (interaction, sessionId) => {
           } else if (isSelected(answer)) {
             row[index] = answer.includes(index) ? "✅" : "❌";
           } else {
-            error();
+            assert.fail();
           }
         }
 
         return row;
       });
 
-      stream = stringify(rows, {
+      stream = csv.stringify(rows, {
         columns,
         header: true,
       });
@@ -48,7 +48,7 @@ registerComponent(UIID.AnswersCsvButton, async (interaction, sessionId) => {
     }
     case QuestionType.OpenAnswer: {
       const rows = answers.map((answer) => [answer]);
-      stream = stringify(rows);
+      stream = csv.stringify(rows);
       break;
     }
   }

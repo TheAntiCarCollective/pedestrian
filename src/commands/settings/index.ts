@@ -1,7 +1,7 @@
 import type { CommandInteraction } from "discord.js";
 
 import { Events, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
-import assert, { fail as error } from "node:assert";
+import assert from "node:assert";
 
 import { SupportedChannelTypes } from "../../creators";
 import Environment from "../../environment";
@@ -73,9 +73,10 @@ const onCommand = (interaction: CommandInteraction) => {
     case SubcommandGroup.Surveys: {
       return onSurveys(interaction);
     }
+    default: {
+      assert.fail();
+    }
   }
-
-  error();
 };
 
 registerCommand(json, onCommand);

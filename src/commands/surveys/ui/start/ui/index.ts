@@ -14,7 +14,7 @@ import {
   bold,
   italic,
 } from "discord.js";
-import assert, { fail as error } from "node:assert";
+import assert from "node:assert";
 
 import type { MultipleChoiceQuestion, SelectedAnswers } from "../../../types";
 import type { Context } from "../context";
@@ -220,7 +220,7 @@ const answerEmbed = (context: Context) => {
     color = Color.Success;
     description = formatSelectAnswers(question, answer);
   } else {
-    error();
+    assert.fail();
   }
 
   return new EmbedBuilder()

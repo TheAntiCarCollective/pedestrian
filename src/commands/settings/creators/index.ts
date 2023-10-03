@@ -1,6 +1,6 @@
 import type { ChatInputCommandInteraction } from "discord.js";
 
-import { fail as error } from "node:assert";
+import assert from "node:assert";
 
 import onChannelMentionRole from "./channel-mention-role";
 import onDefaultMentionRole from "./default-mention-role";
@@ -19,7 +19,8 @@ export default (interaction: ChatInputCommandInteraction) => {
     case Subcommand.ChannelMentionRole: {
       return onChannelMentionRole(interaction);
     }
+    default: {
+      assert.fail();
+    }
   }
-
-  error();
 };
