@@ -1,3 +1,5 @@
+import type { BaseMessageOptions } from "discord.js";
+
 import type { CreatorType } from "../constants";
 
 import { caller } from "../../helpers";
@@ -23,6 +25,19 @@ export type CreatorPost = {
   creatorDomainId: string;
   creatorType: CreatorType;
   id: string;
+};
+
+export type Option = {
+  avatarURL?: string;
+  components?: BaseMessageOptions["components"];
+  contentId: string;
+  title: string;
+  url: string;
+  username: string;
+};
+
+type ContentIdRow = {
+  contentId: string;
 };
 // endregion
 
@@ -93,4 +108,27 @@ export const createCreatorPosts = (creatorPosts: CreatorPost[]) =>
     const creatorPostsJson = JSON.stringify(creatorPosts);
     const values = [creatorPostsJson];
     return client.query(query, values);
+  });
+
+export const getInvalidContentIds = (
+  { creatorChannelId, creatorDomainId, creatorType }: CreatorSubscription,
+  contentIds: string[],
+) =>
+  useClient(caller(module, getInvalidContentIds), async (client) => {
+    const query = `
+      select cp.content_id
+      from creator_post as cp
+      inner join creator_subscription as cs
+        on cs.id = cp.creator_subscription_id
+      inner join creator as c
+        on c.id = cs.creator_id
+      where cs.creator_channel_id = $1
+        and c.domain_id = $2
+        and c.type = $3
+        and cp.content_id = any($4)
+    `;
+
+    const values = [creatorChannelId, creatorDomainId, creatorType, contentIds];
+    const { rows } = await client.query<ContentIdRow>(query, values);
+    return rows.map(({ contentId }) => contentId);
   });

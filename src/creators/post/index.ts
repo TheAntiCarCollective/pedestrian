@@ -1,4 +1,4 @@
-import type { APIMessage, BaseMessageOptions } from "discord.js";
+import type { APIMessage } from "discord.js";
 
 import { CronJob } from "cron";
 import {
@@ -12,7 +12,7 @@ import assert from "node:assert";
 import loggerFactory from "pino";
 
 import type { CreatorType } from "../constants";
-import type { CreatorSubscription } from "./database";
+import type { CreatorSubscription, Option } from "./database";
 
 import { isUnique } from "../../helpers";
 import discord from "../../services/discord";
@@ -20,15 +20,6 @@ import * as creatorsDatabase from "../database";
 import * as postDatabase from "./database";
 
 // region Types
-type Option = {
-  avatarURL?: string;
-  components?: BaseMessageOptions["components"];
-  contentId: string;
-  title: string;
-  url: string;
-  username: string;
-};
-
 type Poster = (creatorSubscription: CreatorSubscription) => Promise<Option[]>;
 // endregion
 
@@ -58,7 +49,15 @@ const getOptions = async (creatorSubscription: CreatorSubscription) => {
   assert(poster !== undefined);
 
   try {
-    return await poster(creatorSubscription);
+    const options = await poster(creatorSubscription);
+    const contentIds = options.map(({ contentId }) => contentId);
+    const invalidContentIds =
+      // prettier-ignore
+      await postDatabase.getInvalidContentIds(creatorSubscription, contentIds);
+
+    return options.filter(
+      ({ contentId }) => !invalidContentIds.includes(contentId),
+    );
   } catch (error) {
     const childLogger = logger.child({ creatorSubscription });
     childLogger.error(error, "GET_OPTIONS_ERROR");
