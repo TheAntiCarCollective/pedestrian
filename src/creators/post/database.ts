@@ -116,7 +116,7 @@ export const getInvalidContentIds = (
 ) =>
   useClient(caller(module, getInvalidContentIds), async (client) => {
     const query = `
-      select cp.content_id
+      select cp.content_id as "contentId"
       from creator_post as cp
       inner join creator_subscription as cs
         on cs.id = cp.creator_subscription_id
