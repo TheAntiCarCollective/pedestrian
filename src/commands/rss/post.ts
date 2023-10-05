@@ -1,6 +1,9 @@
+import type { Item } from "rss-parser";
+
 import assert from "node:assert";
 
 import { CreatorType, registerPoster } from "../../creators";
+import { byDate } from "../../helpers";
 import * as rss from "./rss.manager";
 
 registerPoster(
@@ -13,10 +16,14 @@ registerPoster(
     // All other properties are optional and cannot be asserted
     // https://www.rssboard.org/rss-specification
     assert(feedName !== undefined);
+
     const { url: avatarURL } = image ?? {};
+    const orderedItems = items.sort(
+      byDate(({ pubDate }: Item) => pubDate, "desc"),
+    );
 
     const options = [];
-    for (const [index, { link, pubDate, title }] of items.entries()) {
+    for (const [index, { link, pubDate, title }] of orderedItems.entries()) {
       if (title === undefined) break;
       // Do not post items created before the last posted item
       if (link === undefined || link === lastContentId) break;

@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { CreatorType, registerPoster } from "../../../creators";
-import { isNonNullable } from "../../../helpers";
+import { byDate, isNonNullable } from "../../../helpers";
 import { getThumbnailUrl, getVideoUrl } from "../../../services/youtube";
 import * as youtube from "../youtube.manager";
 import UI from "./ui";
@@ -20,9 +20,12 @@ registerPoster(
     assert(isNonNullable(channelName));
 
     const videos = await youtube.getVideos(uploads);
-    const options = [];
+    const orderedVideos = videos.sort(
+      byDate(({ publishedAt }) => publishedAt, "desc"),
+    );
 
-    for (const video of videos) {
+    const options = [];
+    for (const video of orderedVideos) {
       const { publishedAt, resourceId, title } = video;
       assert(isNonNullable(title));
 
