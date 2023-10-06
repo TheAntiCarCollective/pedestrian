@@ -1,5 +1,3 @@
-import type { BaseMessageOptions } from "discord.js";
-
 import type { CreatorType } from "../constants";
 
 import { caller } from "../../helpers";
@@ -27,16 +25,7 @@ export type CreatorPost = {
   id: string;
 };
 
-export type Option = {
-  avatarURL?: string;
-  components?: BaseMessageOptions["components"];
-  contentId: string;
-  title: string;
-  url: string;
-  username: string;
-};
-
-type ContentIdRow = {
+type ContentId = {
   contentId: string;
 };
 // endregion
@@ -110,11 +99,11 @@ export const createCreatorPosts = (creatorPosts: CreatorPost[]) =>
     return client.query(query, values);
   });
 
-export const getInvalidContentIds = (
+export const getPostedContentIds = (
   { creatorChannelId, creatorDomainId, creatorType }: CreatorSubscription,
   contentIds: string[],
 ) =>
-  useClient(caller(module, getInvalidContentIds), async (client) => {
+  useClient(caller(module, getPostedContentIds), async (client) => {
     const query = `
       select cp.content_id as "contentId"
       from creator_post as cp
@@ -129,6 +118,6 @@ export const getInvalidContentIds = (
     `;
 
     const values = [creatorChannelId, creatorDomainId, creatorType, contentIds];
-    const { rows } = await client.query<ContentIdRow>(query, values);
+    const { rows } = await client.query<ContentId>(query, values);
     return rows.map(({ contentId }) => contentId);
   });

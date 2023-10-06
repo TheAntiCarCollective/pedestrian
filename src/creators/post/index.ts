@@ -1,4 +1,4 @@
-import type { APIMessage } from "discord.js";
+import type { APIMessage, BaseMessageOptions } from "discord.js";
 
 import { CronJob } from "cron";
 import {
@@ -11,16 +11,27 @@ import {
 import assert from "node:assert";
 import loggerFactory from "pino";
 
+import type { Nullable } from "../../helpers";
 import type { CreatorType } from "../constants";
-import type { CreatorSubscription, Option } from "./database";
+import type { CreatorSubscription } from "./database";
 
-import { isUnique } from "../../helpers";
+import { byDate, isNullable, isUnique } from "../../helpers";
 import discord from "../../services/discord";
 import * as creatorsDatabase from "../database";
 import * as postDatabase from "./database";
 
 // region Types
-type Poster = (creatorSubscription: CreatorSubscription) => Promise<Option[]>;
+export type Option = {
+  avatarURL?: string;
+  components?: BaseMessageOptions["components"];
+  contentId: string;
+  timestamp: Date | Nullable | number | string;
+  title: string;
+  url: string;
+  username: string;
+};
+
+type Poster = (creatorDomainId: string) => Promise<Option[]>;
 // endregion
 
 const logger = loggerFactory({
@@ -45,18 +56,52 @@ const getChannel = async ({
 };
 
 const getOptions = async (creatorSubscription: CreatorSubscription) => {
-  const poster = posters.get(creatorSubscription.creatorType);
+  const { createdAt, creatorDomainId, creatorType, lastContentId } =
+    creatorSubscription;
+
+  const poster = posters.get(creatorType);
   assert(poster !== undefined);
 
   try {
-    const options = await poster(creatorSubscription);
-    const contentIds = options.map(({ contentId }) => contentId);
-    const invalidContentIds =
-      // prettier-ignore
-      await postDatabase.getInvalidContentIds(creatorSubscription, contentIds);
+    const options = await poster(creatorDomainId);
+    // Iterate options from latest to oldest
+    const orderedOptions = options.sort(
+      byDate(({ timestamp }) => timestamp, "desc"),
+    );
 
-    return options.filter(
-      ({ contentId }) => !invalidContentIds.includes(contentId),
+    const optionsToPost = [];
+    for (const [index, option] of orderedOptions.entries()) {
+      const { contentId, timestamp } = option;
+
+      // Do not post options created before the last posted option
+      if (contentId === lastContentId) break;
+
+      if (isNullable(timestamp)) {
+        // Only post latest option if none has been previously posted
+        if (lastContentId === null && index > 0) break;
+      } else {
+        // Do not post options created before the subscription
+        const timestampDate = new Date(timestamp);
+        if (timestampDate < createdAt) break;
+      }
+
+      optionsToPost.push(option);
+    }
+
+    // If no options will be posted skip checking for posted content
+    if (optionsToPost.length === 0) return optionsToPost;
+
+    const contentIds = optionsToPost.map(({ contentId }) => contentId);
+    const postedContentIds =
+      // prettier-ignore
+      await postDatabase.getPostedContentIds(creatorSubscription, contentIds);
+
+    return (
+      optionsToPost
+        // Do not post options previously posted (handles some edge cases)
+        .filter(({ contentId }) => !postedContentIds.includes(contentId))
+        // Post options from oldest to latest
+        .reverse()
     );
   } catch (error) {
     const childLogger = logger.child({ creatorSubscription });
