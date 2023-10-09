@@ -1,5 +1,21 @@
+version: "3.8"
 services:
+  postgres:
+    container_name: postgres
+    image: postgres:16.0
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=db
+    ports:
+      - 5432:5432
+  redis:
+    container_name: redis
+    image: redis:7.2.1
+    ports:
+      - 6379:6379
   flyway:
+    container_name: flyway
     build: flyway
     command:
       - "-url=jdbc:postgresql://postgres:5432/db"
@@ -9,15 +25,11 @@ services:
       - "migrate"
     depends_on:
       - postgres
-  postgres:
-    image: postgres:15.4
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=db
-    ports:
-      - 5432:5432
-  redis:
-    image: redis:7.2.0
-    ports:
-      - 6379:6379
+  pedestrian:
+    container_name: pedestrian
+    build: .
+    env_file: .env
+    depends_on:
+      - postgres
+      - redis
+      - flyway

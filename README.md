@@ -6,7 +6,7 @@ A custom bot designed for [The Anti-Car Collective](https://discord.gg/anticar) 
 
 [Node.js](https://nodejs.org) and [docker-compose](https://docs.docker.com/compose) is required for development.
 
-Starting (`npm run start`) requires the project to be installed (`npm install`), built (`npm run build`), have services running (`npm run services`), and required [environment variables](#environment-variables) configured.
+Required [environment variables](#environment-variables) must be configured in a `.env` file at the project's root to start (`npm run start`).
 
 It is recommended to dump (`npm run dump`) the database before migrating (`npm run migrate`) in case restoring (`npm run restore`) is required.
 
@@ -23,13 +23,13 @@ Code must pass minimum quality standards checks (`npm run check`) to be merged:
 | BOT_GUILD_ID         | ❌       |               | Guild ID to enable `/bot`                                                                              |
 | DISCORD_TOKEN        | ✅       |               | [Create Discord Token](https://discord.com/developers/docs/getting-started#configuring-your-bot)       |
 | EXPRESS_PORT         | ❌       | 8080          |                                                                                                        |
-| POSTGRESQL_HOST      | ❌       | localhost     |                                                                                                        |
+| POSTGRESQL_HOST      | ❌       | postgres      |                                                                                                        |
 | POSTGRESQL_PORT      | ❌       | 5432          |                                                                                                        |
 | POSTGRESQL_DATABASE  | ❌       | db            |                                                                                                        |
 | POSTGRESQL_USER      | ❌       | user          |                                                                                                        |
 | POSTGRESQL_PASSWORD  | ❌       | password      |                                                                                                        |
 | PROJECT_NAME         | ❌       | Pedestrian    |                                                                                                        |
-| REDIS_HOST           | ❌       | localhost     |                                                                                                        |
+| REDIS_HOST           | ❌       | redis         |                                                                                                        |
 | REDIS_PORT           | ❌       | 6379          |                                                                                                        |
 | REDIS_CLUSTER        | ❌       |               | IIF value is "true" then Redis will run in [cluster mode](https://redis.io/docs/management/scaling/)   |
 | REDIS_USERNAME       | ❌       |               |                                                                                                        |
