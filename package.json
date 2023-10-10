@@ -17,6 +17,8 @@
     "pino-http": "8.5.0",
     "prom-client": "15.0.0",
     "puppeteer": "21.3.8",
+    "puppeteer-extra": "3.3.6",
+    "puppeteer-extra-plugin-stealth": "2.11.2",
     "rss-parser": "3.13.0",
     "vega": "5.25.0"
   },

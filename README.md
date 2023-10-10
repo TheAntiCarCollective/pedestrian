@@ -22,6 +22,7 @@ Code must pass minimum quality standards checks (`npm run check`) to be merged:
 | -------------------- | -------- | ------------- | ------------------------------------------------------------------------------------------------------ |
 | BOT_GUILD_ID         | ❌       |               | Guild ID to enable `/bot`                                                                              |
 | DISCORD_TOKEN        | ✅       |               | [Create Discord Token](https://discord.com/developers/docs/getting-started#configuring-your-bot)       |
+| ENABLE_CARSIZED      | ❌       | false         | IIF value is "true" then `/carsized` is enabled                                                        |
 | EXPRESS_PORT         | ❌       | 8080          |                                                                                                        |
 | POSTGRESQL_HOST      | ❌       | postgres      |                                                                                                        |
 | POSTGRESQL_PORT      | ❌       | 5432          |                                                                                                        |
@@ -31,7 +32,7 @@ Code must pass minimum quality standards checks (`npm run check`) to be merged:
 | PROJECT_NAME         | ❌       | Pedestrian    |                                                                                                        |
 | REDIS_HOST           | ❌       | redis         |                                                                                                        |
 | REDIS_PORT           | ❌       | 6379          |                                                                                                        |
-| REDIS_CLUSTER        | ❌       |               | IIF value is "true" then Redis will run in [cluster mode](https://redis.io/docs/management/scaling/)   |
+| REDIS_CLUSTER        | ❌       | false         | IIF value is "true" then Redis will run in [cluster mode](https://redis.io/docs/management/scaling/)   |
 | REDIS_USERNAME       | ❌       |               |                                                                                                        |
 | REDIS_PASSWORD       | ❌       |               |                                                                                                        |
 | YOUTUBE_API_KEY      | ✅       |               | [Create YouTube API Key](https://console.cloud.google.com/apis/api/youtube.googleapis.com/credentials) |

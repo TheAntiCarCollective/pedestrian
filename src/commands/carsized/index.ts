@@ -3,6 +3,7 @@ import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
 import assert from "node:assert";
 
+import Environment from "../../environment";
 import { registerCommand, toChoices } from "../../services/discord";
 import onAutocomplete from "./autocomplete";
 import * as carsized from "./carsized.manager";
@@ -80,4 +81,5 @@ const onCommand = async (interaction: CommandInteraction) => {
   return withContext.compareCarsUi(context, interaction);
 };
 
-registerCommand(json, onCommand, onAutocomplete);
+if (Environment.EnableCarsized === "true")
+  registerCommand(json, onCommand, onAutocomplete);

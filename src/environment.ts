@@ -11,6 +11,7 @@ const environmentVariable = (key: string, defaultValue?: string) => {
 export default {
   BotGuildId: environmentVariables.BOT_GUILD_ID,
   DiscordToken: environmentVariable("DISCORD_TOKEN"),
+  EnableCarsized: environmentVariable("ENABLE_CARSIZED", "false"),
   ExpressPort: environmentVariable("EXPRESS_PORT", "8080"),
   PostgresqlDatabase: environmentVariable("POSTGRESQL_DATABASE", "db"),
   PostgresqlHost: environmentVariable("POSTGRESQL_HOST", "postgres"),
@@ -18,7 +19,7 @@ export default {
   PostgresqlPort: environmentVariable("POSTGRESQL_PORT", "5432"),
   PostgresqlUser: environmentVariable("POSTGRESQL_USER", "user"),
   ProjectName: environmentVariable("PROJECT_NAME", "Pedestrian"),
-  RedisCluster: environmentVariables.REDIS_CLUSTER,
+  RedisCluster: environmentVariable("REDIS_CLUSTER", "false"),
   RedisHost: environmentVariable("REDIS_HOST", "redis"),
   RedisPassword: environmentVariables.REDIS_PASSWORD,
   RedisPort: environmentVariable("REDIS_PORT", "6379"),

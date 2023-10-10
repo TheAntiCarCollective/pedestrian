@@ -3,11 +3,12 @@ import type { Index } from "lunr";
 import lunr from "lunr";
 import assert from "node:assert";
 import loggerFactory from "pino";
-import puppeteer from "puppeteer";
 
 import type { Car, CompareCars } from "./types";
 
+import Environment from "../../environment";
 import { isNonNullable } from "../../helpers";
+import { usePage } from "../../services/puppeteer";
 import { Prospective } from "./constants";
 
 const logger = loggerFactory({
@@ -37,30 +38,27 @@ export const compareCars = async ({
   prospective,
   secondCar,
   units,
-}: CompareCars) => {
-  const browser = await puppeteer.launch({ headless: "new" });
-  const page = await browser.newPage();
-  await page.setJavaScriptEnabled(false);
-  const compareSegment = `${firstCar.id}-vs-${secondCar.id}`;
-  const prospectiveSegment =
-    prospective === Prospective.Side ? "" : prospective;
-  // prettier-ignore
-  await page.goto(`${CarsizedBaseUrl}/cars/compare/${compareSegment}/${prospectiveSegment}?units=${units}`);
+}: CompareCars) =>
+  usePage(async (page) => {
+    await page.setJavaScriptEnabled(false);
+    const compareSegment = `${firstCar.id}-vs-${secondCar.id}`;
+    const prospectiveSegment =
+      prospective === Prospective.Side ? "" : prospective;
+    // prettier-ignore
+    await page.goto(`${CarsizedBaseUrl}/cars/compare/${compareSegment}/${prospectiveSegment}?units=${units}`);
 
-  const contentHandle = await page.$("div.flowcontent");
-  assert(contentHandle !== null);
+    const contentHandle = await page.$("div.flowcontent");
+    assert(contentHandle !== null);
 
-  await page.setViewport({ height: 720, width: 1280 });
-  const screenshot = await contentHandle.screenshot();
-  assert(typeof screenshot === "object");
-  return screenshot;
-};
+    await page.setViewport({ height: 720, width: 1280 });
+    const screenshot = await contentHandle.screenshot();
+    assert(typeof screenshot === "object");
+    return screenshot;
+  });
 
 // region initializeCars
-const initializeCars = async () => {
-  try {
-    const browser = await puppeteer.launch({ headless: "new" });
-    const page = await browser.newPage();
+const initializeCars = () =>
+  usePage(async (page) => {
     await page.setJavaScriptEnabled(false);
     await page.goto(`${CarsizedBaseUrl}/cars/`);
 
@@ -107,12 +105,17 @@ const initializeCars = async () => {
       cars.set(id, { body, id, make, model, production });
     });
 
-    await Promise.all(promises);
-    await browser.close();
+    return Promise.all(promises);
+  });
 
-    logger.debug(cars, "INITIALIZE_CARS_SUCCESS");
-  } catch (error) {
-    logger.error(error, "INITIALIZE_CARS_ERROR");
+const initializeCarsIndex = async () => {
+  if (Environment.EnableCarsized === "true") {
+    try {
+      await initializeCars();
+      logger.debug(cars, "INITIALIZE_CARS_SUCCESS");
+    } catch (error) {
+      logger.error(error, "INITIALIZE_CARS_ERROR");
+    }
   }
 
   carsIndex = lunr((builder) => {
@@ -129,5 +132,5 @@ const initializeCars = async () => {
   logger.info(`Indexed ${cars.size} cars from ${CarsizedBaseUrl}`);
 };
 
-void initializeCars();
+void initializeCarsIndex();
 // endregion
