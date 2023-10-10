@@ -77,6 +77,9 @@ export const isUserOwner = (userId: string) => {
   // TODO Check role type
   return member !== undefined;
 };
+
+export const toChoices = (o: Record<string, string>) =>
+  Object.entries(o).map(([name, value]) => ({ name, value }));
 // endregion
 
 // region Interactions
