@@ -58,54 +58,55 @@ export const compareCars = async ({
 
 // region initializeCars
 const initializeCars = () =>
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   usePage(async (page) => {
     await page.setJavaScriptEnabled(false);
     await page.goto(`${CarsizedBaseUrl}/cars/`);
 
-    const containerHandles = await page.$$("div.indexcontainer");
-    const promises = containerHandles.map(async (containerHandle) => {
-      const aHandle = await containerHandle.$("a");
-      assert(aHandle !== null);
+    const carsArray = await page.evaluate(() => {
+      const carsArray = [];
 
-      const idPromise = aHandle
-        .evaluate((a) => a.getAttribute("href"))
-        .then((href) => {
-          assert(href !== null);
-          // Given https://www.carsized.com/en/cars/abarth-500-2008-3-door-hatchback/
-          // id should equal "abarth-500-2008-3-door-hatchback"
-          const id = href
-            .split("/")
-            .filter((segment) => segment !== "")
-            .at(-1);
+      const containers = document.querySelectorAll("div.indexcontainer");
+      for (let index = 0; index < containers.length; index++) {
+        const container = containers.item(index);
+        const a = container.querySelector("a");
 
-          assert(id !== undefined);
-          return id;
+        const href = a?.getAttribute("href");
+        const segments = href?.split("/");
+        const validSegments = segments?.filter((segment) => segment !== "");
+        const id = validSegments?.at(-1);
+        // Given https://www.carsized.com/en/cars/abarth-500-2008-3-door-hatchback/
+        // id should equal "abarth-500-2008-3-door-hatchback"
+        if (id === undefined) continue;
+
+        // eslint-disable-next-line unicorn/consistent-function-scoping
+        const getValue = (name: string) => {
+          const span = a?.querySelector(`span.index${name}`);
+          return span?.textContent;
+        };
+
+        const body = getValue("body");
+        if (typeof body !== "string") continue;
+        const make = getValue("make");
+        if (typeof make !== "string") continue;
+        const model = getValue("model");
+        if (typeof model !== "string") continue;
+        const production = getValue("production");
+        if (typeof production !== "string") continue;
+
+        carsArray.push({
+          body,
+          id,
+          make,
+          model,
+          production,
         });
+      }
 
-      const getValue = async (name: string) => {
-        const spanHandle = await aHandle.$(`span.index${name}`);
-        assert(spanHandle !== null);
-
-        const value = await spanHandle.evaluate(
-          ({ textContent }) => textContent,
-        );
-
-        assert(value !== null);
-        return value;
-      };
-
-      const [body, id, make, model, production] = await Promise.all([
-        getValue("body"),
-        idPromise,
-        getValue("make"),
-        getValue("model"),
-        getValue("production"),
-      ]);
-
-      cars.set(id, { body, id, make, model, production });
+      return carsArray;
     });
 
-    return Promise.all(promises);
+    for (const car of carsArray) cars.set(car.id, car);
   });
 
 const initializeCarsIndex = async () => {
