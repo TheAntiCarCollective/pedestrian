@@ -4,8 +4,8 @@ import { Events, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import assert from "node:assert";
 
 import { SupportedChannelTypes } from "../../creators";
-import Environment from "../../environment";
-import discord, { registerCommand } from "../../services/discord";
+import discord, { registerCommand } from "../../shared/discord";
+import Environment from "../../shared/environment";
 import onCreators, { Subcommand as CreatorsSubcommand } from "./creators";
 import { Option as ChannelMentionRoleOption } from "./creators/channel-mention-role";
 import * as database from "./database";

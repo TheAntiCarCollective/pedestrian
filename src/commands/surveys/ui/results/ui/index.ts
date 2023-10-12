@@ -17,7 +17,7 @@ import assert from "node:assert";
 import type { Survey } from "../../../types";
 import type { Context } from "../context";
 
-import { Color } from "../../../../../services/discord";
+import { Color } from "../../../../../shared/discord";
 import { QuestionType } from "../../../constants";
 import { isOpen, isOpenAnswer, isSkipped } from "../../../functions";
 import UI from "../../../ui";

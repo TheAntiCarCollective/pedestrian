@@ -4,7 +4,7 @@ import { PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import assert from "node:assert";
 
 import { SupportedChannelTypes } from "../../creators";
-import { registerCommand } from "../../services/discord";
+import { registerCommand } from "../../shared/discord";
 import onSubscribe, { Option as SubscribeOption } from "./subscribe";
 import onUnsubscribe from "./unsubscribe";
 

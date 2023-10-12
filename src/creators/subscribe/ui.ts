@@ -3,7 +3,7 @@ import { EmbedBuilder, bold, channelMention } from "discord.js";
 
 import type { CreatorType } from "../constants";
 
-import { Color } from "../../services/discord";
+import { Color } from "../../shared/discord";
 
 // region Max Creator Subscriptions
 const maxCreatorSubscriptionsEmbeds = (

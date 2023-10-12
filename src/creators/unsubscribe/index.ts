@@ -4,7 +4,7 @@ import assert from "node:assert";
 
 import type { CreatorType } from "../constants";
 
-import { isUnique } from "../../helpers";
+import { isUnique } from "../../shared/array";
 import session from "./context";
 import * as database from "./database";
 import UI from "./ui";

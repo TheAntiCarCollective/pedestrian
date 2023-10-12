@@ -3,9 +3,9 @@ import path from "node:path";
 import loggerFactory from "pino";
 import { collectDefaultMetrics } from "prom-client";
 
-import Environment from "./environment";
-import discord from "./services/discord";
-import express from "./services/express";
+import discord from "./shared/discord";
+import Environment from "./shared/environment";
+import express from "./shared/express";
 
 // region Logger and Metrics
 const logger = loggerFactory({

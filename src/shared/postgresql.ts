@@ -4,9 +4,9 @@ import { Pool } from "pg";
 import loggerFactory from "pino";
 import { Histogram, exponentialBuckets } from "prom-client";
 
-import type { Caller } from "../helpers";
+import type { Caller } from "./caller";
 
-import Environment from "../environment";
+import Environment from "./environment";
 
 // region Types
 type Callback<T> = (client: PoolClient) => Promise<T>;

@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
-import { isNonNullable } from "../../../../helpers";
-import { registerComponent } from "../../../../services/discord";
+import { registerComponent } from "../../../../shared/discord";
+import { isNonNullable } from "../../../../shared/nullable";
 import * as youtube from "../../youtube.manager";
 import * as database from "../database";
 import UI, { UIID } from "../ui";

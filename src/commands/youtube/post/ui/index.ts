@@ -7,13 +7,9 @@ import {
 } from "discord.js";
 import assert from "node:assert";
 
-import { isNonNullable, isNullable } from "../../../../helpers";
-import { Color } from "../../../../services/discord";
-import {
-  getChannelUrl,
-  getThumbnailUrl,
-  getVideoUrl,
-} from "../../../../services/youtube";
+import { Color } from "../../../../shared/discord";
+import { isNonNullable, isNullable } from "../../../../shared/nullable";
+import * as youtube from "../../youtube.manager";
 
 import Channel = youtube_v3.Schema$Channel;
 import Video = youtube_v3.Schema$Video;
@@ -84,9 +80,9 @@ const descriptionEmbeds = (
   assert(isNonNullable(channelId));
   const { thumbnails, title: channelName } = channelSnippet ?? {};
 
-  const channelUrl = getChannelUrl(channelId);
-  const channelThumbnailUrl = getThumbnailUrl(thumbnails);
-  const videoUrl = getVideoUrl(videoId);
+  const channelUrl = youtube.getChannelUrl(channelId);
+  const channelThumbnailUrl = youtube.getThumbnailUrl(thumbnails);
+  const videoUrl = youtube.getVideoUrl(videoId);
 
   let { title } = videoSnippet ?? {};
   title ??= null;

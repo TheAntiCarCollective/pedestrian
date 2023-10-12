@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { registerComponent } from "../../../../services/discord";
+import { registerComponent } from "../../../../shared/discord";
 import * as surveysDatabase from "../../database";
 import { UIID } from "../../ui";
 import session, * as withContext from "./context";

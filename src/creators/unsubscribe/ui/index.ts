@@ -15,7 +15,7 @@ import assert from "node:assert";
 import type { CreatorType } from "../../constants";
 import type { Context } from "../context";
 
-import { Color } from "../../../services/discord";
+import { Color } from "../../../shared/discord";
 
 export enum UIID {
   CancelButton = "6abeeb82-31e1-4258-a2db-3471c0922e1a",

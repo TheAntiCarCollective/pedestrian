@@ -1,8 +1,8 @@
 import assert from "node:assert";
 
 import { CreatorType, subscribe } from "../../../../creators";
-import { isNonNullable } from "../../../../helpers";
-import { registerComponent } from "../../../../services/discord";
+import { registerComponent } from "../../../../shared/discord";
+import { isNonNullable } from "../../../../shared/nullable";
 import session, * as withContext from "../context";
 import { UIID } from "../ui";
 

@@ -4,8 +4,9 @@ import assert from "node:assert";
 
 import type { PartialSurvey, Question, Survey } from "../types";
 
-import { caller, isNonNullable } from "../../../helpers";
-import { useClient, useTransaction } from "../../../services/postgresql";
+import caller from "../../../shared/caller";
+import { isNonNullable } from "../../../shared/nullable";
+import { useClient, useTransaction } from "../../../shared/postgresql";
 import { isMultipleChoice } from "../functions";
 
 // region Types

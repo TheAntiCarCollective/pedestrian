@@ -11,8 +11,8 @@ import {
 
 import type { Context } from "../context";
 
-import Environment from "../../../environment";
-import { Color } from "../../../services/discord";
+import { Color } from "../../../shared/discord";
+import Environment from "../../../shared/environment";
 import * as carsized from "../carsized.manager";
 import { Prospective, Units } from "../constants";
 

@@ -19,7 +19,7 @@ import assert from "node:assert";
 import type { MultipleChoiceQuestion, SelectedAnswers } from "../../../types";
 import type { Context } from "../context";
 
-import { Color } from "../../../../../services/discord";
+import { Color } from "../../../../../shared/discord";
 import {
   isMultipleChoice,
   isOpen,

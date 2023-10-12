@@ -3,8 +3,8 @@ import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
 import assert from "node:assert";
 
-import Environment from "../../environment";
-import { registerCommand, toChoices } from "../../services/discord";
+import { registerCommand, toChoices } from "../../shared/discord";
+import Environment from "../../shared/environment";
 import onAutocomplete from "./autocomplete";
 import * as carsized from "./carsized.manager";
 import { Prospective, Units } from "./constants";

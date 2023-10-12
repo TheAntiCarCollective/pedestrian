@@ -18,7 +18,7 @@ import {
 import type { PartialSurvey } from "../../types";
 import type { Context } from "../context";
 
-import { Color } from "../../../../services/discord";
+import { Color } from "../../../../shared/discord";
 import { QuestionType, QuestionTypes } from "../../constants";
 import { isMultipleChoice, surveyLink } from "../../functions";
 import UI from "../../ui";

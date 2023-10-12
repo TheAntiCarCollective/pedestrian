@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
-import { caller } from "../../../helpers";
-import { useClient } from "../../../services/postgresql";
+import caller from "../../../shared/caller";
+import { useClient } from "../../../shared/postgresql";
 
 // region Types
 type ContentId = {

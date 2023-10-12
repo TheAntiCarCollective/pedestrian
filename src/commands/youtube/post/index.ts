@@ -1,8 +1,7 @@
 import assert from "node:assert";
 
 import { CreatorType, registerPoster } from "../../../creators";
-import { isNonNullable } from "../../../helpers";
-import { getThumbnailUrl, getVideoUrl } from "../../../services/youtube";
+import { isNonNullable } from "../../../shared/nullable";
 import * as youtube from "../youtube.manager";
 import UI from "./ui";
 
@@ -24,12 +23,12 @@ registerPoster(CreatorType.YouTube, async (creatorDomainId) => {
     assert(isNonNullable(videoId));
 
     options.push({
-      avatarURL: getThumbnailUrl(thumbnails),
+      avatarURL: youtube.getThumbnailUrl(thumbnails),
       components: UI.viewDescription(videoId),
       contentId: videoId,
       timestamp: publishedAt,
       title,
-      url: getVideoUrl(videoId),
+      url: youtube.getVideoUrl(videoId),
       username: channelName,
     });
   }

@@ -11,7 +11,7 @@ import assert from "node:assert";
 
 import type { PartialSurvey, Survey } from "../types";
 
-import { Color } from "../../../services/discord";
+import { Color } from "../../../shared/discord";
 import { surveyLink } from "../functions";
 
 export enum UIID {

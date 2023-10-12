@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
-import { caller } from "../helpers";
-import { useClient } from "../services/postgresql";
+import caller from "../shared/caller";
+import { useClient } from "../shared/postgresql";
 
 // region Types
 export type Context = {
@@ -19,19 +19,14 @@ export const createSession = <T extends Context>(
   sessionId: string,
   context: PartialContext<T>,
 ) =>
-  useClient(caller(module, createSession), async (client) => {
+  useClient(caller(module, createSession), (client) => {
     const query = `
       insert into session(id, context)
       values($1, $2)
     `;
 
     const values = [sessionId, context];
-    await client.query(query, values);
-
-    return {
-      ...context,
-      sessionId,
-    };
+    return client.query(query, values);
   });
 
 export const readSession = <T extends Context>(sessionId: string) =>
@@ -47,30 +42,21 @@ export const readSession = <T extends Context>(sessionId: string) =>
 
     const { context } = rows[0] ?? {};
     assert(context !== undefined);
-
-    return {
-      ...context,
-      sessionId,
-    };
+    return context;
   });
 
 export const updateSession = <T extends Context>(
   newSessionId: string,
   { sessionId: oldSessionId, ...context }: T,
 ) =>
-  useClient(caller(module, updateSession), async (client) => {
+  useClient(caller(module, updateSession), (client) => {
     const query = `
       insert into session(id, previous_id, context)
       values($1, $2, $3)
     `;
 
     const values = [newSessionId, oldSessionId, context];
-    await client.query(query, values);
-
-    return {
-      ...context,
-      sessionId: newSessionId,
-    };
+    return client.query(query, values);
   });
 
 export const destroySession = (sessionId: string) =>

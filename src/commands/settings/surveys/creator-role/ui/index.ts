@@ -5,7 +5,7 @@ import {
   roleMention,
 } from "discord.js";
 
-import { Color } from "../../../../../services/discord";
+import { Color } from "../../../../../shared/discord";
 
 export enum UIID {
   RoleSelect = "a032dce9-865c-4f42-86c8-78b353cb78ad",

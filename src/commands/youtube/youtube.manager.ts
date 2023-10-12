@@ -1,15 +1,24 @@
+import { youtube, youtube_v3 } from "@googleapis/youtube";
 import assert from "node:assert";
 
-import CacheKey, * as cache from "../../cache";
-import { isNonNullable } from "../../helpers";
-import youtube from "../../services/youtube";
+import Environment from "../../shared/environment";
+import { isNonNullable } from "../../shared/nullable";
+import RedisKey, * as redis from "../../shared/redis";
 
-const { channels, playlistItems, search, videos } = youtube;
+import Thumbnail = youtube_v3.Schema$Thumbnail;
+import ThumbnailDetails = youtube_v3.Schema$ThumbnailDetails;
+
+// region YouTube
+const { channels, playlistItems, search, videos } = youtube({
+  auth: Environment.YoutubeApiKey,
+  version: "v3",
+});
+
 const ExpireIn30Days = 2_592_000_000;
 const ExpireIn30Minutes = 1_800_000;
 
 export const getChannels = (query: string) => {
-  const key = CacheKey.channels(query);
+  const key = RedisKey.channels(query);
   const callback = async () => {
     const { data } = await search.list({
       fields:
@@ -28,11 +37,11 @@ export const getChannels = (query: string) => {
       .filter(isNonNullable);
   };
 
-  return cache.computeIfAbsent(key, callback, ExpireIn30Days);
+  return redis.computeIfAbsent(key, callback, ExpireIn30Days);
 };
 
 export const getChannel = (channelId: string) => {
-  const key = CacheKey.channel(channelId);
+  const key = RedisKey.channel(channelId);
   const callback = async () => {
     const { data } = await channels.list({
       fields:
@@ -49,11 +58,11 @@ export const getChannel = (channelId: string) => {
     return item;
   };
 
-  return cache.computeIfAbsent(key, callback, ExpireIn30Days);
+  return redis.computeIfAbsent(key, callback, ExpireIn30Days);
 };
 
 export const getVideos = (playlistId: string) => {
-  const key = CacheKey.videos(playlistId);
+  const key = RedisKey.videos(playlistId);
   const callback = async () => {
     const { data } = await playlistItems.list({
       fields: "items(snippet(publishedAt,resourceId,title))",
@@ -70,11 +79,11 @@ export const getVideos = (playlistId: string) => {
       .filter(({ resourceId }) => resourceId?.kind === "youtube#video");
   };
 
-  return cache.computeIfAbsent(key, callback, ExpireIn30Minutes);
+  return redis.computeIfAbsent(key, callback, ExpireIn30Minutes);
 };
 
 export const getVideo = (videoId: string) => {
-  const key = CacheKey.video(videoId);
+  const key = RedisKey.video(videoId);
   const callback = async () => {
     const { data } = await videos.list({
       fields:
@@ -91,5 +100,26 @@ export const getVideo = (videoId: string) => {
     return item;
   };
 
-  return cache.computeIfAbsent(key, callback, ExpireIn30Minutes);
+  return redis.computeIfAbsent(key, callback, ExpireIn30Minutes);
 };
+// endregion
+
+// region Functions
+export const getChannelUrl = (channelId: string) =>
+  `https://www.youtube.com/channel/${channelId}`;
+
+export const getThumbnailUrl = (thumbnailDetails: ThumbnailDetails = {}) =>
+  Object.values(thumbnailDetails)
+    .filter((value) => typeof value === "object")
+    .map((value) => value as Thumbnail)
+    .sort((a, b) => {
+      const aResolution = (a.height ?? 0) * (a.width ?? 0);
+      const bResolution = (b.height ?? 0) * (b.width ?? 0);
+      return bResolution - aResolution;
+    })
+    .map(({ url }) => url)
+    .find(isNonNullable);
+
+export const getVideoUrl = (videoId: string) =>
+  `https://www.youtube.com/watch?v=${videoId}`;
+// endregion

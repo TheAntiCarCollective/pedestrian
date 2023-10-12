@@ -1,7 +1,7 @@
 import { compress } from "compress-tag";
 import { EmbedBuilder, bold } from "discord.js";
 
-import { Color } from "../../../services/discord";
+import { Color } from "../../../shared/discord";
 
 // region No Survey
 const noSurveyEmbeds = (title: string) => {

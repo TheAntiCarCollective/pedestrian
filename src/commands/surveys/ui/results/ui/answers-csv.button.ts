@@ -2,7 +2,7 @@ import csv from "csv";
 import { AttachmentBuilder } from "discord.js";
 import assert from "node:assert";
 
-import { registerComponent } from "../../../../../services/discord";
+import { registerComponent } from "../../../../../shared/discord";
 import { QuestionType } from "../../../constants";
 import { isSelected, isSkipped } from "../../../functions";
 import session, * as withContext from "../context";

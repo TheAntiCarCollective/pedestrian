@@ -3,7 +3,7 @@ import assert from "node:assert";
 
 import type { Survey } from "../../types";
 
-import { registerModal } from "../../../../services/discord";
+import { registerModal } from "../../../../shared/discord";
 import UI from "../../ui";
 import session from "../context";
 import * as database from "../database";

@@ -5,14 +5,22 @@ import type { Context, PartialContext } from "./database";
 import * as database from "./database";
 
 export default class Session<T extends Context> {
-  create = (context: PartialContext<T>, { id: sessionId }: BaseInteraction) =>
-    database.createSession(sessionId, context);
+  async create(context: PartialContext<T>, { id: sessionId }: BaseInteraction) {
+    await database.createSession(sessionId, context);
+    return { ...context, sessionId };
+  }
 
-  destroy = async (sessionId: string) =>
-    void (await database.destroySession(sessionId));
+  async destroy(sessionId: string) {
+    await database.destroySession(sessionId);
+  }
 
-  read = (sessionId: string) => database.readSession<T>(sessionId);
+  async read(sessionId: string) {
+    const context = await database.readSession<T>(sessionId);
+    return { ...context, sessionId };
+  }
 
-  update = (context: T, { id: newSessionId }: BaseInteraction) =>
-    database.updateSession(newSessionId, context);
+  async update(context: T, { id: newSessionId }: BaseInteraction) {
+    await database.updateSession(newSessionId, context);
+    return { ...context, sessionId: newSessionId };
+  }
 }

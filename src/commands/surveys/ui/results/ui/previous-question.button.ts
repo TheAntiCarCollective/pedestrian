@@ -1,4 +1,4 @@
-import { registerComponent } from "../../../../../services/discord";
+import { registerComponent } from "../../../../../shared/discord";
 import session, * as withContext from "../context";
 import { UIID } from "../ui";
 

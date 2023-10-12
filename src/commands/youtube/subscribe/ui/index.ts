@@ -10,9 +10,9 @@ import {
 
 import type { Context } from "../context";
 
-import { isNullable } from "../../../../helpers";
-import { Color } from "../../../../services/discord";
-import { getChannelUrl, getThumbnailUrl } from "../../../../services/youtube";
+import { Color } from "../../../../shared/discord";
+import { isNullable } from "../../../../shared/nullable";
+import * as youtube from "../../youtube.manager";
 import * as withContext from "../context";
 
 export enum UIID {
@@ -113,9 +113,11 @@ const youtubeChannelEmbeds = (context: Context) => {
   const { channelId, publishedAt, thumbnails } = youtubeChannel;
 
   const channelName = withContext.getName(context);
-  const thumbnailUrl = getThumbnailUrl(thumbnails) ?? null;
+  const thumbnailUrl = youtube.getThumbnailUrl(thumbnails) ?? null;
 
-  const channelUrl = isNullable(channelId) ? null : getChannelUrl(channelId);
+  const channelUrl =
+    // prettier-ignore
+    isNullable(channelId) ? null : youtube.getChannelUrl(channelId);
   const timestamp = isNullable(publishedAt) ? null : new Date(publishedAt);
 
   description ??= "";

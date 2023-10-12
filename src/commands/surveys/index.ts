@@ -3,7 +3,7 @@ import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
 import assert from "node:assert";
 
-import { registerCommand } from "../../services/discord";
+import { registerCommand } from "../../shared/discord";
 import onAutocomplete from "./autocomplete";
 import onCreate, { Option as CreateOption } from "./create";
 import onDelete, { Option as DeleteOption } from "./delete";

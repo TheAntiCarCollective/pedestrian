@@ -6,9 +6,9 @@ import loggerFactory from "pino";
 
 import type { Car, CompareCars } from "./types";
 
-import Environment from "../../environment";
-import { isNonNullable } from "../../helpers";
-import { usePage } from "../../services/puppeteer";
+import Environment from "../../shared/environment";
+import { isNonNullable } from "../../shared/nullable";
+import { usePage } from "../../shared/puppeteer";
 import { Prospective } from "./constants";
 
 const logger = loggerFactory({
@@ -57,7 +57,6 @@ export const compareCars = async ({
   });
 
 // region initializeCars
-// eslint-disable-next-line sonarjs/cognitive-complexity
 const initializeCars = async () => {
   const carsArray = await usePage(async (page) => {
     await page.setJavaScriptEnabled(false);
@@ -81,17 +80,13 @@ const initializeCars = async () => {
         // eslint-disable-next-line unicorn/consistent-function-scoping
         const getValue = (name: string) => {
           const span = a?.querySelector(`span.index${name}`);
-          return span?.textContent;
+          return span?.textContent ?? `(unknown ${name})`;
         };
 
         const body = getValue("body");
-        if (typeof body !== "string") continue;
         const make = getValue("make");
-        if (typeof make !== "string") continue;
         const model = getValue("model");
-        if (typeof model !== "string") continue;
         const production = getValue("production");
-        if (typeof production !== "string") continue;
 
         carsArray.push({
           body,

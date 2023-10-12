@@ -1,7 +1,7 @@
 import type { Answer } from "../../types";
 
-import { caller } from "../../../../helpers";
-import { useClient } from "../../../../services/postgresql";
+import caller from "../../../../shared/caller";
+import { useClient } from "../../../../shared/postgresql";
 
 // region Types
 type Answers = {

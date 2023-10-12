@@ -4,8 +4,8 @@ import assert from "node:assert";
 
 import type { Choice, Survey } from "./types";
 
-import { caller } from "../../helpers";
-import { useTransaction } from "../../services/postgresql";
+import caller from "../../shared/caller";
+import { useTransaction } from "../../shared/postgresql";
 import { QuestionType } from "./constants";
 
 // region Types

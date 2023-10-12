@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { registerModal } from "../../../../services/discord";
+import { registerModal } from "../../../../shared/discord";
 import { isMultipleChoice } from "../../functions";
 import session, * as withContext from "../context";
 import { UIID } from "../ui";

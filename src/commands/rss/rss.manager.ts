@@ -1,13 +1,13 @@
 import Parser from "rss-parser";
 
-import CacheKey, * as cache from "../../cache";
+import RedisKey, * as redis from "../../shared/redis";
 
 const parser = new Parser();
 const ExpireIn30Minutes = 1_800_000;
 
 export const getFeed = async (url: string) => {
-  const key = CacheKey.rssFeed(url);
+  const key = RedisKey.rssFeed(url);
   const callback = () => parser.parseURL(url);
 
-  return cache.computeIfAbsent(key, callback, ExpireIn30Minutes);
+  return redis.computeIfAbsent(key, callback, ExpireIn30Minutes);
 };
