@@ -2,7 +2,7 @@ import type { PoolClient } from "pg";
 
 import { Pool } from "pg";
 import loggerFactory from "pino";
-import { Histogram, exponentialBuckets } from "prom-client";
+import { Histogram } from "prom-client";
 
 import type { Caller } from "./caller";
 
@@ -18,8 +18,6 @@ const logger = loggerFactory({
 });
 
 const databaseRequestDuration = new Histogram({
-  // Create 11 buckets, starting on 1 and with a factor of 2
-  buckets: exponentialBuckets(1, 2, 11),
   help: "Database request duration in milliseconds",
   labelNames: ["caller", "status", "connected"],
   name: "database_request_duration_milliseconds",
