@@ -143,7 +143,7 @@ const compareCars = (context: Context, files?: BaseMessageOptions["files"]) => {
   return {
     components: compareCarsComponents(context, isLoading),
     content: compareCarsContent(context, isLoading),
-    files,
+    files: isLoading || files.length === 0 ? undefined : files,
   };
 };
 // endregion

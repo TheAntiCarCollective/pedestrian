@@ -195,6 +195,7 @@ const normalize = (value: string) => value.replaceAll(/\s+/g, "").toLowerCase();
 const redisKey = (key: string) => `${Environment.ProjectName}:${key}`;
 
 export default {
+  Cars: redisKey("cars"),
   channel: (channelId: string) => redisKey(`channel:${channelId}`),
   channels: (query: string) => redisKey(`channels:${normalize(query)}`),
   rssFeed: (url: string) => redisKey(`rssFeed:${url}`),

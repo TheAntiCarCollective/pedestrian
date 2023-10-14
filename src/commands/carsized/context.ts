@@ -37,7 +37,7 @@ export const compareCarsUi = async (
   // processing compareCars in parallel then edit the response
   carsized
     .compareCars(context)
-    .then((screenshot) => {
+    .then(async (screenshot) => {
       const firstCarName = carsized.toName(context.firstCar);
       const secondCarName = carsized.toName(context.secondCar);
       const attachment = new AttachmentBuilder(screenshot, {
@@ -45,13 +45,14 @@ export const compareCarsUi = async (
       });
 
       const files = [attachment];
-      return response.edit(UI.compareCars(context, files));
-    })
-    .then((message) => {
+      const message = await response.edit(UI.compareCars(context, files));
       childLogger.debug(message, "COMPARE_CARS_SUCCESS");
+      return message;
     })
-    .catch((error) => {
+    .catch(async (error) => {
       childLogger.error(error, "COMPARE_CARS_ERROR");
+      if (interaction.isMessageComponent())
+        await response.edit(UI.compareCars(context, []));
     });
 
   return response;

@@ -9,6 +9,7 @@ import type { Car, CompareCars } from "./types";
 import Environment from "../../shared/environment";
 import { isNonNullable } from "../../shared/nullable";
 import { usePage } from "../../shared/puppeteer";
+import RedisKey, * as redis from "../../shared/redis";
 import { Prospective } from "./constants";
 
 const logger = loggerFactory({
@@ -17,19 +18,19 @@ const logger = loggerFactory({
 
 const CarsizedBaseUrl = "https://www.carsized.com/en";
 
-const cars = new Map<string, Car>();
+const cars: Record<string, Car> = {};
 let carsIndex: Index | undefined;
 
 export const toName = ({ body, make, model, production }: Car) =>
   `${make} ${model} ${body} ${production}`;
 
-export const getCar = (id: string) => cars.get(id);
+export const getCar = (id: string) => cars[id];
 
 export const searchCars = (carName: string) => {
   if (carsIndex === undefined) return [];
   return carsIndex
     .search(carName)
-    .map(({ ref }) => cars.get(ref))
+    .map(({ ref }) => getCar(ref))
     .filter(isNonNullable);
 };
 
@@ -57,62 +58,66 @@ export const compareCars = async ({
   });
 
 // region initializeCars
-const initializeCars = async () => {
-  const carsArray = await usePage(async (page) => {
-    await page.setJavaScriptEnabled(false);
-    await page.goto(`${CarsizedBaseUrl}/cars/`);
-    return page.evaluate(() => {
-      const carsArray = [];
+const ExpireIn30Days = 2_592_000_000;
 
-      const containers = document.querySelectorAll("div.indexcontainer");
-      for (let index = 0; index < containers.length; index++) {
-        const container = containers.item(index);
-        const a = container.querySelector("a");
+const getCars = async () => {
+  try {
+    const cars = await usePage(async (page) => {
+      await page.setJavaScriptEnabled(false);
+      await page.goto(`${CarsizedBaseUrl}/cars/`);
+      return page.evaluate(() => {
+        const cars = [];
 
-        const href = a?.getAttribute("href");
-        const segments = href?.split("/");
-        const validSegments = segments?.filter((segment) => segment !== "");
-        const id = validSegments?.at(-1);
-        // Given https://www.carsized.com/en/cars/abarth-500-2008-3-door-hatchback/
-        // id should equal "abarth-500-2008-3-door-hatchback"
-        if (id === undefined) continue;
+        const containers = document.querySelectorAll("div.indexcontainer");
+        for (let index = 0; index < containers.length; index++) {
+          const container = containers.item(index);
+          const a = container.querySelector("a");
 
-        // eslint-disable-next-line unicorn/consistent-function-scoping
-        const getValue = (name: string) => {
-          const span = a?.querySelector(`span.index${name}`);
-          return span?.textContent ?? `(unknown ${name})`;
-        };
+          const href = a?.getAttribute("href");
+          const segments = href?.split("/");
+          const validSegments = segments?.filter((segment) => segment !== "");
+          const id = validSegments?.at(-1);
+          // Given https://www.carsized.com/en/cars/abarth-500-2008-3-door-hatchback/
+          // id should equal "abarth-500-2008-3-door-hatchback"
+          if (id === undefined) continue;
 
-        const body = getValue("body");
-        const make = getValue("make");
-        const model = getValue("model");
-        const production = getValue("production");
+          // eslint-disable-next-line unicorn/consistent-function-scoping
+          const getValue = (name: string) => {
+            const span = a?.querySelector(`span.index${name}`);
+            return span?.textContent ?? `(unknown ${name})`;
+          };
 
-        carsArray.push({
-          body,
-          id,
-          make,
-          model,
-          production,
-        });
-      }
+          const body = getValue("body");
+          const make = getValue("make");
+          const model = getValue("model");
+          const production = getValue("production");
 
-      return carsArray;
+          cars.push({
+            body,
+            id,
+            make,
+            model,
+            production,
+          });
+        }
+
+        return cars;
+      });
     });
-  });
 
-  for (const car of carsArray) cars.set(car.id, car);
+    logger.debug(cars, "GET_CARS_SUCCESS");
+    return cars;
+  } catch (error) {
+    logger.error(error, "GET_CARS_ERROR");
+    return [];
+  }
 };
 
-const initializeCarsIndex = async () => {
-  if (Environment.EnableCarsized === "true") {
-    try {
-      await initializeCars();
-      logger.debug(cars, "INITIALIZE_CARS_SUCCESS");
-    } catch (error) {
-      logger.error(error, "INITIALIZE_CARS_ERROR");
-    }
-  }
+const initializeCars = async () => {
+  const carsArray =
+    Environment.EnableCarsized === "true"
+      ? await redis.computeIfAbsent(RedisKey.Cars, getCars, ExpireIn30Days)
+      : [];
 
   carsIndex = lunr((builder) => {
     builder.ref("id");
@@ -122,11 +127,14 @@ const initializeCarsIndex = async () => {
     builder.field("model");
     builder.field("production");
 
-    for (const car of cars.values()) builder.add(car);
+    for (const car of carsArray) {
+      cars[car.id] = car;
+      builder.add(car);
+    }
   });
 
-  logger.info(`Indexed ${cars.size} cars from ${CarsizedBaseUrl}`);
+  logger.info(`Indexed ${carsArray.length} cars from ${CarsizedBaseUrl}`);
 };
 
-void initializeCarsIndex();
+void initializeCars();
 // endregion
