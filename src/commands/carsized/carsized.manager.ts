@@ -10,7 +10,7 @@ import Environment from "../../shared/environment";
 import { isNonNullable } from "../../shared/nullable";
 import { usePage } from "../../shared/puppeteer";
 import RedisKey, * as redis from "../../shared/redis";
-import { Prospective } from "./constants";
+import { Perspective } from "./constants";
 
 const logger = loggerFactory({
   name: __filename,
@@ -36,17 +36,17 @@ export const searchCars = (carName: string) => {
 
 export const compareCars = async ({
   firstCar,
-  prospective,
+  perspective,
   secondCar,
   units,
 }: CompareCars) =>
   usePage(async (page) => {
     await page.setJavaScriptEnabled(false);
     const compareSegment = `${firstCar.id}-vs-${secondCar.id}`;
-    const prospectiveSegment =
-      prospective === Prospective.Side ? "" : prospective;
+    const perspectiveSegment =
+      perspective === Perspective.Side ? "" : perspective;
     // prettier-ignore
-    await page.goto(`${CarsizedBaseUrl}/cars/compare/${compareSegment}/${prospectiveSegment}?units=${units}`);
+    await page.goto(`${CarsizedBaseUrl}/cars/compare/${compareSegment}/${perspectiveSegment}?units=${units}`);
 
     const contentHandle = await page.$("div.flowcontent");
     assert(contentHandle !== null);

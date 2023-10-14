@@ -3,7 +3,7 @@ export enum Units {
   Metric = "metric",
 }
 
-export enum Prospective {
+export enum Perspective {
   Front = "front",
   Rear = "rear",
   Side = "side",

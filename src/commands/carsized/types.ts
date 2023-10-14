@@ -1,4 +1,4 @@
-import type { Prospective, Units } from "./constants";
+import type { Perspective, Units } from "./constants";
 
 export type Car = {
   body: string;
@@ -10,7 +10,9 @@ export type Car = {
 
 export type CompareCars = {
   firstCar: Car;
-  prospective: Prospective;
+  perspective: Perspective | undefined;
+  /** @deprecated Use perspective **/
+  prospective?: Perspective;
   secondCar: Car;
   units: Units;
 };

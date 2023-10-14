@@ -14,7 +14,7 @@ import type { Context } from "../context";
 import { Color } from "../../../shared/discord";
 import Environment from "../../../shared/environment";
 import * as carsized from "../carsized.manager";
-import { Prospective, Units } from "../constants";
+import { Perspective, Units } from "../constants";
 
 export enum UIID {
   FrontButton = "26b9b11a-0134-46b0-9552-6a8d9353176e",
@@ -62,32 +62,32 @@ const swapActionRow = (context: Context, isLoading: boolean) =>
   );
 // endregion
 
-// region Prospective
-const frontButton = ({ prospective, sessionId }: Context, isLoading: boolean) =>
+// region Perspective
+const frontButton = ({ perspective, sessionId }: Context, isLoading: boolean) =>
   new ButtonBuilder()
     .setCustomId(`${UIID.FrontButton}${sessionId}`)
-    .setDisabled(prospective === Prospective.Front || isLoading)
+    .setDisabled(perspective === Perspective.Front || isLoading)
     .setEmoji("🚘")
     .setLabel("| Front")
     .setStyle(ButtonStyle.Secondary);
 
-const sideButton = ({ prospective, sessionId }: Context, isLoading: boolean) =>
+const sideButton = ({ perspective, sessionId }: Context, isLoading: boolean) =>
   new ButtonBuilder()
     .setCustomId(`${UIID.SideButton}${sessionId}`)
-    .setDisabled(prospective === Prospective.Side || isLoading)
+    .setDisabled(perspective === Perspective.Side || isLoading)
     .setEmoji("🚗")
     .setLabel("| Side")
     .setStyle(ButtonStyle.Secondary);
 
-const rearButton = ({ prospective, sessionId }: Context, isLoading: boolean) =>
+const rearButton = ({ perspective, sessionId }: Context, isLoading: boolean) =>
   new ButtonBuilder()
     .setCustomId(`${UIID.RearButton}${sessionId}`)
-    .setDisabled(prospective === Prospective.Rear || isLoading)
+    .setDisabled(perspective === Perspective.Rear || isLoading)
     .setEmoji("🍑")
     .setLabel("| Rear")
     .setStyle(ButtonStyle.Secondary);
 
-const prospectiveActionRow = (context: Context, isLoading: boolean) =>
+const perspectiveActionRow = (context: Context, isLoading: boolean) =>
   new ActionRowBuilder<ButtonBuilder>().setComponents(
     frontButton(context, isLoading),
     sideButton(context, isLoading),
@@ -121,7 +121,7 @@ const unitsActionRow = (context: Context, isLoading: boolean) =>
 
 const compareCarsComponents = (context: Context, isLoading: boolean) => [
   swapActionRow(context, isLoading),
-  prospectiveActionRow(context, isLoading),
+  perspectiveActionRow(context, isLoading),
   unitsActionRow(context, isLoading),
 ];
 // endregion

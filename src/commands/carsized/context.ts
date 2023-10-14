@@ -24,10 +24,20 @@ const logger = loggerFactory({
   name: __filename,
 });
 
+const session = new Session<Context>();
+export default session;
+
 export const compareCarsUi = async (
   context: Context,
   interaction: Interaction,
 ) => {
+  // "perspective" was wrongly spelled "prospective" initially
+  // Use new spelling while supporting older sessions
+  if (context.perspective === undefined) {
+    context.perspective = context.prospective;
+    context = await session.update(context, interaction);
+  }
+
   const response = interaction.isCommand()
     ? await interaction.deferReply()
     : await interaction.update(UI.compareCars(context));
@@ -57,5 +67,3 @@ export const compareCarsUi = async (
 
   return response;
 };
-
-export default new Session<Context>();

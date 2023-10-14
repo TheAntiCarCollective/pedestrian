@@ -7,13 +7,13 @@ import { registerCommand, toChoices } from "../../shared/discord";
 import Environment from "../../shared/environment";
 import onAutocomplete from "./autocomplete";
 import * as carsized from "./carsized.manager";
-import { Prospective, Units } from "./constants";
+import { Perspective, Units } from "./constants";
 import session, * as withContext from "./context";
 import UI from "./ui";
 
 enum Option {
   FirstCar = "first-car",
-  Prospective = "prospective",
+  Perspective = "perspective",
   SecondCar = "second-car",
   Units = "units",
 }
@@ -37,9 +37,9 @@ const json = new SlashCommandBuilder()
   )
   .addStringOption((option) =>
     option
-      .setName(Option.Prospective)
-      .setDescription("Prospective of the comparison")
-      .setChoices(...toChoices(Prospective)),
+      .setName(Option.Perspective)
+      .setDescription("Perspective of the comparison")
+      .setChoices(...toChoices(Perspective)),
   )
   .addStringOption((option) =>
     option
@@ -63,16 +63,16 @@ const onCommand = async (interaction: CommandInteraction) => {
   if (secondCar === undefined)
     return interaction.reply(UI.noCarExists(secondCarId));
 
-  const prospectiveOption =
-    options.getString(Option.Prospective) ?? Prospective.Side;
-  const prospective = prospectiveOption as Prospective;
+  const perspectiveOption =
+    options.getString(Option.Perspective) ?? Perspective.Side;
+  const perspective = perspectiveOption as Perspective;
 
   const unitsOption = options.getString(Option.Units) ?? Units.Metric;
   const units = unitsOption as Units;
 
   const partialContext = {
     firstCar,
-    prospective,
+    perspective,
     secondCar,
     units,
   };

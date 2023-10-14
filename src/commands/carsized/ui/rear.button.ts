@@ -1,11 +1,11 @@
 import { registerComponent } from "../../../shared/discord";
-import { Prospective } from "../constants";
+import { Perspective } from "../constants";
 import session, * as withContext from "../context";
 import { UIID } from "../ui";
 
 registerComponent(UIID.RearButton, async (interaction, sessionId) => {
   const context = await session.read(sessionId);
-  context.prospective = Prospective.Rear;
+  context.perspective = Perspective.Rear;
 
   const newContext = await session.update(context, interaction);
   return withContext.compareCarsUi(newContext, interaction);
