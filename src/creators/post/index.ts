@@ -9,12 +9,12 @@ import {
   roleMention,
 } from "discord.js";
 import assert from "node:assert";
-import loggerFactory from "pino";
 
 import type Nullable from "../../shared/nullable";
 import type { CreatorType } from "../constants";
 import type { CreatorSubscription } from "./database";
 
+import loggerFactory from "../../logger.factory";
 import { byDate, isUnique } from "../../shared/array";
 import discord from "../../shared/discord";
 import { isNullable } from "../../shared/nullable";
@@ -35,9 +35,7 @@ export type Option = {
 type Poster = (creatorDomainId: string) => Promise<Option[]>;
 // endregion
 
-const logger = loggerFactory({
-  name: __filename,
-});
+const logger = loggerFactory(module);
 
 const posters = new Map<CreatorType, Poster>();
 export const registerPoster = (creatorType: CreatorType, poster: Poster) => {

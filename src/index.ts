@@ -1,16 +1,14 @@
 import { glob } from "glob";
 import path from "node:path";
-import loggerFactory from "pino";
 import { collectDefaultMetrics } from "prom-client";
 
+import loggerFactory from "./logger.factory";
 import discord from "./shared/discord";
 import Environment from "./shared/environment";
 import express from "./shared/express";
 
 // region Logger and Metrics
-const logger = loggerFactory({
-  name: __filename,
-});
+const logger = loggerFactory(module);
 
 collectDefaultMetrics();
 // endregion

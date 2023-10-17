@@ -4,10 +4,10 @@ import type {
 } from "discord.js";
 
 import { AttachmentBuilder } from "discord.js";
-import loggerFactory from "pino";
 
 import type { CompareCars } from "./types";
 
+import loggerFactory from "../../logger.factory";
 import Session from "../../session";
 import * as carsized from "./carsized.manager";
 import UI from "./ui";
@@ -20,9 +20,7 @@ export type Context = CompareCars & {
 type Interaction = CommandInteraction | MessageComponentInteraction;
 // endregion
 
-const logger = loggerFactory({
-  name: __filename,
-});
+const logger = loggerFactory(module);
 
 const session = new Session<Context>();
 export default session;

@@ -1,14 +1,13 @@
 import express from "express";
 import promBundle from "express-prom-bundle";
-import loggerFactory from "pino";
 import pinoBundle from "pino-http";
+
+import loggerFactory from "../logger.factory";
 
 const server = express();
 
 // region Logger and Metrics
-const logger = loggerFactory({
-  name: __filename,
-});
+const logger = loggerFactory(module);
 
 server.use(
   promBundle({

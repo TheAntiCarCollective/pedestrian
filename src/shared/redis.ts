@@ -2,15 +2,13 @@ import type { Callback, Result } from "ioredis";
 
 import { Redis } from "ioredis";
 import * as crypto from "node:crypto";
-import loggerFactory from "pino";
 
+import loggerFactory from "../logger.factory";
 import Environment from "./environment";
 import { isNullable } from "./nullable";
 import sleep from "./sleep";
 
-const logger = loggerFactory({
-  name: __filename,
-});
+const logger = loggerFactory(module);
 
 // region redis
 const node = {

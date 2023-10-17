@@ -31,6 +31,6 @@ RUN npm ci
 COPY . .
 
 RUN npm run check \
-    && npx tsc
+    && npm run build
 
-CMD node --no-warnings --enable-source-maps build/index.js
+CMD npm run production

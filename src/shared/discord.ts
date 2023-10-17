@@ -3,27 +3,37 @@ import type {
   BaseInteraction,
   CommandInteraction,
   ContextMenuCommandBuilder,
-  InteractionResponse,
-  Message,
   MessageComponentInteraction,
   ModalSubmitInteraction,
   SlashCommandBuilder,
 } from "discord.js";
 
-import { Client, Events, Routes, User } from "discord.js";
+import {
+  Client,
+  Events,
+  InteractionResponse,
+  Message,
+  Routes,
+  User,
+} from "discord.js";
 import assert from "node:assert";
-import loggerFactory from "pino";
-import { Histogram } from "prom-client";
+import { Gauge, Histogram } from "prom-client";
+
+import loggerFactory from "../logger.factory";
 
 // region Logger and Metrics
-const logger = loggerFactory({
-  name: __filename,
-});
+const logger = loggerFactory(module);
 
 const interactionRequestDuration = new Histogram({
   help: "Interaction request duration in milliseconds",
   labelNames: ["status", "handler"],
   name: "interaction_request_duration_milliseconds",
+});
+
+const shardPing = new Gauge({
+  help: "Shard ping in milliseconds",
+  labelNames: ["shard"],
+  name: "shard_ping_milliseconds",
 });
 // endregion
 
@@ -41,8 +51,16 @@ const discord = new Client({
   intents: ["Guilds"],
 });
 
+const { ws } = discord;
+const { shards } = ws;
+
 discord.on(Events.Debug, (debug) => {
   logger.debug(debug, "DISCORD_DEBUG");
+
+  for (const [shard, { ping }] of shards) {
+    const labels = { shard };
+    shardPing.set(labels, ping);
+  }
 });
 
 discord.on(Events.Warn, (warn) => {
@@ -171,14 +189,18 @@ const getHandler = (interaction: BaseInteraction, uiid?: string) => {
 const onInteraction = (
   status: "error" | "success",
   interaction: BaseInteraction,
-  startRequestTime: number,
   uiid?: string,
 ) => {
   const handler = getHandler(interaction, uiid);
   const labels = { handler, status };
 
   return (result: unknown) => {
-    const endRequestTime = performance.now();
+    const endRequestTime =
+      result instanceof InteractionResponse || result instanceof Message
+        ? result.createdTimestamp
+        : Date.now();
+
+    const startRequestTime = interaction.createdTimestamp;
     const requestDuration = endRequestTime - startRequestTime;
     interactionRequestDuration.observe(labels, requestDuration);
 
@@ -200,37 +222,28 @@ const onInteraction = (
   };
 };
 
-const onCommand = (
-  interaction: CommandInteraction,
-  startRequestTime: number,
-) => {
+const onCommand = (interaction: CommandInteraction) => {
   for (const [name, { onCommand }] of commands) {
     if (name === interaction.commandName) {
       return onCommand(interaction)
-        .then(onInteraction("success", interaction, startRequestTime))
-        .catch(onInteraction("error", interaction, startRequestTime));
+        .then(onInteraction("success", interaction))
+        .catch(onInteraction("error", interaction));
     }
   }
 };
 
-const onAutocomplete = (
-  interaction: AutocompleteInteraction,
-  startRequestTime: number,
-) => {
+const onAutocomplete = (interaction: AutocompleteInteraction) => {
   for (const [name, { onAutocomplete }] of commands) {
     if (name === interaction.commandName) {
       assert(onAutocomplete !== undefined);
       return onAutocomplete(interaction)
-        .then(onInteraction("success", interaction, startRequestTime))
-        .catch(onInteraction("error", interaction, startRequestTime));
+        .then(onInteraction("success", interaction))
+        .catch(onInteraction("error", interaction));
     }
   }
 };
 
-const onMessageComponent = (
-  interaction: MessageComponentInteraction,
-  startRequestTime: number,
-) => {
+const onMessageComponent = (interaction: MessageComponentInteraction) => {
   let { customId } = interaction;
   for (const [uiid, onComponent] of components) {
     const legacyPrefix = `GLOBAL_${uiid}_`;
@@ -242,39 +255,34 @@ const onMessageComponent = (
     if (customId.startsWith(uiid)) {
       const id = customId.slice(uiid.length);
       return onComponent(interaction, id)
-        .then(onInteraction("success", interaction, startRequestTime, uiid))
-        .catch(onInteraction("error", interaction, startRequestTime, uiid));
+        .then(onInteraction("success", interaction, uiid))
+        .catch(onInteraction("error", interaction, uiid));
     }
   }
 };
 
-const onModalSubmit = (
-  interaction: ModalSubmitInteraction,
-  startRequestTime: number,
-) => {
+const onModalSubmit = (interaction: ModalSubmitInteraction) => {
   const { customId } = interaction;
   for (const [uiid, onModal] of modals) {
     if (customId.startsWith(uiid)) {
       const id = customId.slice(uiid.length);
       return onModal(interaction, id)
-        .then(onInteraction("success", interaction, startRequestTime, uiid))
-        .catch(onInteraction("error", interaction, startRequestTime, uiid));
+        .then(onInteraction("success", interaction, uiid))
+        .catch(onInteraction("error", interaction, uiid));
     }
   }
 };
 
 discord.on(Events.InteractionCreate, async (interaction) => {
-  const startRequestTime = performance.now();
-
   let status;
   if (interaction.isCommand()) {
-    status = await onCommand(interaction, startRequestTime);
+    status = await onCommand(interaction);
   } else if (interaction.isAutocomplete()) {
-    status = await onAutocomplete(interaction, startRequestTime);
+    status = await onAutocomplete(interaction);
   } else if (interaction.isMessageComponent()) {
-    status = await onMessageComponent(interaction, startRequestTime);
+    status = await onMessageComponent(interaction);
   } else if (interaction.isModalSubmit()) {
-    status = await onModalSubmit(interaction, startRequestTime);
+    status = await onModalSubmit(interaction);
   }
 
   assert(status !== undefined);

@@ -1,6 +1,7 @@
 /.env
 /LICENSE
 /README.md
+/build
 /dump.sql
 /flyway
 

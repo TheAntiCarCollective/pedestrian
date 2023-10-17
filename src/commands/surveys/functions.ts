@@ -2,7 +2,6 @@ import type { BaseInteraction } from "discord.js";
 
 import { messageLink } from "discord.js";
 import assert from "node:assert";
-import loggerFactory from "pino";
 
 import type {
   Answer,
@@ -16,11 +15,10 @@ import type {
   Survey,
 } from "./types";
 
+import loggerFactory from "../../logger.factory";
 import { QuestionType } from "./constants";
 
-const logger = loggerFactory({
-  name: __filename,
-});
+const logger = loggerFactory(module);
 
 // region Survey
 export const surveyLink = ({ channelId, guildId, id }: PartialSurvey) =>

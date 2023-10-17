@@ -1,11 +1,11 @@
 import type { PoolClient } from "pg";
 
 import { Pool } from "pg";
-import loggerFactory from "pino";
 import { Histogram } from "prom-client";
 
 import type { Caller } from "./caller";
 
+import loggerFactory from "../logger.factory";
 import Environment from "./environment";
 
 // region Types
@@ -13,9 +13,7 @@ type Callback<T> = (client: PoolClient) => Promise<T>;
 // endregion
 
 // region Logger and Metrics
-const logger = loggerFactory({
-  name: __filename,
-});
+const logger = loggerFactory(module);
 
 const databaseRequestDuration = new Histogram({
   help: "Database request duration in milliseconds",

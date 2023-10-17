@@ -2,19 +2,17 @@ import type { Index } from "lunr";
 
 import lunr from "lunr";
 import assert from "node:assert";
-import loggerFactory from "pino";
 
 import type { Car, CompareCars } from "./types";
 
+import loggerFactory from "../../logger.factory";
 import Environment from "../../shared/environment";
 import { isNonNullable } from "../../shared/nullable";
 import { usePage } from "../../shared/puppeteer";
 import RedisKey, * as redis from "../../shared/redis";
 import { Perspective } from "./constants";
 
-const logger = loggerFactory({
-  name: __filename,
-});
+const logger = loggerFactory(module);
 
 const CarsizedBaseUrl = "https://www.carsized.com/en";
 

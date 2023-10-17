@@ -38,14 +38,18 @@
     "typescript": "5.2.2"
   },
   "license": "MIT",
-  "private": true,
   "name": "pedestrian",
+  "private": true,
   "scripts": {
+    "build": "shx rm -rf ./build && tsc",
     "check": "tsc --noemit && eslint . && prettier --check .",
+    "debug": "node --trace-warnings --enable-source-maps ./build/index.js | pino-pretty",
     "dump": "docker exec --tty postgres pg_dumpall --clean --username=user > dump.sql",
     "migrate": "docker-compose up --detach --build flyway",
     "prettier": "prettier --write .",
+    "production": "node --no-warnings --enable-source-maps ./build/index.js",
     "restore": "shx cat dump.sql | docker exec --interactive postgres psql --username=user --dbname=postgres",
-    "start": "docker-compose up --detach --build pedestrian"
+    "services": "docker-compose up --detach postgres redis flyway",
+    "start": "docker-compose up --build pedestrian"
   }
 }
