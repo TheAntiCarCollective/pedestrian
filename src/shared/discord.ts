@@ -3,19 +3,14 @@ import type {
   BaseInteraction,
   CommandInteraction,
   ContextMenuCommandBuilder,
+  InteractionResponse,
+  Message,
   MessageComponentInteraction,
   ModalSubmitInteraction,
   SlashCommandBuilder,
 } from "discord.js";
 
-import {
-  Client,
-  Events,
-  InteractionResponse,
-  Message,
-  Routes,
-  User,
-} from "discord.js";
+import { Client, Events, Routes, User } from "discord.js";
 import assert from "node:assert";
 import { Gauge, Histogram } from "prom-client";
 
@@ -189,18 +184,14 @@ const getHandler = (interaction: BaseInteraction, uiid?: string) => {
 const onInteraction = (
   status: "error" | "success",
   interaction: BaseInteraction,
+  startRequestTime: number,
   uiid?: string,
 ) => {
   const handler = getHandler(interaction, uiid);
   const labels = { handler, status };
 
   return (result: unknown) => {
-    const endRequestTime =
-      result instanceof InteractionResponse || result instanceof Message
-        ? result.createdTimestamp
-        : Date.now();
-
-    const startRequestTime = interaction.createdTimestamp;
+    const endRequestTime = performance.now();
     const requestDuration = endRequestTime - startRequestTime;
     interactionRequestDuration.observe(labels, requestDuration);
 
@@ -222,28 +213,37 @@ const onInteraction = (
   };
 };
 
-const onCommand = (interaction: CommandInteraction) => {
+const onCommand = (
+  interaction: CommandInteraction,
+  startRequestTime: number,
+) => {
   for (const [name, { onCommand }] of commands) {
     if (name === interaction.commandName) {
       return onCommand(interaction)
-        .then(onInteraction("success", interaction))
-        .catch(onInteraction("error", interaction));
+        .then(onInteraction("success", interaction, startRequestTime))
+        .catch(onInteraction("error", interaction, startRequestTime));
     }
   }
 };
 
-const onAutocomplete = (interaction: AutocompleteInteraction) => {
+const onAutocomplete = (
+  interaction: AutocompleteInteraction,
+  startRequestTime: number,
+) => {
   for (const [name, { onAutocomplete }] of commands) {
     if (name === interaction.commandName) {
       assert(onAutocomplete !== undefined);
       return onAutocomplete(interaction)
-        .then(onInteraction("success", interaction))
-        .catch(onInteraction("error", interaction));
+        .then(onInteraction("success", interaction, startRequestTime))
+        .catch(onInteraction("error", interaction, startRequestTime));
     }
   }
 };
 
-const onMessageComponent = (interaction: MessageComponentInteraction) => {
+const onMessageComponent = (
+  interaction: MessageComponentInteraction,
+  startRequestTime: number,
+) => {
   let { customId } = interaction;
   for (const [uiid, onComponent] of components) {
     const legacyPrefix = `GLOBAL_${uiid}_`;
@@ -255,34 +255,39 @@ const onMessageComponent = (interaction: MessageComponentInteraction) => {
     if (customId.startsWith(uiid)) {
       const id = customId.slice(uiid.length);
       return onComponent(interaction, id)
-        .then(onInteraction("success", interaction, uiid))
-        .catch(onInteraction("error", interaction, uiid));
+        .then(onInteraction("success", interaction, startRequestTime, uiid))
+        .catch(onInteraction("error", interaction, startRequestTime, uiid));
     }
   }
 };
 
-const onModalSubmit = (interaction: ModalSubmitInteraction) => {
+const onModalSubmit = (
+  interaction: ModalSubmitInteraction,
+  startRequestTime: number,
+) => {
   const { customId } = interaction;
   for (const [uiid, onModal] of modals) {
     if (customId.startsWith(uiid)) {
       const id = customId.slice(uiid.length);
       return onModal(interaction, id)
-        .then(onInteraction("success", interaction, uiid))
-        .catch(onInteraction("error", interaction, uiid));
+        .then(onInteraction("success", interaction, startRequestTime, uiid))
+        .catch(onInteraction("error", interaction, startRequestTime, uiid));
     }
   }
 };
 
 discord.on(Events.InteractionCreate, async (interaction) => {
+  const startRequestTime = performance.now();
+
   let status;
   if (interaction.isCommand()) {
-    status = await onCommand(interaction);
+    status = await onCommand(interaction, startRequestTime);
   } else if (interaction.isAutocomplete()) {
-    status = await onAutocomplete(interaction);
+    status = await onAutocomplete(interaction, startRequestTime);
   } else if (interaction.isMessageComponent()) {
-    status = await onMessageComponent(interaction);
+    status = await onMessageComponent(interaction, startRequestTime);
   } else if (interaction.isModalSubmit()) {
-    status = await onModalSubmit(interaction);
+    status = await onModalSubmit(interaction, startRequestTime);
   }
 
   assert(status !== undefined);
