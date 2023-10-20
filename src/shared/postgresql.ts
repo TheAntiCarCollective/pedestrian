@@ -1,7 +1,7 @@
 import type { PoolClient } from "pg";
 
 import { Pool } from "pg";
-import { Summary } from "prom-client";
+import { Histogram } from "prom-client";
 
 import type { Caller } from "./caller";
 
@@ -15,10 +15,10 @@ type Callback<T> = (client: PoolClient) => Promise<T>;
 // region Logger and Metrics
 const logger = loggerFactory(module);
 
-const databaseRequestDuration = new Summary({
-  help: "Database request duration in milliseconds",
-  labelNames: ["caller", "status", "connected"],
-  name: "database_request_duration_milliseconds",
+const databaseRequestDuration = new Histogram({
+  help: "Database request duration in seconds",
+  labelNames: ["caller", "connected", "status"],
+  name: "database_request_duration_seconds",
 });
 // endregion
 
@@ -31,7 +31,7 @@ const postgresql = new Pool({
 });
 
 export const useClient = async <T>(caller: Caller, callback: Callback<T>) => {
-  const startRequestTime = performance.now();
+  const observeRequestDuration = databaseRequestDuration.startTimer();
   const onDatabase =
     (status: "error" | "success", client?: PoolClient) => (result: unknown) => {
       client?.release(status === "error");
@@ -42,14 +42,8 @@ export const useClient = async <T>(caller: Caller, callback: Callback<T>) => {
         status,
       };
 
-      const endRequestTime = performance.now();
-      const requestDuration = endRequestTime - startRequestTime;
-      databaseRequestDuration.observe(labels, requestDuration);
-
-      const childLogger = logger.child({
-        labels,
-        requestDuration,
-      });
+      const requestDuration = observeRequestDuration(labels);
+      const childLogger = logger.child({ labels, requestDuration });
 
       if (status === "error") {
         childLogger.error(result, "ON_DATABASE_ERROR");

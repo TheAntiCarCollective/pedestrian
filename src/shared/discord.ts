@@ -12,17 +12,17 @@ import type {
 
 import { Client, Events, Routes, User } from "discord.js";
 import assert from "node:assert";
-import { Gauge, Summary } from "prom-client";
+import { Gauge, Histogram } from "prom-client";
 
 import loggerFactory from "../logger.factory";
 
 // region Logger and Metrics
 const logger = loggerFactory(module);
 
-const interactionRequestDuration = new Summary({
-  help: "Interaction request duration in milliseconds",
-  labelNames: ["status", "handler"],
-  name: "interaction_request_duration_milliseconds",
+const interactionRequestDuration = new Histogram({
+  help: "Interaction request duration in seconds",
+  labelNames: ["handler", "status"],
+  name: "interaction_request_duration_seconds",
 });
 
 const shardPing = new Gauge({
@@ -181,69 +181,32 @@ const getHandler = (interaction: BaseInteraction, uiid?: string) => {
   }
 };
 
-const onInteraction = (
-  status: "error" | "success",
-  interaction: BaseInteraction,
-  startRequestTime: number,
-  uiid?: string,
-) => {
-  const handler = getHandler(interaction, uiid);
-  const labels = { handler, status };
-
-  return (result: unknown) => {
-    const endRequestTime = performance.now();
-    const requestDuration = endRequestTime - startRequestTime;
-    interactionRequestDuration.observe(labels, requestDuration);
-
-    const childLogger = logger.child({
-      interaction,
-      labels,
-      requestDuration,
-    });
-
-    if (status === "error") {
-      childLogger.error(result, "ON_INTERACTION_ERROR");
-    } else if (requestDuration >= 2500) {
-      childLogger.warn(result, "ON_INTERACTION_SUCCESS_SLOW");
-    } else {
-      childLogger.info(result, "ON_INTERACTION_SUCCESS");
-    }
-
-    return status;
-  };
+const createContext = (status: "error" | "success", uiid?: string) => {
+  return (result: unknown) => ({ result, status, uiid });
 };
 
-const onCommand = (
-  interaction: CommandInteraction,
-  startRequestTime: number,
-) => {
+const onCommand = (interaction: CommandInteraction) => {
   for (const [name, { onCommand }] of commands) {
     if (name === interaction.commandName) {
       return onCommand(interaction)
-        .then(onInteraction("success", interaction, startRequestTime))
-        .catch(onInteraction("error", interaction, startRequestTime));
+        .then(createContext("success"))
+        .catch(createContext("error"));
     }
   }
 };
 
-const onAutocomplete = (
-  interaction: AutocompleteInteraction,
-  startRequestTime: number,
-) => {
+const onAutocomplete = (interaction: AutocompleteInteraction) => {
   for (const [name, { onAutocomplete }] of commands) {
     if (name === interaction.commandName) {
       assert(onAutocomplete !== undefined);
       return onAutocomplete(interaction)
-        .then(onInteraction("success", interaction, startRequestTime))
-        .catch(onInteraction("error", interaction, startRequestTime));
+        .then(createContext("success"))
+        .catch(createContext("error"));
     }
   }
 };
 
-const onMessageComponent = (
-  interaction: MessageComponentInteraction,
-  startRequestTime: number,
-) => {
+const onMessageComponent = (interaction: MessageComponentInteraction) => {
   let { customId } = interaction;
   for (const [uiid, onComponent] of components) {
     const legacyPrefix = `GLOBAL_${uiid}_`;
@@ -255,42 +218,58 @@ const onMessageComponent = (
     if (customId.startsWith(uiid)) {
       const id = customId.slice(uiid.length);
       return onComponent(interaction, id)
-        .then(onInteraction("success", interaction, startRequestTime, uiid))
-        .catch(onInteraction("error", interaction, startRequestTime, uiid));
+        .then(createContext("success", uiid))
+        .catch(createContext("error", uiid));
     }
   }
 };
 
-const onModalSubmit = (
-  interaction: ModalSubmitInteraction,
-  startRequestTime: number,
-) => {
+const onModalSubmit = (interaction: ModalSubmitInteraction) => {
   const { customId } = interaction;
   for (const [uiid, onModal] of modals) {
     if (customId.startsWith(uiid)) {
       const id = customId.slice(uiid.length);
       return onModal(interaction, id)
-        .then(onInteraction("success", interaction, startRequestTime, uiid))
-        .catch(onInteraction("error", interaction, startRequestTime, uiid));
+        .then(createContext("success", uiid))
+        .catch(createContext("error", uiid));
     }
   }
 };
 
 discord.on(Events.InteractionCreate, async (interaction) => {
-  const startRequestTime = performance.now();
+  const observeRequestDuration = interactionRequestDuration.startTimer();
 
-  let status;
+  let context;
   if (interaction.isCommand()) {
-    status = await onCommand(interaction, startRequestTime);
+    context = await onCommand(interaction);
   } else if (interaction.isAutocomplete()) {
-    status = await onAutocomplete(interaction, startRequestTime);
+    context = await onAutocomplete(interaction);
   } else if (interaction.isMessageComponent()) {
-    status = await onMessageComponent(interaction, startRequestTime);
+    context = await onMessageComponent(interaction);
   } else if (interaction.isModalSubmit()) {
-    status = await onModalSubmit(interaction, startRequestTime);
+    context = await onModalSubmit(interaction);
   }
 
-  assert(status !== undefined);
+  assert(context !== undefined);
+  const { result, status, uiid } = context;
+
+  const handler = getHandler(interaction, uiid);
+  const labels = { handler, status };
+  const requestDuration = observeRequestDuration(labels);
+
+  const childLogger = logger.child({
+    interaction,
+    labels,
+    requestDuration,
+  });
+
+  if (status === "error") {
+    childLogger.error(result, "ON_INTERACTION_ERROR");
+  } else if (requestDuration >= 2.5) {
+    childLogger.warn(result, "ON_INTERACTION_SUCCESS_SLOW");
+  } else {
+    childLogger.info(result, "ON_INTERACTION_SUCCESS");
+  }
 });
 // endregion
 // endregion
