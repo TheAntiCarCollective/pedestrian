@@ -17,5 +17,5 @@
     "strict": true,
     "target": "es2021"
   },
-  "include": [".eslintrc.js", "src"]
+  "include": ["src"]
 }

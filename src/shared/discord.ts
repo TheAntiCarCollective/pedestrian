@@ -12,14 +12,14 @@ import type {
 
 import { Client, Events, Routes, User } from "discord.js";
 import assert from "node:assert";
-import { Gauge, Histogram } from "prom-client";
+import { Gauge, Summary } from "prom-client";
 
 import loggerFactory from "../logger.factory";
 
 // region Logger and Metrics
 const logger = loggerFactory(module);
 
-const interactionRequestDuration = new Histogram({
+const interactionRequestDuration = new Summary({
   help: "Interaction request duration in milliseconds",
   labelNames: ["status", "handler"],
   name: "interaction_request_duration_milliseconds",

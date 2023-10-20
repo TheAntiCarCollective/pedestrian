@@ -1,7 +1,4 @@
 module.exports = {
-  env: {
-    node: true,
-  },
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/strict-type-checked",
@@ -11,9 +8,9 @@ module.exports = {
     "plugin:unicorn/recommended",
   ],
   ignorePatterns: ["/build/*"],
-  parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaVersion: "latest",
+    parser: "@typescript-eslint/parser",
     project: true,
     tsConfigRootDir: __dirname,
   },

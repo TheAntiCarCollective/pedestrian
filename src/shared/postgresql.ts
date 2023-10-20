@@ -1,7 +1,7 @@
 import type { PoolClient } from "pg";
 
 import { Pool } from "pg";
-import { Histogram } from "prom-client";
+import { Summary } from "prom-client";
 
 import type { Caller } from "./caller";
 
@@ -15,7 +15,7 @@ type Callback<T> = (client: PoolClient) => Promise<T>;
 // region Logger and Metrics
 const logger = loggerFactory(module);
 
-const databaseRequestDuration = new Histogram({
+const databaseRequestDuration = new Summary({
   help: "Database request duration in milliseconds",
   labelNames: ["caller", "status", "connected"],
   name: "database_request_duration_milliseconds",
