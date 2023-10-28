@@ -14,9 +14,9 @@ import type Nullable from "../../shared/nullable";
 import type { CreatorType } from "../constants";
 import type { CreatorSubscription } from "./database";
 
-import loggerFactory from "../../logger.factory";
 import { byDate, isUnique } from "../../shared/array";
 import discord from "../../shared/discord";
+import loggerFactory from "../../shared/logger";
 import { isNullable } from "../../shared/nullable";
 import * as creatorsDatabase from "../database";
 import * as postDatabase from "./database";

@@ -8,8 +8,9 @@ export default ({ filename }: NodeModule) =>
       bindings: () => ({
         name: path.relative(__dirname, filename),
       }),
-      level: (label) => ({
+      level: (label, value) => ({
         level: label,
+        levelValue: value,
       }),
     },
     level: "debug",

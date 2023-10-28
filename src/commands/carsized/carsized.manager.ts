@@ -5,8 +5,8 @@ import assert from "node:assert";
 
 import type { Car, CompareCars } from "./types";
 
-import loggerFactory from "../../logger.factory";
 import Environment from "../../shared/environment";
+import loggerFactory from "../../shared/logger";
 import { isNonNullable } from "../../shared/nullable";
 import { usePage } from "../../shared/puppeteer";
 import RedisKey, * as redis from "../../shared/redis";
@@ -112,10 +112,9 @@ const getCars = async () => {
 };
 
 const initializeCars = async () => {
-  const carsArray =
-    Environment.EnableCarsized === "true"
-      ? await redis.computeIfAbsent(RedisKey.Cars, getCars, ExpireIn30Days)
-      : [];
+  const carsArray = Environment.EnableCarsized
+    ? await redis.computeIfAbsent(RedisKey.Cars, getCars, ExpireIn30Days)
+    : [];
 
   carsIndex = lunr((builder) => {
     builder.ref("id");

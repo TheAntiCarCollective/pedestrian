@@ -2,10 +2,10 @@ import { glob } from "glob";
 import path from "node:path";
 import { collectDefaultMetrics } from "prom-client";
 
-import loggerFactory from "./logger.factory";
 import discord from "./shared/discord";
 import Environment from "./shared/environment";
 import express from "./shared/express";
+import loggerFactory from "./shared/logger";
 
 // region Logger and Metrics
 const logger = loggerFactory(module);
@@ -22,9 +22,8 @@ const main = async () => {
       .map((importPath) => import(`./${importPath}`));
     await Promise.all(imports);
 
-    const expressPort = Number.parseInt(Environment.ExpressPort);
-    express.listen(expressPort, () => {
-      logger.info(`Express is listening on port ${expressPort}`);
+    express.listen(Environment.ExpressPort, () => {
+      logger.info(`Express is listening on port ${Environment.ExpressPort}`);
     });
 
     await discord.login();

@@ -2,7 +2,7 @@ import express from "express";
 import promBundle from "express-prom-bundle";
 import pinoBundle from "pino-http";
 
-import loggerFactory from "../logger.factory";
+import loggerFactory from "./logger";
 
 const server = express();
 

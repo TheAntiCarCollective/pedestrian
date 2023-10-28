@@ -7,8 +7,8 @@ import { AttachmentBuilder } from "discord.js";
 
 import type { CompareCars } from "./types";
 
-import loggerFactory from "../../logger.factory";
 import Session from "../../session";
+import loggerFactory from "../../shared/logger";
 import * as carsized from "./carsized.manager";
 import UI from "./ui";
 

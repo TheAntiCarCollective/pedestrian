@@ -14,7 +14,7 @@ import { Client, Events, Routes, User } from "discord.js";
 import assert from "node:assert";
 import { Gauge, Histogram } from "prom-client";
 
-import loggerFactory from "../logger.factory";
+import loggerFactory from "./logger";
 
 // region Logger and Metrics
 const logger = loggerFactory(module);
@@ -26,9 +26,9 @@ const interactionRequestDuration = new Histogram({
 });
 
 const shardPing = new Gauge({
-  help: "Shard ping in milliseconds",
+  help: "Shard ping in seconds",
   labelNames: ["shard"],
-  name: "shard_ping_milliseconds",
+  name: "shard_ping_seconds",
 });
 // endregion
 
@@ -54,7 +54,7 @@ discord.on(Events.Debug, (debug) => {
 
   for (const [shard, { ping }] of shards) {
     const labels = { shard };
-    shardPing.set(labels, ping);
+    shardPing.set(labels, ping / 1000);
   }
 });
 

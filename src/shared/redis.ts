@@ -3,8 +3,8 @@ import type { Callback, Result } from "ioredis";
 import { Redis } from "ioredis";
 import * as crypto from "node:crypto";
 
-import loggerFactory from "../logger.factory";
 import Environment from "./environment";
+import loggerFactory from "./logger";
 import { isNullable } from "./nullable";
 import sleep from "./sleep";
 
@@ -13,7 +13,7 @@ const logger = loggerFactory(module);
 // region redis
 const node = {
   host: Environment.RedisHost,
-  port: Number.parseInt(Environment.RedisPort),
+  port: Environment.RedisPort,
 };
 
 const user = {
@@ -34,10 +34,9 @@ const createRedisByClient = () =>
     ...user,
   });
 
-const redis =
-  Environment.RedisCluster === "true"
-    ? createRedisByCluster()
-    : createRedisByClient();
+const redis = Environment.RedisCluster
+  ? createRedisByCluster()
+  : createRedisByClient();
 
 redis.on("error", (error) => {
   logger.error(error, "REDIS_ERROR");

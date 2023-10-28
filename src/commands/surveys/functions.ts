@@ -15,7 +15,7 @@ import type {
   Survey,
 } from "./types";
 
-import loggerFactory from "../../logger.factory";
+import loggerFactory from "../../shared/logger";
 import { QuestionType } from "./constants";
 
 const logger = loggerFactory(module);

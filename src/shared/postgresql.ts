@@ -5,8 +5,8 @@ import { Histogram } from "prom-client";
 
 import type { Caller } from "./caller";
 
-import loggerFactory from "../logger.factory";
 import Environment from "./environment";
+import loggerFactory from "./logger";
 
 // region Types
 type Callback<T> = (client: PoolClient) => Promise<T>;
@@ -26,7 +26,7 @@ const postgresql = new Pool({
   database: Environment.PostgresqlDatabase,
   host: Environment.PostgresqlHost,
   password: Environment.PostgresqlPassword,
-  port: Number.parseInt(Environment.PostgresqlPort),
+  port: Environment.PostgresqlPort,
   user: Environment.PostgresqlUser,
 });
 
@@ -34,27 +34,23 @@ export const useClient = async <T>(caller: Caller, callback: Callback<T>) => {
   const observeRequestDuration = databaseRequestDuration.startTimer();
   const onDatabase =
     (status: "error" | "success", client?: PoolClient) => (result: unknown) => {
-      client?.release(status === "error");
+      const connected = client !== undefined;
+      if (connected) client.release(status === "error");
 
-      const labels = {
-        caller: caller.toString(),
-        connected: `${client !== undefined}`,
-        status,
-      };
-
+      const labels = { caller, connected: `${connected}`, status };
       const requestDuration = observeRequestDuration(labels);
       const childLogger = logger.child({ labels, requestDuration });
 
       if (status === "error") {
         childLogger.error(result, "ON_DATABASE_ERROR");
         throw result;
-      } else if (requestDuration > 100) {
+      } else if (requestDuration >= 0.1) {
         childLogger.warn(result, "ON_DATABASE_SUCCESS_SLOW");
+        return result as T;
       } else {
         childLogger.debug(result, "ON_DATABASE_SUCCESS");
+        return result as T;
       }
-
-      return result as T;
     };
 
   return postgresql

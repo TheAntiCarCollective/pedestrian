@@ -81,5 +81,5 @@ const onCommand = async (interaction: CommandInteraction) => {
   return withContext.compareCarsUi(context, interaction);
 };
 
-if (Environment.EnableCarsized === "true")
+if (Environment.EnableCarsized)
   registerCommand(json, onCommand, onAutocomplete);
