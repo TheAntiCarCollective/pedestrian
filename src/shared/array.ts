@@ -1,32 +1,41 @@
-import type Nullable from "./nullable";
+// region Types
+type Order = "asc" | "desc";
 
-import { isNullable } from "./nullable";
+type Sort<T> = (a: T, b: T) => number;
 
-export const byDate =
-  <T, U extends Date | Nullable | number | string>(
-    property: (element: T) => U,
-    order: "asc" | "desc" = "asc",
-  ) =>
+type By = {
+  <T, U>(property: (element: T) => U, order?: Order): Sort<T>;
+  <T>(order?: Order): Sort<T>;
+};
+// endregion
+
+export const by: By =
+  <T, U>(property?: ((element: T) => U) | Order, order?: Order) =>
   (a: T, b: T) => {
-    const aValue = property(a);
-    if (isNullable(aValue)) return 0;
-    const aDate = new Date(aValue);
-    const aTime = aDate.getTime();
-
-    const bValue = property(b);
-    if (isNullable(bValue)) return 0;
-    const bDate = new Date(bValue);
-    const bTime = bDate.getTime();
-
-    switch (order) {
-      case "asc": {
-        return aTime - bTime;
-      }
-      case "desc": {
-        return bTime - aTime;
-      }
+    if (typeof property === "string") {
+      order = property;
+      property = undefined;
     }
+
+    property ??= (element: unknown) => element as U;
+    const aProperty = property(a);
+    const bProperty = property(b);
+
+    if (aProperty === bProperty) return 0;
+    const result = aProperty > bProperty ? 1 : -1;
+
+    order ??= "asc";
+    return order === "asc" ? result : result * -1;
   };
 
-export const isUnique = <T>(value: T, index: number, array: T[]) =>
-  array.indexOf(value) === index;
+export const unique = <T, U>(property?: (element: T) => U) => {
+  const set = new Set<U>();
+  return (value: T) => {
+    property ??= (element: unknown) => element as U;
+    const valueProperty = property(value);
+
+    if (set.has(valueProperty)) return false;
+    set.add(valueProperty);
+    return true;
+  };
+};

@@ -8,7 +8,7 @@ import assert from "node:assert";
 
 import type { CreatorType } from "../constants";
 
-import { isUnique } from "../../shared/array";
+import { unique } from "../../shared/array";
 import Environment from "../../shared/environment";
 import * as creatorsDatabase from "../database";
 import * as subscribeDatabase from "./database";
@@ -40,7 +40,7 @@ export const checkSubscribeRequirements = async (
   const channels = guildChannelManager.valueOf();
   const obsoleteCreatorChannelIds = creatorSubscriptions
     .map(({ creatorChannelId }) => creatorChannelId)
-    .filter(isUnique)
+    .filter(unique())
     .filter((creatorChannelId) => !channels.has(creatorChannelId));
 
   if (obsoleteCreatorChannelIds.length > 0)

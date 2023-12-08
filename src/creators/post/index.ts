@@ -14,7 +14,7 @@ import type Nullable from "../../shared/nullable";
 import type { CreatorType } from "../constants";
 import type { CreatorSubscription } from "./database";
 
-import { byDate, isUnique } from "../../shared/array";
+import { by, unique } from "../../shared/array";
 import discord from "../../shared/discord";
 import loggerFactory from "../../shared/logger";
 import { isNullable } from "../../shared/nullable";
@@ -65,10 +65,10 @@ const getOptions = async (creatorSubscription: CreatorSubscription) => {
     const options = await poster(creatorDomainId);
     // Iterate options from latest to oldest
     const orderedOptions = options.sort(
-      byDate(({ timestamp }) => timestamp, "desc"),
+      by(({ timestamp }) => timestamp, "desc"),
     );
 
-    const optionsToPost = [];
+    let optionsToPost = [];
     for (const [index, option] of orderedOptions.entries()) {
       const { contentId, timestamp } = option;
 
@@ -89,6 +89,9 @@ const getOptions = async (creatorSubscription: CreatorSubscription) => {
 
     // If no options will be posted skip checking for posted content
     if (optionsToPost.length === 0) return optionsToPost;
+
+    // Do not post duplicate options (handles some edge cases)
+    optionsToPost = optionsToPost.filter(unique(({ contentId }) => contentId));
 
     const contentIds = optionsToPost.map(({ contentId }) => contentId);
     const postedContentIds =
@@ -236,7 +239,7 @@ const postAll = async (creatorSubscriptions: CreatorSubscription[]) => {
   }
 
   if (obsoleteCreatorChannelIds.length > 0) {
-    obsoleteCreatorChannelIds = obsoleteCreatorChannelIds.filter(isUnique);
+    obsoleteCreatorChannelIds = obsoleteCreatorChannelIds.filter(unique());
     const childLogger = logger.child({ obsoleteCreatorChannelIds });
 
     try {

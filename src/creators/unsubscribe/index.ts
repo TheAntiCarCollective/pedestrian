@@ -4,7 +4,7 @@ import assert from "node:assert";
 
 import type { CreatorType } from "../constants";
 
-import { isUnique } from "../../shared/array";
+import { unique } from "../../shared/array";
 import session from "./context";
 import * as database from "./database";
 import UI from "./ui";
@@ -27,7 +27,7 @@ export const unsubscribe = async (
 
   const namePromises = creatorSubscriptions
     .map(({ creatorDomainId }) => creatorDomainId)
-    .filter(isUnique)
+    .filter(unique())
     .map(async (creatorDomainId) => {
       const domainName = await name(creatorDomainId);
       return { [creatorDomainId]: domainName };

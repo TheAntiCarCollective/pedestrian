@@ -5,7 +5,7 @@
     "forceConsistentCasingInFileNames": true,
     "inlineSourceMap": false,
     "inlineSources": true,
-    "lib": ["es2021"],
+    "lib": ["dom", "es2021"],
     "module": "node16",
     "moduleResolution": "node16",
     "noEmit": false,

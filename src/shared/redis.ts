@@ -2,11 +2,11 @@ import type { Callback, Result } from "ioredis";
 
 import { Redis } from "ioredis";
 import * as crypto from "node:crypto";
+import { setTimeout } from "node:timers/promises";
 
 import Environment from "./environment";
 import loggerFactory from "./logger";
 import { isNullable } from "./nullable";
-import sleep from "./sleep";
 
 const logger = loggerFactory(module);
 
@@ -131,7 +131,7 @@ const lock = async (key: string, expireInMilliseconds: number) => {
       logger.error(error, "LOCK_ERROR");
     }
 
-    await sleep(untilLockExpires);
+    await setTimeout(untilLockExpires);
     lockObject = await tryLock(lockKey, expireInMilliseconds);
   }
 
@@ -168,7 +168,7 @@ const useLock = async <T>(
     let callbackResult = callback(lockObject);
 
     while (callbackResult instanceof Promise) {
-      const sleepPromise = sleep(expireInMilliseconds / 2);
+      const sleepPromise = setTimeout(expireInMilliseconds / 2);
       const result = await Promise.race([callbackResult, sleepPromise]);
 
       if (result === undefined) {

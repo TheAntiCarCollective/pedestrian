@@ -23,7 +23,7 @@ export const getChannels = (query: string) => {
     const { data } = await search.list({
       fields:
         "items(snippet(channelId,channelTitle,description,publishedAt,thumbnails,title))",
-      maxResults: 50,
+      maxResults: 25,
       part: ["snippet"],
       q: query,
       type: ["channel"],
@@ -66,7 +66,7 @@ export const getVideos = (playlistId: string) => {
   const callback = async () => {
     const { data } = await playlistItems.list({
       fields: "items(snippet(publishedAt,resourceId,title))",
-      maxResults: 50,
+      maxResults: 25,
       part: ["snippet"],
       playlistId,
     });
