@@ -40,16 +40,18 @@ export const compareCars = async ({
 }: CompareCars) =>
   usePage(async (page) => {
     await page.setJavaScriptEnabled(false);
+    await page.setViewport({ height: 720, width: 1280 });
+
     const compareSegment = `${firstCar.id}-vs-${secondCar.id}`;
     const perspectiveSegment =
       perspective === Perspective.Side ? "" : perspective;
     // prettier-ignore
     await page.goto(`${CarsizedBaseUrl}/cars/compare/${compareSegment}/${perspectiveSegment}?units=${units}`);
+    await page.waitForNetworkIdle(); // Allow images to load before continuing
 
     const contentHandle = await page.$("div.flowcontent");
     assert(contentHandle !== null);
 
-    await page.setViewport({ height: 720, width: 1280 });
     const screenshot = await contentHandle.screenshot();
     assert(typeof screenshot === "object");
     return screenshot;

@@ -1,10 +1,5 @@
-FROM node:20.8.0
-
+FROM node:20.8.0 as base
 WORKDIR /pedestrian
-
-# Express port
-EXPOSE 8080
-
 # Install Chrome dependencies for puppeteer
 RUN apt-get update \
     && apt-get install -y wget gnupg \
@@ -20,17 +15,26 @@ RUN apt-get update \
     && mkdir -p /home/pptruser/Downloads \
     && chown -R pptruser:pptruser /home/pptruser \
     && chown -R pptruser:pptruser /pedestrian
-
-# Run everything after as puppeteer
+# Use puppeteer user for Chrome sandbox
 USER pptruser
-
 COPY package*.json ./
 
+FROM base as build
+# Install runtime and build dependencies
 RUN npm ci
-
+# Copy source code into current image
 COPY . .
-
-RUN npm run check \
+# Test source code
+RUN npm test \
+    # Build source code
     && npm run build
+
+FROM base
+# Install runtime dependencies
+RUN npm ci --omit=dev
+# Copy built source code into current image
+COPY --from=build /pedestrian/build ./build
+# Expose port used by Express
+EXPOSE 8080
 
 CMD npm run production

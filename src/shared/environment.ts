@@ -4,7 +4,7 @@ const { env } = process;
 export default {
   BotGuildId: env.BOT_GUILD_ID,
   DiscordToken: env.DISCORD_TOKEN ?? assert.fail(),
-  EnableCarsized: Boolean(env.ENABLE_CARSIZED),
+  EnableCarsized: env.ENABLE_CARSIZED === `${true}`,
   ExpressPort: Number(env.EXPRESS_PORT ?? 8080),
   PostgresqlDatabase: env.POSTGRESQL_DATABASE ?? "db",
   PostgresqlHost: env.POSTGRESQL_HOST ?? "postgres",
@@ -12,7 +12,7 @@ export default {
   PostgresqlPort: Number(env.POSTGRESQL_PORT ?? 5432),
   PostgresqlUser: env.POSTGRESQL_USER ?? "user",
   ProjectName: env.PROJECT_NAME ?? "Pedestrian",
-  RedisCluster: Boolean(env.REDIS_CLUSTER),
+  RedisCluster: env.REDIS_CLUSTER === `${true}`,
   RedisHost: env.REDIS_HOST ?? "redis",
   RedisPassword: env.REDIS_PASSWORD,
   RedisPort: Number(env.REDIS_PORT ?? 6379),

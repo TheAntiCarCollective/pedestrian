@@ -1,27 +1,7 @@
-/.env
-/LICENSE
-/README.md
-/build
-/dump.sql
-/flyway
-
-# Docker
-/.dockerignore
-/Dockerfile
-/docker-compose.yml
-
-# Git
-/.git
-/.gitignore
-
-# GitHub
-/.github
-
-# JetBrains
-/.idea
-
-# Node.js
-/node_modules
-
-# Prettier
-/.prettierignore
+# Ignore everything
+**
+# except
+!/src
+!/.eslint*
+!/package*.json
+!/tsconfig.json
