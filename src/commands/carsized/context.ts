@@ -8,7 +8,7 @@ import { AttachmentBuilder } from "discord.js";
 import type { CompareCars } from "./types";
 
 import Session from "../../session";
-import loggerFactory from "../../shared/logger";
+import * as observability from "../../shared/observability";
 import * as carsized from "./carsized.manager";
 import UI from "./ui";
 
@@ -20,7 +20,9 @@ export type Context = CompareCars & {
 type Interaction = CommandInteraction | MessageComponentInteraction;
 // endregion
 
-const logger = loggerFactory(module);
+// region Logger
+const logger = observability.logger(module);
+// endregion
 
 const session = new Session<Context>();
 export default session;

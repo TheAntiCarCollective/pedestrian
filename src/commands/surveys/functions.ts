@@ -15,10 +15,12 @@ import type {
   Survey,
 } from "./types";
 
-import loggerFactory from "../../shared/logger";
+import * as observability from "../../shared/observability";
 import { QuestionType } from "./constants";
 
-const logger = loggerFactory(module);
+// region Logger
+const logger = observability.logger(module);
+// endregion
 
 // region Survey
 export const surveyLink = ({ channelId, guildId, id }: PartialSurvey) =>

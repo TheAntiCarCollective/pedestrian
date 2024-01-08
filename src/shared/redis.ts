@@ -5,10 +5,12 @@ import * as crypto from "node:crypto";
 import { setTimeout } from "node:timers/promises";
 
 import Environment from "./environment";
-import loggerFactory from "./logger";
 import { isNullable } from "./nullable";
+import * as observability from "./observability";
 
-const logger = loggerFactory(module);
+// region Logger
+const logger = observability.logger(module);
+// endregion
 
 // region redis
 const node = {

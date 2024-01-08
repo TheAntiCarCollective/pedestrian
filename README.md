@@ -6,19 +6,19 @@ A custom bot designed for [The Anti-Car Collective](https://discord.gg/anticar) 
 
 ### Requirements
 
+- [Docker Compose](https://docs.docker.com/compose)
 - [Node.js](https://nodejs.org)
-- [docker-compose](https://docs.docker.com/compose)
 
 ### Environment Variables
 
-Required environment variables must be configured in a `.env` file at the project's root. While [debugging](#debugging), additional environment variables can be configured in a `.env.debug` file at the project's root; for example, setting `REDIS_HOST` and `POSTGRESQL_HOST` to `localhost` is a common debug requirement.
+Required environment variables must be configured in a `.env` file at the project's root.
 
 | Environment Variable | Required | Default Value | Notes                                                                                                  |
 | -------------------- | -------- | ------------- | ------------------------------------------------------------------------------------------------------ |
-| BOT_GUILD_ID         | ❌       |               | Guild ID to enable `/bot`                                                                              |
 | DISCORD_TOKEN        | ✅       |               | [Create Discord Token](https://discord.com/developers/docs/getting-started#configuring-your-bot)       |
 | ENABLE_CARSIZED      | ❌       |               | IIF value is `true` then `/carsized` is enabled                                                        |
 | EXPRESS_PORT         | ❌       | 8080          |                                                                                                        |
+| PINO_LEVEL           | ❌       | info          | `silent`, `fatal`, `error`, `warn`, `info`, `debug`, `trace`                                           |
 | POSTGRESQL_HOST      | ❌       | postgres      |                                                                                                        |
 | POSTGRESQL_PORT      | ❌       | 5432          |                                                                                                        |
 | POSTGRESQL_DATABASE  | ❌       | db            |                                                                                                        |
@@ -34,7 +34,7 @@ Required environment variables must be configured in a `.env` file at the projec
 
 ### Quick Start
 
-Simply run `npm start`! Assuming the above requirements are met, the project will automatically be built and deployed locally along with required dependencies and services.
+Simply run `npm start`! If the above requirements are met then the project will automatically be built and deployed locally along with required dependencies and services.
 
 ### Debugging
 
@@ -44,6 +44,8 @@ Steps 1-3 is not required if the ask is already installed, updated, and/or runni
 2. Install dependencies (`npm install`)
 3. Build project (`npm run build`)
 4. Attach debugger while running `npm run debug`
+
+Additional environment variables can be configured in a `.env.debug` file at the project's root; for example, setting `REDIS_HOST` and `POSTGRESQL_HOST` to `localhost` is a common debug requirement.
 
 ### Database Migration
 

@@ -6,14 +6,14 @@ import { Histogram } from "prom-client";
 import type { Caller } from "./caller";
 
 import Environment from "./environment";
-import loggerFactory from "./logger";
+import * as observability from "./observability";
 
 // region Types
 type Callback<T> = (client: PoolClient) => Promise<T>;
 // endregion
 
 // region Logger and Metrics
-const logger = loggerFactory(module);
+const logger = observability.logger(module);
 
 const databaseRequestDuration = new Histogram({
   help: "Database request duration in seconds",

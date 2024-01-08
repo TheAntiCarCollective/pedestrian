@@ -6,13 +6,15 @@ import assert from "node:assert";
 import type { Car, CompareCars } from "./types";
 
 import Environment from "../../shared/environment";
-import loggerFactory from "../../shared/logger";
 import { isNonNullable } from "../../shared/nullable";
+import * as observability from "../../shared/observability";
 import { usePage } from "../../shared/puppeteer";
 import RedisKey, * as redis from "../../shared/redis";
 import { Perspective } from "./constants";
 
-const logger = loggerFactory(module);
+// region Logger
+const logger = observability.logger(module);
+// endregion
 
 const CarsizedBaseUrl = "https://www.carsized.com/en";
 

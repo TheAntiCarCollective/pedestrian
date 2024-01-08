@@ -16,8 +16,8 @@ import type { CreatorSubscription } from "./database";
 
 import { by, unique } from "../../shared/array";
 import discord from "../../shared/discord";
-import loggerFactory from "../../shared/logger";
 import { isNullable } from "../../shared/nullable";
+import * as observability from "../../shared/observability";
 import * as creatorsDatabase from "../database";
 import * as postDatabase from "./database";
 
@@ -35,7 +35,9 @@ export type Option = {
 type Poster = (creatorDomainId: string) => Promise<Option[]>;
 // endregion
 
-const logger = loggerFactory(module);
+// region Logger
+const logger = observability.logger(module);
+// endregion
 
 const posters = new Map<CreatorType, Poster>();
 export const registerPoster = (creatorType: CreatorType, poster: Poster) => {
