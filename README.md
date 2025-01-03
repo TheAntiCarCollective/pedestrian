@@ -24,6 +24,8 @@ Required environment variables must be configured in a `.env` file at the projec
 | POSTGRESQL_DATABASE  | ❌       | db            |                                                                                                        |
 | POSTGRESQL_USER      | ❌       | user          |                                                                                                        |
 | POSTGRESQL_PASSWORD  | ❌       | password      |                                                                                                        |
+| POSTGRESQL_SSL       | ❌       | false         |                                                                                                        |
+| POSTGRESQL_SSL_CA    | ❌       | ./ca.crt      |                                                                                                        |
 | PROJECT_NAME         | ❌       | Pedestrian    |                                                                                                        |
 | REDIS_HOST           | ❌       | redis         |                                                                                                        |
 | REDIS_PORT           | ❌       | 6379          |                                                                                                        |

@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 
+import * as fs from "node:fs";
 import { Pool } from "pg";
 import { Histogram } from "prom-client";
 
@@ -22,11 +23,20 @@ const databaseRequestDuration = new Histogram({
 });
 // endregion
 
+let postgresqlSsl;
+if (Environment.PostgresqlSsl) {
+  const caFile = fs.readFileSync(Environment.PostgresqlSslCa);
+  postgresqlSsl = {
+    ca: caFile.toString(),
+  };
+}
+
 const postgresql = new Pool({
   database: Environment.PostgresqlDatabase,
   host: Environment.PostgresqlHost,
   password: Environment.PostgresqlPassword,
   port: Environment.PostgresqlPort,
+  ssl: postgresqlSsl,
   user: Environment.PostgresqlUser,
 });
 

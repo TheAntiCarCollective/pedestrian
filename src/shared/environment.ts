@@ -21,6 +21,8 @@ export default {
   PostgresqlHost: env.POSTGRESQL_HOST ?? "postgres",
   PostgresqlPassword: env.POSTGRESQL_PASSWORD ?? "password",
   PostgresqlPort: Number(env.POSTGRESQL_PORT ?? 5432),
+  PostgresqlSsl: env.POSTGRESQL_SSL === true.toString(),
+  PostgresqlSslCa: env.POSTGRESQL_SSL_CA ?? "./ca.crt",
   PostgresqlUser: env.POSTGRESQL_USER ?? "user",
   ProjectName: env.PROJECT_NAME ?? "Pedestrian",
   RedisCluster: env.REDIS_CLUSTER === true.toString(),
