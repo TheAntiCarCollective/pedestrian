@@ -53,7 +53,7 @@ export const checkSubscribeRequirements = async (
     );
 
   numberOfCreatorSubscriptions -= numberOfObsoleteCreatorSubscriptions;
-  return numberOfCreatorSubscriptions < 25
+  return numberOfCreatorSubscriptions < 100
     ? undefined
     : interaction.reply(UI.maxCreatorSubscriptions(creatorType, name));
 };
