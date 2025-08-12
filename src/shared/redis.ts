@@ -14,6 +14,7 @@ const logger = observability.logger(module);
 
 // region redis
 const node = {
+  db: Environment.RedisDb,
   host: Environment.RedisHost,
   port: Environment.RedisPort,
 };

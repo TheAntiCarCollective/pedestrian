@@ -26,6 +26,7 @@ export default {
   PostgresqlUser: env.POSTGRESQL_USER ?? "user",
   ProjectName: env.PROJECT_NAME ?? "Pedestrian",
   RedisCluster: env.REDIS_CLUSTER === true.toString(),
+  RedisDb: Number(env.REDIS_DB ?? 0),
   RedisHost: env.REDIS_HOST ?? "redis",
   RedisPassword: env.REDIS_PASSWORD,
   RedisPort: Number(env.REDIS_PORT ?? 6379),
