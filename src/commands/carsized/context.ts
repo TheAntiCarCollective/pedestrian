@@ -29,7 +29,7 @@ export default session;
 
 export const compareCarsUi = async (
   context: Context,
-  interaction: Interaction
+  interaction: Interaction,
 ) => {
   // "perspective" was wrongly spelled "prospective" initially
   // Use new spelling while supporting older sessions

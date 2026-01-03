@@ -96,7 +96,6 @@ export const subscribe = async ({
 
         webhookId = webhook.id;
         webhookToken = webhook.token;
-        assert(webhookToken !== null);
       } else {
         webhookId = creatorChannel.webhookId;
         webhookToken = creatorChannel.webhookToken;
@@ -108,7 +107,6 @@ export const subscribe = async ({
 
       webhookId = webhook.id;
       webhookToken = webhook.token;
-      assert(webhookToken !== null);
     }
 
     creatorChannel = {

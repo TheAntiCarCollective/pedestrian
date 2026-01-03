@@ -105,7 +105,7 @@ export const getAnswersPng = async (context: Context) => {
 export const resultsUi = async (
   context: Context,
   interaction: Interaction,
-  files: BaseMessageOptions["files"] = []
+  files: BaseMessageOptions["files"] = [],
 ) => {
   const { survey } = context;
   const { message } = interaction;

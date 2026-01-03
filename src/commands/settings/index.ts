@@ -6,6 +6,7 @@ import assert from "node:assert";
 import { SupportedChannelTypes } from "../../creators";
 import discord, { registerCommand } from "../../shared/discord";
 import Environment from "../../shared/environment";
+import * as observability from "../../shared/observability";
 import onCreators, { Subcommand as CreatorsSubcommand } from "./creators";
 import { Option as ChannelMentionRoleOption } from "./creators/channel-mention-role";
 import * as database from "./database";
@@ -83,13 +84,19 @@ registerCommand(json, onCommand);
 // endregion
 
 // region Initialize Guilds
-discord.on(Events.ClientReady, async ({ guilds: guildManager }) => {
+const logger = observability.logger(module);
+
+discord.on(Events.ClientReady, ({ guilds: guildManager }) => {
   const guilds = guildManager.valueOf();
   const guildIds = [...guilds.keys()];
-  await database.initializeGuilds(guildIds);
+  database.initializeGuilds(guildIds).catch((error) => {
+    logger.error(error, "SETTINGS_CLIENT_READY_ERROR");
+  });
 });
 
-discord.on(Events.GuildCreate, async ({ id: guildId }) => {
-  await database.initializeGuilds([guildId]);
+discord.on(Events.GuildCreate, ({ id: guildId }) => {
+  database.initializeGuilds([guildId]).catch((error) => {
+    logger.error(error, "SETTINGS_GUILD_CREATE_ERROR");
+  });
 });
 // endregion

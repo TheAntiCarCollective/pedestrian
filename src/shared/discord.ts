@@ -125,7 +125,7 @@ const commands = new Map<string, Command>();
 export const registerCommand = (
   json: CommandJson,
   onCommand: OnCommand,
-  onAutocomplete?: OnAutocomplete
+  onAutocomplete?: OnAutocomplete,
 ) =>
   void commands.set(json.name, {
     json,
