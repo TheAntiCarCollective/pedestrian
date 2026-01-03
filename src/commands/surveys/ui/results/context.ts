@@ -105,18 +105,19 @@ export const getAnswersPng = async (context: Context) => {
 export const resultsUi = async (
   context: Context,
   interaction: Interaction,
-  files: BaseMessageOptions["files"] = [],
+  files: BaseMessageOptions["files"] = []
 ) => {
   const { survey } = context;
   const { message } = interaction;
+  const newFiles = [...files];
 
   const answersPng = await getAnswersPng(context);
-  if (answersPng !== undefined) files.push(answersPng);
+  if (answersPng !== undefined) newFiles.push(answersPng);
 
   const creator = await surveyCreator(survey, interaction);
   return survey.id === message.id
-    ? interaction.reply(UI.results(context, creator, files))
-    : interaction.update(UI.results(context, creator, files));
+    ? interaction.reply(UI.results(context, creator, newFiles))
+    : interaction.update(UI.results(context, creator, newFiles));
 };
 
 export default new Session<Context>();

@@ -29,7 +29,7 @@ export default session;
 
 export const compareCarsUi = async (
   context: Context,
-  interaction: Interaction,
+  interaction: Interaction
 ) => {
   // "perspective" was wrongly spelled "prospective" initially
   // Use new spelling while supporting older sessions
@@ -47,6 +47,7 @@ export const compareCarsUi = async (
   // processing compareCars in parallel then edit the response
   carsized
     .compareCars(context)
+    .then((screenshot) => Buffer.from(screenshot))
     .then(async (screenshot) => {
       const firstCarName = carsized.toName(context.firstCar);
       const secondCarName = carsized.toName(context.secondCar);

@@ -28,8 +28,11 @@ export default {
   RedisCluster: env.REDIS_CLUSTER === true.toString(),
   RedisDb: Number(env.REDIS_DB ?? 0),
   RedisHost: env.REDIS_HOST ?? "redis",
+  RedisIpv: Number(env.REDIS_IPV ?? 6),
   RedisPassword: env.REDIS_PASSWORD,
   RedisPort: Number(env.REDIS_PORT ?? 6379),
+  RedisTls: env.REDIS_TLS === true.toString(),
+  RedisTlsCa: env.REDIS_TLS_CA ?? "./ca.crt",
   RedisUsername: env.REDIS_USERNAME,
   YoutubeApiKey: required("YOUTUBE_API_KEY"),
 } as const;

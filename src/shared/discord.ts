@@ -50,7 +50,7 @@ const { ws } = discord;
 const { shards } = ws;
 
 discord.on(Events.Debug, (debug) => {
-  logger.debug(debug, "DISCORD_DEBUG");
+  logger.debug(new Error(debug), "DISCORD_DEBUG");
 
   for (const [shard, { ping }] of shards) {
     const labels = { shard };
@@ -59,7 +59,7 @@ discord.on(Events.Debug, (debug) => {
 });
 
 discord.on(Events.Warn, (warn) => {
-  logger.warn(warn, "DISCORD_WARN");
+  logger.warn(new Error(warn), "DISCORD_WARN");
 });
 
 discord.on(Events.Error, (error) => {
@@ -67,8 +67,12 @@ discord.on(Events.Error, (error) => {
 });
 
 // Initialize ClientApplication for future uses
-discord.on(Events.ClientReady, async ({ application }) => {
-  if (application.partial) await application.fetch();
+discord.on(Events.ClientReady, ({ application }) => {
+  if (application.partial) {
+    application.fetch().catch((error) => {
+      logger.error(error, "APPLICATION_ERROR");
+    });
+  }
 });
 
 export default discord;
@@ -121,7 +125,7 @@ const commands = new Map<string, Command>();
 export const registerCommand = (
   json: CommandJson,
   onCommand: OnCommand,
-  onAutocomplete?: OnAutocomplete,
+  onAutocomplete?: OnAutocomplete
 ) =>
   void commands.set(json.name, {
     json,
@@ -151,7 +155,7 @@ export const refreshCommands = async () => {
   await rest.put(Routes.applicationCommands(applicationId), { body });
 };
 
-discord.once(Events.ClientReady, refreshCommands);
+discord.once(Events.ClientReady, () => refreshCommands);
 // endregion
 
 // region Handlers
@@ -236,40 +240,46 @@ const onModalSubmit = (interaction: ModalSubmitInteraction) => {
   }
 };
 
-discord.on(Events.InteractionCreate, async (interaction) => {
-  const observeRequestDuration = interactionRequestDuration.startTimer();
+discord.on(Events.InteractionCreate, (interaction) => {
+  const handler = async () => {
+    const observeRequestDuration = interactionRequestDuration.startTimer();
 
-  let context;
-  if (interaction.isCommand()) {
-    context = await onCommand(interaction);
-  } else if (interaction.isAutocomplete()) {
-    context = await onAutocomplete(interaction);
-  } else if (interaction.isMessageComponent()) {
-    context = await onMessageComponent(interaction);
-  } else if (interaction.isModalSubmit()) {
-    context = await onModalSubmit(interaction);
-  }
+    let context;
+    if (interaction.isCommand()) {
+      context = await onCommand(interaction);
+    } else if (interaction.isAutocomplete()) {
+      context = await onAutocomplete(interaction);
+    } else if (interaction.isMessageComponent()) {
+      context = await onMessageComponent(interaction);
+    } else if (interaction.isModalSubmit()) {
+      context = await onModalSubmit(interaction);
+    }
 
-  assert(context !== undefined);
-  const { result, status, uiid } = context;
+    assert(context !== undefined);
+    const { result, status, uiid } = context;
 
-  const handler = getHandler(interaction, uiid);
-  const labels = { handler, status };
-  const requestDuration = observeRequestDuration(labels);
+    const handler = getHandler(interaction, uiid);
+    const labels = { handler, status };
+    const requestDuration = observeRequestDuration(labels);
 
-  const childLogger = logger.child({
-    interaction,
-    labels,
-    requestDuration,
+    const childLogger = logger.child({
+      interaction,
+      labels,
+      requestDuration,
+    });
+
+    if (status === "error") {
+      childLogger.error(result, "ON_INTERACTION_ERROR");
+    } else if (requestDuration >= 2.5) {
+      childLogger.warn(result, "ON_INTERACTION_SUCCESS_SLOW");
+    } else {
+      childLogger.info(result, "ON_INTERACTION_SUCCESS");
+    }
+  };
+
+  handler().catch((error) => {
+    logger.error(error, "ON_INTERACTION_ERROR");
   });
-
-  if (status === "error") {
-    childLogger.error(result, "ON_INTERACTION_ERROR");
-  } else if (requestDuration >= 2.5) {
-    childLogger.warn(result, "ON_INTERACTION_SUCCESS_SLOW");
-  } else {
-    childLogger.info(result, "ON_INTERACTION_SUCCESS");
-  }
 });
 // endregion
 // endregion

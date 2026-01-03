@@ -3,7 +3,7 @@ import type { Page } from "puppeteer";
 import puppeteer from "puppeteer";
 
 export const usePage = async <T>(callback: (page: Page) => Promise<T>) => {
-  const browser = await puppeteer.launch({ headless: "new" });
+  const browser = await puppeteer.launch();
 
   try {
     const pages = await browser.pages();

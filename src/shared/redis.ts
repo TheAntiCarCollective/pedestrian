@@ -13,6 +13,11 @@ const logger = observability.logger(module);
 // endregion
 
 // region redis
+const common = {
+  family: Environment.RedisIpv,
+  tls: Environment.RedisTls ? { ca: Environment.RedisTlsCa } : undefined,
+};
+
 const node = {
   db: Environment.RedisDb,
   host: Environment.RedisHost,
@@ -27,12 +32,14 @@ const user = {
 const createRedisByCluster = () =>
   new Redis.Cluster([node], {
     redisOptions: {
+      ...common,
       ...user,
     },
   });
 
 const createRedisByClient = () =>
   new Redis({
+    ...common,
     ...node,
     ...user,
   });
@@ -84,12 +91,12 @@ declare module "ioredis" {
       lockKey: string, // KEYS[1]
       lockToken: string, // ARGV[1]
       expireInMilliseconds: number, // ARGV[2]
-      callback?: Callback<string>,
+      callback?: Callback<string>
     ): Result<number, Context>;
     unlock(
       lockKey: string, // KEYS[1]
       lockToken: string, // ARGV[1]
-      callback?: Callback<string>,
+      callback?: Callback<string>
     ): Result<number, Context>;
   }
 }
@@ -107,7 +114,7 @@ const tryLock = async (lockKey: string, expireInMilliseconds: number) => {
       "PX",
       expireInMilliseconds,
       "NX",
-      "GET",
+      "GET"
     );
   } catch (error) {
     logger.error(error, "TRY_LOCK_ERROR");
@@ -143,7 +150,7 @@ const lock = async (key: string, expireInMilliseconds: number) => {
 
 const extendLock = async (
   { key, token }: Lock,
-  expireInMilliseconds: number,
+  expireInMilliseconds: number
 ) => {
   try {
     await redis.extendLock(key, token, expireInMilliseconds);
@@ -163,7 +170,7 @@ const unlock = async ({ key, token }: Lock) => {
 const useLock = async <T>(
   key: string,
   callback: (lock: Lock) => NonNullable<T> | Promise<NonNullable<T>>,
-  expireInMilliseconds = 1000,
+  expireInMilliseconds = 1000
 ) => {
   const lockObject = await lock(key, expireInMilliseconds);
 
@@ -225,7 +232,7 @@ declare module "ioredis" {
       lockToken: string, // ARGV[1]
       value: string, // ARGV[2]
       expireInMilliseconds: number, // ARGV[3]
-      callback?: Callback<string>,
+      callback?: Callback<string>
     ): Result<null | string, Context>;
   }
 }
@@ -234,7 +241,7 @@ const atomicSet = async (
   lock: Lock,
   key: string,
   value: string,
-  expireInMilliseconds: number,
+  expireInMilliseconds: number
 ) => {
   try {
     await redis.atomicSet(
@@ -242,7 +249,7 @@ const atomicSet = async (
       key,
       lock.token,
       value,
-      expireInMilliseconds,
+      expireInMilliseconds
     );
   } catch (error) {
     logger.error(error, "ATOMIC_SET_ERROR");
@@ -266,7 +273,7 @@ export const computeIfAbsent = async <T>(
   key: string,
   callback: () => Promise<NonNullable<T>>,
   cacheExpirationInMilliseconds = Number.MAX_VALUE,
-  lockExpirationInMilliseconds = 1000,
+  lockExpirationInMilliseconds = 1000
 ) => {
   let value = await get<NonNullable<T>>(key);
 
@@ -284,7 +291,7 @@ export const computeIfAbsent = async <T>(
 
         return value;
       },
-      lockExpirationInMilliseconds,
+      lockExpirationInMilliseconds
     );
   }
 

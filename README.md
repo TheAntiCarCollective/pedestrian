@@ -32,6 +32,9 @@ Required environment variables must be configured in a `.env` file at the projec
 | REDIS_CLUSTER        | ❌       |               | IIF value is `true` then Redis will run in [cluster mode](https://redis.io/docs/management/scaling/)   |
 | REDIS_USERNAME       | ❌       |               |                                                                                                        |
 | REDIS_PASSWORD       | ❌       |               |                                                                                                        |
+| REDIS_IPV            | ❌       | 6             |                                                                                                        |
+| REDIS_TLS            | ❌       | false         |                                                                                                        |
+| REDIS_TLS_CA         | ❌       | ./ca.crt      |                                                                                                        |
 | YOUTUBE_API_KEY      | ✅       |               | [Create YouTube API Key](https://console.cloud.google.com/apis/api/youtube.googleapis.com/credentials) |
 
 ### Quick Start
